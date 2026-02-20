@@ -1,4 +1,4 @@
-// js/coach-history.js — Scrummer Coach (Sprint History v1.0)
+// js/coach-history.js — Scrummer Coach (Sprint History v1.1)
 // Safe add-on: does NOT depend on existing coach.js internals.
 // Features:
 //  - 6-sprint editable table (N .. N-5)
@@ -6,6 +6,8 @@
 //  - Reset (clear localStorage + reset UI)
 //  - Auto-fill from Plan localStorage: committed + last 3 velocities
 //  - CSV upload (template format) + template download
+//  - Demo data loader (one-click) ✅
+
 (function () {
   const qs = (id) => document.getElementById(id);
 
@@ -139,7 +141,6 @@
         inp.addEventListener("input", () => {
           const v = clampInt3(num(inp.value));
           r[field] = v;
-          // once user edits, clear auto meta for that field
           if(r._meta && r._meta.auto) r._meta.auto[field] = false;
         });
 
@@ -170,7 +171,6 @@
   }
 
   function normalizeRows(rows){
-    // Ensure 6 rows exist and have needed fields
     const base = makeBlankRows();
     if(!Array.isArray(rows)) return base;
 
@@ -192,8 +192,7 @@
 
   function doSave(rows){
     const ok = saveHistory(rows);
-    if(ok) setStatus("Saved ✔ Sprint history stored locally.");
-    else setStatus("Could not save (browser storage blocked).");
+    setStatus(ok ? "Saved ✔ Sprint history stored locally." : "Could not save (browser storage blocked).");
   }
 
   function doReset(){
@@ -211,7 +210,6 @@
       return rows;
     }
 
-    // Sprint N: committed + forecast capacity estimate
     const committed = clampInt3(num(plan.committedSP));
     const capForecast = calcCapacityForecastFromPlan(plan);
 
@@ -222,7 +220,6 @@
     if(committed != null) rows[0]._meta.auto.committedSP = true;
     if(capForecast != null) rows[0]._meta.auto.forecastCapacity = true;
 
-    // Sprint N-1..N-3 completed = v1..v3
     const v1 = clampInt3(num(plan.v1));
     const v2 = clampInt3(num(plan.v2));
     const v3 = clampInt3(num(plan.v3));
@@ -245,6 +242,44 @@
     renderTable(rows);
     setStatus("Auto-fill applied ✨ You can override any cell.");
     return rows;
+  }
+
+  // ✅ Demo data (realistic patterns)
+  function makeDemoRows(){
+    const rows = makeBlankRows();
+
+    // Newest first: N, N-1, ... N-5
+    // Pattern: slight overcommit, some disruption, sick leaves spikes
+    const demo = [
+      // sprint, forecast, actual, committed, completed, added, removed, sick
+      ["Sprint N",   38, 36, 40,  null,  6, 2, 2],
+      ["Sprint N-1", 40, 39, 42,  38,    5, 3, 1],
+      ["Sprint N-2", 37, 35, 36,  34,    3, 1, 4],
+      ["Sprint N-3", 41, 40, 40,  42,    2, 4, 0],
+      ["Sprint N-4", 39, 37, 38,  36,    7, 2, 2],
+      ["Sprint N-5", 36, 36, 35,  35,    1, 1, 1],
+    ];
+
+    demo.forEach((d, i) => {
+      rows[i].sprint = d[0];
+      rows[i].forecastCapacity = d[1];
+      rows[i].actualCapacity = d[2];
+      rows[i].committedSP = d[3];
+      rows[i].completedSP = d[4];
+      rows[i].addedMid = d[5];
+      rows[i].removedMid = d[6];
+      rows[i].sickLeaveDays = d[7];
+      rows[i]._meta = { auto: {} }; // demo counts as manual
+    });
+
+    return rows;
+  }
+
+  function doDemo(state){
+    state.rows = makeDemoRows();
+    renderTable(state.rows);
+    doSave(state.rows);
+    setStatus("Demo data loaded 🧪 (you can edit + Save anytime).");
   }
 
   // CSV helpers
@@ -270,7 +305,6 @@
   }
 
   function parseCSV(text){
-    // Minimal CSV parser (no quotes support) — stable for our template.
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if(lines.length < 2) return null;
 
@@ -310,7 +344,6 @@
       if(iRem >= 0) r.removedMid = toNum(read(iRem));
       if(iSick >= 0) r.sickLeaveDays = toNum(read(iSick));
 
-      // CSV is considered manual input, not auto.
       r._meta = { auto: {} };
     }
 
@@ -321,6 +354,7 @@
     const btnSave = qs("hist_saveBtn");
     const btnReset = qs("hist_resetBtn");
     const btnAuto = qs("hist_autofillBtn");
+    const btnDemo = qs("hist_demoBtn");
     const btnUpload = qs("hist_uploadCsvBtn");
     const btnTpl = qs("hist_downloadTplBtn");
     const fileInput = qs("hist_csvInput");
@@ -328,6 +362,7 @@
     btnSave?.addEventListener("click", () => doSave(state.rows));
     btnReset?.addEventListener("click", () => { state.rows = doReset(); });
     btnAuto?.addEventListener("click", () => { state.rows = doAutofill(state.rows); });
+    btnDemo?.addEventListener("click", () => doDemo(state));
     btnTpl?.addEventListener("click", () => downloadTemplateCSV());
 
     btnUpload?.addEventListener("click", () => fileInput?.click());
@@ -355,7 +390,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const tbody = qs("hist_rows");
-    if(!tbody) return; // Coach page might not have history section yet
+    if(!tbody) return;
 
     const saved = loadHistory();
     const rows = normalizeRows(saved || makeBlankRows());
@@ -363,7 +398,7 @@
     const state = { rows };
 
     renderTable(state.rows);
-    setStatus(saved ? "Loaded saved sprint history." : "No sprint history yet. Use Auto-fill or enter values, then Save.");
+    setStatus(saved ? "Loaded saved sprint history." : "No sprint history yet. Use Auto-fill, Demo, or enter values, then Save.");
 
     attachHandlers(state);
   });
