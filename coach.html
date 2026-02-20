@@ -16,19 +16,13 @@
     .tabBtn.active{background: rgba(99,102,241,0.95); color:#fff; border-color: rgba(99,102,241,0.55); box-shadow: 0 10px 24px rgba(99,102,241,0.18);}
     .tabPanel.hidden{display:none}
 
-    /* ✅ Make desktop feel like desktop (fix “too small”) */
-    .coachWrap{
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
     /* ===== Sprint History table (Coach) — added ===== */
     .historyWrap{ margin-top: 12px; }
     .historyTop{
       display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap;
     }
     .historyActions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
     .historyTable{
       width:100%;
       border-collapse:separate;
@@ -54,28 +48,32 @@
     .historyTable tbody tr:last-child td{ border-bottom:none; }
     .historyTable td:first-child, .historyTable th:first-child{ padding-left: 12px; }
     .historyTable td:last-child, .historyTable th:last-child{ padding-right: 12px; }
-
-    .histNum{
-      width: 92px;
-      min-width: 92px;
-    }
-    .histSprint{
-      font-weight: 800;
-    }
-    .histAutoPill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--bg-panel);
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 750;
-      margin-left: 8px;
-    }
     .fileInput{ display:none; }
+
+    /* ===== Charts area (Health) — added ===== */
+    .chartsGrid{
+      display:grid;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .chartCard{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--bg-soft);
+      padding: 12px;
+      overflow: hidden;
+    }
+    .chartTitle{
+      font-weight: 750;
+      color: var(--text-muted);
+      font-size: 12px;
+      letter-spacing: .2px;
+      margin-bottom: 8px;
+    }
+    .chartCanvas{
+      width: 100%;
+      display:block;
+    }
   </style>
 </head>
 
@@ -121,342 +119,371 @@
     </aside>
 
     <main class="main">
-      <div class="coachWrap">
 
-        <div class="tabBar">
-          <button class="tabBtn active" data-tab="insights">Insights</button>
-          <button class="tabBtn" data-tab="health">Health</button>
-          <button class="tabBtn" data-tab="actions">Actions</button>
-          <button class="tabBtn" data-tab="copilot">Copilot</button>
+      <div class="tabBar">
+        <button class="tabBtn active" data-tab="insights">Insights</button>
+        <button class="tabBtn" data-tab="health">Health</button>
+        <button class="tabBtn" data-tab="actions">Actions</button>
+        <button class="tabBtn" data-tab="copilot">Copilot</button>
+      </div>
+
+      <!-- ===================== INSIGHTS ===================== -->
+      <section class="tabPanel" id="panel-insights">
+        <div class="sectionCard">
+          <h1 class="sectionTitle">Sprint Intelligence</h1>
+          <p class="sectionSub">Risk, confidence, and capacity signals for this sprint.</p>
+
+          <div class="info-banner">
+            <strong>Executive View:</strong> Clear signals, no blame. Save a snapshot to power 🛡️ Health.
+          </div>
+
+          <div class="info-banner" id="insights_toast" style="display:none; margin-top:12px; border-left:4px solid rgba(99,102,241,.55);">
+            —
+          </div>
+
+          <div style="display:grid; gap:12px; margin-top:12px;">
+            <div class="info-banner">
+              <div class="kvKey">Risk Score</div>
+              <div id="insights_riskScore" style="font-size:24px; font-weight:650; margin-top:4px;">—</div>
+              <div class="mutedText" id="insights_riskBand" style="margin-top:2px;">—</div>
+            </div>
+
+            <div class="info-banner">
+              <div class="kvKey">Confidence</div>
+              <div style="font-size:24px; font-weight:650; margin-top:4px;">
+                <span id="insights_confidence">—</span>%
+              </div>
+              <div class="mutedText" id="insights_confidenceLabel" style="margin-top:2px;">—</div>
+            </div>
+
+            <div class="info-banner">
+              <div class="kvKey">Capacity Health</div>
+              <div id="insights_health" style="font-size:18px; font-weight:650; margin-top:4px;">—</div>
+              <div class="mutedText" id="insights_capacityNote" style="margin-top:2px;">—</div>
+            </div>
+          </div>
+
+          <div class="info-banner" style="margin-top:14px;">
+            <div class="kvKey">Inputs detected</div>
+            <div class="mutedText" id="insights_inputsDetected" style="margin-top:6px;">—</div>
+          </div>
+
+          <div class="stageIndicator">Flow: Setup → Insights → 🛡️ Health → Actions</div>
+          <div class="stageFooter">
+            <div class="left">
+              <a class="btnStage btnStage-back" href="index.html">← Back: Setup</a>
+            </div>
+            <div class="right">
+              <button class="btnStage btnStage-action" id="insights_refreshAndSaveBtn" type="button">Refresh + Save Snapshot</button>
+              <a class="btnStage btnStage-next" href="coach.html#health">Next: 🛡️ Health →</a>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <section class="tabPanel" id="panel-insights">
-          <div class="sectionCard">
-            <h1 class="sectionTitle">Sprint Intelligence</h1>
-            <p class="sectionSub">Risk, confidence, and capacity signals for this sprint.</p>
-            <div class="info-banner">
-              <strong>Executive View:</strong> Clear signals, no blame. Save a snapshot to power 🛡️ Health.
-            </div>
+      <!-- ===================== HEALTH ===================== -->
+      <section class="tabPanel hidden" id="panel-health">
+        <div class="sectionCard">
+          <h1 class="sectionTitle">Sprint Health Dashboard</h1>
+          <p class="sectionSub">Executive view: trends, stability, and explanation — without blame.</p>
 
-            <div class="info-banner" id="insights_toast" style="display:none; margin-top:12px; border-left:4px solid rgba(99,102,241,.55);">—</div>
+          <div class="info-banner">
+            <strong>Tip:</strong> Health improves when risk trends down and commitment matches capacity.
+          </div>
 
-            <div style="display:grid; gap:12px; margin-top:12px;">
-              <div class="info-banner">
-                <div class="kvKey">Risk Score</div>
-                <div id="insights_riskScore" style="font-size:24px; font-weight:650; margin-top:4px;">—</div>
-                <div class="mutedText" id="insights_riskBand" style="margin-top:2px;">—</div>
-              </div>
-
-              <div class="info-banner">
-                <div class="kvKey">Confidence</div>
-                <div style="font-size:24px; font-weight:650; margin-top:4px;">
-                  <span id="insights_confidence">—</span>%
+          <!-- ✅ Sprint History table (6 sprints only: N-6 → N-1) -->
+          <div class="info-banner historyWrap" style="margin-top:12px;">
+            <div class="historyTop">
+              <div>
+                <div class="kvKey">Sprint History (Last 6 sprints)</div>
+                <div class="mutedText" style="margin-top:6px;">
+                  Use this for trends: velocity variation, predictability, rolling averages, disruption, team health, and capacity accuracy.
                 </div>
-                <div class="mutedText" id="insights_confidenceLabel" style="margin-top:2px;">—</div>
               </div>
 
-              <div class="info-banner">
-                <div class="kvKey">Capacity Health</div>
-                <div id="insights_health" style="font-size:18px; font-weight:650; margin-top:4px;">—</div>
-                <div class="mutedText" id="insights_capacityNote" style="margin-top:2px;">—</div>
+              <div class="historyActions">
+                <button class="btnGhost" id="hist_autofillBtn" type="button">✨ Auto-fill from Plan</button>
+
+                <select class="fun-input" id="hist_demoVariant" style="min-width:220px;">
+                  <option value="stable">🟢 Stable mature team</option>
+                  <option value="recovery" selected>🟡 Chaos → recovery arc</option>
+                  <option value="overcommit">🔴 Overcommit streak → correction</option>
+                </select>
+
+                <button class="btnGhost" id="hist_demoBtn" type="button">🧪 Load Demo Data</button>
+                <button class="btnPrimary" id="hist_saveBtn" type="button">Save</button>
+                <button class="btnGhost" id="hist_resetBtn" type="button">Reset</button>
+
+                <input class="fileInput" id="hist_csvInput" type="file" accept=".csv,text/csv" />
+                <button class="btnGhost" id="hist_uploadCsvBtn" type="button">Upload CSV</button>
+                <button class="btnGhost" id="hist_downloadTplBtn" type="button">Download Template</button>
               </div>
             </div>
 
-            <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey">Inputs detected</div>
-              <div class="mutedText" id="insights_inputsDetected" style="margin-top:6px;">—</div>
+            <div style="overflow:auto; margin-top:12px;">
+              <table class="historyTable">
+                <thead>
+                  <tr>
+                    <th align="left">Sprint</th>
+                    <th align="right">Forecast Capacity (SP)</th>
+                    <th align="right">Actual Capacity (SP)</th>
+                    <th align="right">Committed SP</th>
+                    <th align="right">Completed SP</th>
+                    <th align="right">SP Added (mid)</th>
+                    <th align="right">SP Removed (mid)</th>
+                    <th align="right">Sick leave (person-days)</th>
+                  </tr>
+                </thead>
+                <tbody id="hist_rows">
+                  <!-- Rows rendered by js/coach-history.js -->
+                </tbody>
+              </table>
             </div>
 
-            <div class="stageIndicator">Flow: Setup → Insights → 🛡️ Health → Actions</div>
-            <div class="stageFooter">
-              <div class="left">
-                <a class="btnStage btnStage-back" href="index.html">← Back: Setup</a>
+            <div class="mutedText" id="hist_status" style="margin-top:10px;">—</div>
+          </div>
+          <!-- /Sprint History -->
+
+          <!-- ✅ Charts (Health) -->
+          <div class="info-banner" style="margin-top:12px;">
+            <div class="kvKey">Sprint Trends (from the 6-row table)</div>
+            <div class="mutedText" style="margin-top:6px;">
+              These charts render automatically after you load demo data / edit the table / hit Save.
+              (Powered by <b>js/coach-history.js</b>.)
+            </div>
+
+            <div class="chartsGrid">
+              <div class="chartCard">
+                <div class="chartTitle">Velocity Trend (Completed SP) + Rolling Avg</div>
+                <canvas id="hist_velocityChart" class="chartCanvas" height="140"></canvas>
               </div>
-              <div class="right">
-                <button class="btnStage btnStage-action" id="insights_refreshAndSaveBtn" type="button">Refresh + Save Snapshot</button>
-                <a class="btnStage btnStage-next" href="coach.html#health">Next: 🛡️ Health →</a>
+
+              <div class="chartCard">
+                <div class="chartTitle">Predictability: Committed vs Completed + %</div>
+                <canvas id="hist_commitmentChart" class="chartCanvas" height="140"></canvas>
+              </div>
+
+              <div class="chartCard">
+                <div class="chartTitle">Capacity: Forecast vs Actual</div>
+                <canvas id="hist_capacityChart" class="chartCanvas" height="140"></canvas>
+              </div>
+
+              <div class="chartCard">
+                <div class="chartTitle">Sprint Disruption (SP Added vs Removed mid-sprint)</div>
+                <canvas id="hist_disruptionChart" class="chartCanvas" height="140"></canvas>
+              </div>
+
+              <div class="chartCard">
+                <div class="chartTitle">Team Health (Sick leave person-days)</div>
+                <canvas id="hist_sickChart" class="chartCanvas" height="140"></canvas>
               </div>
             </div>
           </div>
-        </section>
+          <!-- /Charts -->
 
-        <section class="tabPanel hidden" id="panel-health">
-          <div class="sectionCard">
-            <h1 class="sectionTitle">Sprint Health Dashboard</h1>
-            <p class="sectionSub">Executive view: trends, stability, and explanation — without blame.</p>
+          <div class="info-banner" id="health_toast" style="display:none; margin-top:12px; border-left:4px solid rgba(99,102,241,.55);">
+            —
+          </div>
+
+          <div class="healthGrid" style="margin-top:12px;">
+            <div class="info-banner">
+              <div class="kvKey">Stability Index</div>
+              <div class="bigMetric" id="health_stabilityIndex">—</div>
+              <div class="mutedText" id="health_stabilityLabel">—</div>
+            </div>
 
             <div class="info-banner">
-              <strong>Tip:</strong> Health improves when risk trends down and commitment matches capacity.
+              <div class="kvKey">Latest Mode</div>
+              <div class="bigMetric" id="health_latestMode">—</div>
+              <div class="mutedText" id="health_latestModeHint">—</div>
             </div>
 
-            <!-- ✅ ADDED: Sprint History table (6 sprints only: N-6 → N-1) -->
-            <div class="info-banner historyWrap" style="margin-top:12px;">
-              <div class="historyTop">
-                <div>
-                  <div class="kvKey">Sprint History (Last 6 sprints)</div>
-                  <div class="mutedText" style="margin-top:6px;">
-                    Use this for trends: velocity variation, predictability, rolling averages, disruption, team health, and capacity accuracy.
-                  </div>
-                </div>
-
-                <div class="historyActions">
-                  <button class="btnGhost" id="hist_autofillBtn" type="button">✨ Auto-fill from Plan</button>
-
-                  <!-- ✅ NEW: Demo scenario dropdown -->
-                  <select class="fun-input" id="hist_demoVariant" style="min-width:220px;">
-                    <option value="stable">🟢 Stable mature team</option>
-                    <option value="recovery" selected>🟡 Chaos → recovery arc</option>
-                    <option value="overcommit">🔴 Overcommit streak → correction</option>
-                  </select>
-
-                  <button class="btnGhost" id="hist_demoBtn" type="button">🧪 Load Demo Data</button>
-                  <button class="btnPrimary" id="hist_saveBtn" type="button">Save</button>
-                  <button class="btnGhost" id="hist_resetBtn" type="button">Reset</button>
-
-                  <input class="fileInput" id="hist_csvInput" type="file" accept=".csv,text/csv" />
-                  <button class="btnGhost" id="hist_uploadCsvBtn" type="button">Upload CSV</button>
-                  <button class="btnGhost" id="hist_downloadTplBtn" type="button">Download Template</button>
-                </div>
-              </div>
-
-              <div style="overflow:auto; margin-top:12px;">
-                <table class="historyTable">
-                  <thead>
-                    <tr>
-                      <th align="left">Sprint</th>
-                      <th align="right">Forecast Capacity (SP)</th>
-                      <th align="right">Actual Capacity (SP)</th>
-                      <th align="right">Committed SP</th>
-                      <th align="right">Completed SP</th>
-                      <th align="right">SP Added (mid)</th>
-                      <th align="right">SP Removed (mid)</th>
-                      <th align="right">Sick leave (person-days)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="hist_rows">
-                    <!-- Rows rendered by js/coach-history.js -->
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="mutedText" id="hist_status" style="margin-top:10px;">—</div>
+            <div class="info-banner">
+              <div class="kvKey">Overcommit Streak</div>
+              <div class="bigMetric" id="health_overcommitStreak">—</div>
+              <div class="mutedText" id="health_overcommitHint">—</div>
             </div>
 
-<!-- Charts Section -->
-<div class="info-banner" style="margin-top:14px;">
-  <div class="kvKey">Sprint Trends</div>
+            <div class="info-banner">
+              <div class="kvKey">Predictability</div>
+              <div class="bigMetric" id="health_predictability">—</div>
+              <div class="mutedText" id="health_predictabilityHint">—</div>
+            </div>
+          </div>
 
-  <div style="display:grid; gap:18px; margin-top:12px;">
-    <div>
-      <div class="mutedText" style="margin-bottom:6px;">Velocity Trend (Completed SP)</div>
-      <canvas id="hist_velocityChart" height="120"></canvas>
-    </div>
+          <div class="info-banner" style="margin-top:12px;">
+            <div class="kvKey">Executive Narrative</div>
+            <div id="health_narrative" style="margin-top:8px; line-height:1.8; font-weight:450; color:var(--text-main);">—</div>
+          </div>
 
-    <div>
-      <div class="mutedText" style="margin-bottom:6px;">Commitment vs Completion</div>
-      <canvas id="hist_commitmentChart" height="120"></canvas>
-    </div>
-
-    <div>
-      <div class="mutedText" style="margin-bottom:6px;">Forecast vs Actual Capacity</div>
-      <canvas id="hist_capacityChart" height="120"></canvas>
-    </div>
-  </div>
-</div>
-
-            <!-- /added block -->
-
-            <div class="info-banner" id="health_toast" style="display:none; margin-top:12px; border-left:4px solid rgba(99,102,241,.55);">—</div>
-
-            <div class="healthGrid" style="margin-top:12px;">
-              <div class="info-banner">
-                <div class="kvKey">Stability Index</div>
-                <div class="bigMetric" id="health_stabilityIndex">—</div>
-                <div class="mutedText" id="health_stabilityLabel">—</div>
-              </div>
-              <div class="info-banner">
-                <div class="kvKey">Latest Mode</div>
-                <div class="bigMetric" id="health_latestMode">—</div>
-                <div class="mutedText" id="health_latestModeHint">—</div>
-              </div>
-              <div class="info-banner">
-                <div class="kvKey">Overcommit Streak</div>
-                <div class="bigMetric" id="health_overcommitStreak">—</div>
-                <div class="mutedText" id="health_overcommitHint">—</div>
-              </div>
-              <div class="info-banner">
-                <div class="kvKey">Predictability</div>
-                <div class="bigMetric" id="health_predictability">—</div>
-                <div class="mutedText" id="health_predictabilityHint">—</div>
+          <div class="info-banner" style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+              <div class="kvKey">Last 5 sprint snapshots</div>
+              <div class="btnRow" style="margin:0;">
+                <button class="btnGhost" id="health_newSprintBtn" type="button">➕ New Sprint</button>
+                <button class="btnGhost" id="health_clearHistoryBtn" type="button">🧹 Clear History</button>
+                <button class="btnPrimary" id="health_refreshHealthBtn" type="button">Refresh</button>
               </div>
             </div>
 
+            <div style="overflow:auto; margin-top:10px;">
+              <table class="healthTable" style="width:100%; border-collapse:collapse;">
+                <thead>
+                  <tr>
+                    <th align="left">When</th>
+                    <th align="left">Mode</th>
+                    <th align="right">Risk</th>
+                    <th align="right">Conf</th>
+                    <th align="right">Committed</th>
+                    <th align="right">Capacity</th>
+                    <th align="right">Over</th>
+                  </tr>
+                </thead>
+                <tbody id="health_historyRows">
+                  <tr>
+                    <td colspan="7" style="padding:10px; color:var(--text-muted);">
+                      No snapshots yet. Go to Insights → “Refresh + Save Snapshot”.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mutedText" style="margin-top:10px;">
+              *History is saved locally in your browser.
+            </div>
+          </div>
+
+          <div class="stageIndicator">Flow: Setup → Insights → 🛡️ Health → Actions</div>
+          <div class="stageFooter">
+            <div class="left">
+              <a class="btnStage btnStage-back" href="coach.html#insights">← Back: Insights</a>
+            </div>
+            <div class="right">
+              <button class="btnStage btnStage-action" id="health_refreshHealthBtn2" type="button">Refresh Health</button>
+              <a class="btnStage btnStage-next" href="coach.html#actions">Next: Actions →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ACTIONS ===================== -->
+      <section class="tabPanel hidden" id="panel-actions">
+        <div class="sectionCard">
+          <h1 class="sectionTitle">Recommended Actions</h1>
+          <p class="sectionSub">Battle plan to reduce risk and boost confidence.</p>
+
+          <div class="info-banner">
+            <strong>Note:</strong> Actions are generated from Setup inputs + your latest snapshot.
+          </div>
+
+          <div id="actions_actionsWrap" style="display:grid; gap:12px; margin-top:10px;"></div>
+
+          <div class="stageIndicator">Flow: Setup → Insights → 🛡️ Health → Actions</div>
+          <div class="stageFooter">
+            <div class="left">
+              <a class="btnStage btnStage-back" href="coach.html#health">← Back: 🛡️ Health</a>
+            </div>
+            <div class="right">
+              <button class="btnStage btnStage-action" id="actions_refreshBtn" type="button">Refresh Actions</button>
+              <a class="btnStage btnStage-next" href="coach.html#copilot">Next: Copilot →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== COPILOT ===================== -->
+      <section class="tabPanel hidden" id="panel-copilot">
+        <div class="sectionCard">
+          <h1 class="sectionTitle">AI Ceremony Copilot</h1>
+          <p class="sectionSub">Pick a ceremony → get guided prompts → capture outcomes.</p>
+
+          <div class="info-banner">
+            <strong>Pro move:</strong> Use Copilot in Daily Scrum to keep your streak alive. 🏆
+          </div>
+
+          <!-- Dynamic mode banner -->
+          <div class="info-banner" id="copilot_modeBanner" style="margin-top:12px; display:none;">
+            <div class="kvKey" id="copilot_modeTitle">—</div>
+            <div class="modeBody" id="copilot_modeBody" style="color:var(--text-muted); font-weight:450; margin-top:6px; line-height:1.7;">—</div>
+          </div>
+
+          <!-- Ceremony buttons -->
+          <div class="ceremonyRow" id="copilot_ceremonyRow">
+            <button class="btnGhost cerBtn" data-cer="planning" type="button">🗺️ Planning</button>
+            <button class="btnGhost cerBtn" data-cer="daily" type="button">🧩 Daily</button>
+            <button class="btnGhost cerBtn" data-cer="refine" type="button">🧠 Refinement</button>
+            <button class="btnGhost cerBtn" data-cer="review" type="button">🎬 Review</button>
+            <button class="btnGhost cerBtn" data-cer="retro" type="button">♻️ Retro</button>
+          </div>
+
+          <!-- Prompt panel -->
+          <div class="info-banner" style="margin-top:14px;">
+            <div class="kvKey" style="font-size:16px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <span id="copilot_panelTitle">Choose a ceremony</span>
+              <button class="btnGhost" id="copilot_newAngleBtn" style="padding:8px 10px;" type="button">🔄 New angle</button>
+            </div>
+            <div class="panelBody" id="copilot_panelBody" style="color:var(--text-muted); font-weight:450; margin-top:6px; line-height:1.7;">
+              Your prompts will appear here.
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="info-banner" style="margin-top:14px;">
+            <div class="kvKey">Capture decisions</div>
+            <div class="mutedText" style="margin-top:6px; color:var(--text-muted); font-weight:450;">
+              Saved locally in your browser. (Later we can sync this to cloud too.)
+            </div>
+
+            <textarea class="fun-input" id="copilot_decisionNotes" placeholder="Decisions / risks / owners..." rows="5"></textarea>
+
+            <div class="btnRow" style="margin-top:10px;">
+              <button class="btnPrimary" id="copilot_saveBtn" type="button">Save</button>
+              <button class="btnGhost" id="copilot_clearBtn" type="button">Reset</button>
+            </div>
+
+            <div id="copilot_saveStatus" style="margin-top:10px; font-weight:650;"></div>
+            <div class="mutedText" id="copilot_saveHint" style="margin-top:6px; color:var(--text-muted); font-weight:450;"></div>
+
+            <!-- Saved Decisions History -->
             <div class="info-banner" style="margin-top:12px;">
-              <div class="kvKey">Executive Narrative</div>
-              <div id="health_narrative" style="margin-top:8px; line-height:1.8; font-weight:450; color:var(--text-main);">—</div>
-            </div>
-
-            <div class="info-banner" style="margin-top:12px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                <div class="kvKey">Last 5 sprint snapshots</div>
-                <div class="btnRow" style="margin:0;">
-                  <button class="btnGhost" id="health_newSprintBtn" type="button">➕ New Sprint</button>
-                  <button class="btnGhost" id="health_clearHistoryBtn" type="button">🧹 Clear History</button>
-                  <button class="btnPrimary" id="health_refreshHealthBtn" type="button">Refresh</button>
-                </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <div class="kvKey">Saved Decisions</div>
+                <button class="btnGhost" id="copilot_copyRetroBtn" style="padding:8px 10px;" type="button">📋 Copy Retro Summary</button>
               </div>
 
-              <div style="overflow:auto; margin-top:10px;">
-                <table class="healthTable" style="width:100%; border-collapse:collapse;">
-                  <thead>
-                    <tr>
-                      <th align="left">When</th>
-                      <th align="left">Mode</th>
-                      <th align="right">Risk</th>
-                      <th align="right">Conf</th>
-                      <th align="right">Committed</th>
-                      <th align="right">Capacity</th>
-                      <th align="right">Over</th>
-                    </tr>
-                  </thead>
-                  <tbody id="health_historyRows">
-                    <tr>
-                      <td colspan="7" style="padding:10px; color:var(--text-muted);">
-                        No snapshots yet. Go to Insights → “Refresh + Save Snapshot”.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div id="copilot_decisionsEmpty" style="color:var(--text-muted); font-weight:450; margin-top:6px;">
+                No saved decisions yet.
               </div>
 
-              <div class="mutedText" style="margin-top:10px;">
-                *History is saved locally in your browser.
-              </div>
-            </div>
-
-            <div class="stageIndicator">Flow: Setup → Insights → 🛡️ Health → Actions</div>
-            <div class="stageFooter">
-              <div class="left">
-                <a class="btnStage btnStage-back" href="coach.html#insights">← Back: Insights</a>
-              </div>
-              <div class="right">
-                <button class="btnStage btnStage-action" id="health_refreshHealthBtn2" type="button">Refresh Health</button>
-                <a class="btnStage btnStage-next" href="coach.html#actions">Next: Actions →</a>
-              </div>
+              <div id="copilot_decisionsList" style="display:grid; gap:10px; margin-top:10px;"></div>
             </div>
           </div>
-        </section>
 
-        <section class="tabPanel hidden" id="panel-actions">
-          <div class="sectionCard">
-            <h1 class="sectionTitle">Recommended Actions</h1>
-            <p class="sectionSub">Battle plan to reduce risk and boost confidence.</p>
-
-            <div class="info-banner">
-              <strong>Note:</strong> Actions are generated from Setup inputs + your latest snapshot.
-            </div>
-
-            <div id="actions_actionsWrap" style="display:grid; gap:12px; margin-top:10px;"></div>
-
-            <div class="stageIndicator">Flow: Setup → Insights → 🛡️ Health → Actions</div>
-            <div class="stageFooter">
-              <div class="left">
-                <a class="btnStage btnStage-back" href="coach.html#health">← Back: 🛡️ Health</a>
-              </div>
-              <div class="right">
-                <button class="btnStage btnStage-action" id="actions_refreshBtn" type="button">Refresh Actions</button>
-                <a class="btnStage btnStage-next" href="coach.html#copilot">Next: Copilot →</a>
-              </div>
-            </div>
+          <div class="btnRow" style="margin-top:12px;">
+            <a class="btnGhost" href="coach.html#actions">← Back to Actions</a>
+            <a class="btnGhost" href="index.html">Back to Setup</a>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section class="tabPanel hidden" id="panel-copilot">
-          <div class="sectionCard">
-            <h1 class="sectionTitle">AI Ceremony Copilot</h1>
-            <p class="sectionSub">Pick a ceremony → get guided prompts → capture outcomes.</p>
-
-            <div class="info-banner">
-              <strong>Pro move:</strong> Use Copilot in Daily Scrum to keep your streak alive. 🏆
-            </div>
-
-            <!-- Dynamic mode banner -->
-            <div class="info-banner" id="copilot_modeBanner" style="margin-top:12px; display:none;">
-              <div class="kvKey" id="copilot_modeTitle">—</div>
-              <div class="modeBody" id="copilot_modeBody" style="color:var(--text-muted); font-weight:450; margin-top:6px; line-height:1.7;">—</div>
-            </div>
-
-            <!-- Ceremony buttons -->
-            <div class="ceremonyRow" id="copilot_ceremonyRow">
-              <button class="btnGhost cerBtn" data-cer="planning" type="button">🗺️ Planning</button>
-              <button class="btnGhost cerBtn" data-cer="daily" type="button">🧩 Daily</button>
-              <button class="btnGhost cerBtn" data-cer="refine" type="button">🧠 Refinement</button>
-              <button class="btnGhost cerBtn" data-cer="review" type="button">🎬 Review</button>
-              <button class="btnGhost cerBtn" data-cer="retro" type="button">♻️ Retro</button>
-            </div>
-
-            <!-- Prompt panel -->
-            <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey" style="font-size:16px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                <span id="copilot_panelTitle">Choose a ceremony</span>
-                <button class="btnGhost" id="copilot_newAngleBtn" style="padding:8px 10px;" type="button">🔄 New angle</button>
-              </div>
-              <div class="panelBody" id="copilot_panelBody" style="color:var(--text-muted); font-weight:450; margin-top:6px; line-height:1.7;">
-                Your prompts will appear here.
-              </div>
-            </div>
-
-            <!-- Notes -->
-            <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey">Capture decisions</div>
-              <div class="mutedText" style="margin-top:6px; color:var(--text-muted); font-weight:450;">
-                Saved locally in your browser. (Later we can sync this to cloud too.)
-              </div>
-
-              <textarea class="fun-input" id="copilot_decisionNotes" placeholder="Decisions / risks / owners..." rows="5"></textarea>
-
-              <div class="btnRow" style="margin-top:10px;">
-                <button class="btnPrimary" id="copilot_saveBtn" type="button">Save</button>
-                <button class="btnGhost" id="copilot_clearBtn" type="button">Reset</button>
-              </div>
-
-              <div id="copilot_saveStatus" style="margin-top:10px; font-weight:650;"></div>
-              <div class="mutedText" id="copilot_saveHint" style="margin-top:6px; color:var(--text-muted); font-weight:450;"></div>
-
-              <!-- ✅ Saved Decisions History -->
-              <div class="info-banner" style="margin-top:12px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                  <div class="kvKey">Saved Decisions</div>
-                  <button class="btnGhost" id="copilot_copyRetroBtn" style="padding:8px 10px;" type="button">📋 Copy Retro Summary</button>
-                </div>
-
-                <div id="copilot_decisionsEmpty" style="color:var(--text-muted); font-weight:450; margin-top:6px;">
-                  No saved decisions yet.
-                </div>
-
-                <div id="copilot_decisionsList" style="display:grid; gap:10px; margin-top:10px;"></div>
-              </div>
-            </div>
-
-            <div class="btnRow" style="margin-top:12px;">
-              <a class="btnGhost" href="coach.html#actions">← Back to Actions</a>
-              <a class="btnGhost" href="index.html">Back to Setup</a>
-            </div>
-          </div>
-        </section>
-
-      </div><!-- /coachWrap -->
     </main>
   </div>
 
   <script src="js/theme.js"></script>
   <script src="js/xp.js"></script>
 
-  <!-- ✅ IMPORTANT: bring back the main Coach logic if it exists -->
-  <script src="js/coach.js"></script>
-
-  <!-- Add-ons (history table + charts) -->
+  <!-- ✅ Keep your existing core coach behavior -->
   <script src="js/coach-addons.js"></script>
+
+  <!-- ✅ History table + charts rendering should be inside this file -->
   <script src="js/coach-history.js"></script>
+
+  <!-- NOTE:
+       If your older build uses js/coach.js (tabs + insights + health + actions + copilot),
+       add it back here. Otherwise coach-addons.js must already include that logic.
+       Uncomment ONLY if you already have this file and it was used before:
+  -->
+  <!-- <script src="js/coach.js"></script> -->
 </body>
 </html>
