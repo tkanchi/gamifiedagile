@@ -960,3 +960,36 @@ body{
   padding: 6px 10px;
   font-size: 12px;
 }
+
+
+/* =========================================================
+   v12.1 HOTFIX: Over-commit ratio pill clipping
+   (Ensures long text wraps inside the Gap tile)
+   ========================================================= */
+
+/* Gap tile: allow pills to wrap onto next line */
+.deltaRow{
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+}
+
+/* Prevent any flex child from forcing overflow */
+.forecastTile{ min-width: 0; overflow: visible; }
+
+/* Over-commit ratio: override .badge nowrap */
+#forecast_overcommit{
+  display: inline-flex !important;
+  align-items: center;
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+/* Safety: if forecast pills reuse .badge */
+.forecastTile .badge{
+  max-width: 100%;
+}
