@@ -1,12 +1,12 @@
-// js/coach-history.js — Scrummer Coach (Sprint History v1.1)
+// js/coach-history.js — Scrummer Coach (Sprint History v1.2)
 // Safe add-on: does NOT depend on existing coach.js internals.
 // Features:
-//  - 6-sprint editable table (N .. N-5)
+//  - 6-sprint editable table (Sprint N-6 .. Sprint N-1)
 //  - Save/Load to localStorage
 //  - Reset (clear localStorage + reset UI)
-//  - Auto-fill from Plan localStorage: committed + last 3 velocities
+//  - Auto-fill from Plan localStorage: committed (N-1) + last 3 velocities as completed (N-1..N-3)
 //  - CSV upload (template format) + template download
-//  - Demo data loader (one-click) ✅
+//  - Demo data loader with variant dropdown (stable / recovery / overcommit)
 
 (function () {
   const qs = (id) => document.getElementById(id);
@@ -15,9 +15,10 @@
   const PLAN_KEY = "scrummer_plan_setup_v3";
 
   const ROW_COUNT = 6;
-  const DEFAULT_ROWS = ["Sprint N", "Sprint N-1", "Sprint N-2", "Sprint N-3", "Sprint N-4", "Sprint N-5"];
+  // Historical ONLY (no Sprint N here)
+  const DEFAULT_ROWS = ["Sprint N-6", "Sprint N-5", "Sprint N-4", "Sprint N-3", "Sprint N-2", "Sprint N-1"];
 
-  // Forecast capacity estimation defaults (same as plan defaults)
+  // Forecast capacity estimation defaults (matches Plan defaults)
   const DEFAULT_FOCUS = 0.60;
   const DEFAULT_LEAVE_WEIGHT = 1.0;
   const DEFAULT_SP_PER_TEAM_DAY = 1.0;
@@ -76,8 +77,6 @@
   }
 
   function calcCapacityForecastFromPlan(plan){
-    // Uses Plan setup inputs + default knobs.
-    // forecastSP = max(0, teamMembers*(sprintDays*focus) - leaveDays*weight) * spPerTeamDay
     if(!plan) return null;
 
     const sprintDays = clampInt3(num(plan.sprintDays));
@@ -109,6 +108,26 @@
     }));
   }
 
+  function normalizeRows(rows){
+    const base = makeBlankRows();
+    if(!Array.isArray(rows)) return base;
+
+    return base.map((b, i) => {
+      const r = rows[i] || {};
+      return {
+        sprint: r.sprint || b.sprint,
+        forecastCapacity: num(r.forecastCapacity),
+        actualCapacity: num(r.actualCapacity),
+        committedSP: num(r.committedSP),
+        completedSP: num(r.completedSP),
+        addedMid: num(r.addedMid),
+        removedMid: num(r.removedMid),
+        sickLeaveDays: num(r.sickLeaveDays),
+        _meta: r._meta && typeof r._meta === "object" ? r._meta : { auto: {} }
+      };
+    });
+  }
+
   function renderTable(rows){
     const tbody = qs("hist_rows");
     if(!tbody) return;
@@ -118,12 +137,10 @@
     rows.slice(0, ROW_COUNT).forEach((r, idx) => {
       const tr = document.createElement("tr");
 
-      // Sprint label
       const tdSprint = document.createElement("td");
       tdSprint.innerHTML = `<span class="histSprint">${r.sprint || DEFAULT_ROWS[idx]}</span>`;
       tr.appendChild(tdSprint);
 
-      // helper to add numeric cell
       function addNumCell(field, placeholder){
         const td = document.createElement("td");
         td.setAttribute("align","right");
@@ -146,7 +163,6 @@
 
         td.appendChild(inp);
 
-        // show tiny "Auto" indicator if field was auto-filled
         const isAuto = !!(r._meta && r._meta.auto && r._meta.auto[field]);
         if(isAuto){
           const pill = document.createElement("span");
@@ -170,26 +186,6 @@
     });
   }
 
-  function normalizeRows(rows){
-    const base = makeBlankRows();
-    if(!Array.isArray(rows)) return base;
-
-    return base.map((b, i) => {
-      const r = rows[i] || {};
-      return {
-        sprint: r.sprint || b.sprint,
-        forecastCapacity: num(r.forecastCapacity),
-        actualCapacity: num(r.actualCapacity),
-        committedSP: num(r.committedSP),
-        completedSP: num(r.completedSP),
-        addedMid: num(r.addedMid),
-        removedMid: num(r.removedMid),
-        sickLeaveDays: num(r.sickLeaveDays),
-        _meta: r._meta && typeof r._meta === "object" ? r._meta : { auto: {} }
-      };
-    });
-  }
-
   function doSave(rows){
     const ok = saveHistory(rows);
     setStatus(ok ? "Saved ✔ Sprint history stored locally." : "Could not save (browser storage blocked).");
@@ -203,6 +199,12 @@
     return rows;
   }
 
+  // Auto-fill strategy:
+  // - Map Plan committedSP + capacity forecast to latest sprint: Sprint N-1 (last row)
+  // - Map v1,v2,v3 (N-1,N-2,N-3 velocities) to completedSP on corresponding rows:
+  //    N-1 => last row
+  //    N-2 => second last
+  //    N-3 => third last
   function doAutofill(rows){
     const plan = loadPlanSetup();
     if(!plan){
@@ -213,24 +215,27 @@
     const committed = clampInt3(num(plan.committedSP));
     const capForecast = calcCapacityForecastFromPlan(plan);
 
-    rows[0].committedSP = committed;
-    rows[0].forecastCapacity = capForecast != null ? Math.round(capForecast) : null;
-    rows[0]._meta = rows[0]._meta || { auto: {} };
-    rows[0]._meta.auto = rows[0]._meta.auto || {};
-    if(committed != null) rows[0]._meta.auto.committedSP = true;
-    if(capForecast != null) rows[0]._meta.auto.forecastCapacity = true;
+    const idxN1 = ROW_COUNT - 1; // last row = Sprint N-1
 
-    const v1 = clampInt3(num(plan.v1));
-    const v2 = clampInt3(num(plan.v2));
-    const v3 = clampInt3(num(plan.v3));
+    rows[idxN1].committedSP = committed;
+    rows[idxN1].forecastCapacity = capForecast != null ? Math.round(capForecast) : null;
+    rows[idxN1]._meta = rows[idxN1]._meta || { auto: {} };
+    rows[idxN1]._meta.auto = rows[idxN1]._meta.auto || {};
+    if(committed != null) rows[idxN1]._meta.auto.committedSP = true;
+    if(capForecast != null) rows[idxN1]._meta.auto.forecastCapacity = true;
+
+    const v1 = clampInt3(num(plan.v1)); // N-1
+    const v2 = clampInt3(num(plan.v2)); // N-2
+    const v3 = clampInt3(num(plan.v3)); // N-3
 
     const map = [
-      { row: 1, v: v1 },
-      { row: 2, v: v2 },
-      { row: 3, v: v3 },
+      { row: idxN1,     v: v1 }, // N-1
+      { row: idxN1 - 1, v: v2 }, // N-2
+      { row: idxN1 - 2, v: v3 }, // N-3
     ];
 
     map.forEach(({row, v}) => {
+      if(row < 0) return;
       rows[row]._meta = rows[row]._meta || { auto: {} };
       rows[row]._meta.auto = rows[row]._meta.auto || {};
       if(v != null){
@@ -244,21 +249,42 @@
     return rows;
   }
 
-  // ✅ Demo data (realistic patterns)
-  function makeDemoRows(){
+  // Demo scenarios (6 rows: N-6..N-1, oldest->newest)
+  function makeDemoRows(variant){
     const rows = makeBlankRows();
 
-    // Newest first: N, N-1, ... N-5
-    // Pattern: slight overcommit, some disruption, sick leaves spikes
-    const demo = [
-      // sprint, forecast, actual, committed, completed, added, removed, sick
-      ["Sprint N",   38, 36, 40,  null,  6, 2, 2],
-      ["Sprint N-1", 40, 39, 42,  38,    5, 3, 1],
-      ["Sprint N-2", 37, 35, 36,  34,    3, 1, 4],
-      ["Sprint N-3", 41, 40, 40,  42,    2, 4, 0],
-      ["Sprint N-4", 39, 37, 38,  36,    7, 2, 2],
-      ["Sprint N-5", 36, 36, 35,  35,    1, 1, 1],
-    ];
+    // sprint, forecast, actual, committed, completed, added, removed, sick
+    let demo;
+
+    if(variant === "stable"){
+      demo = [
+        ["Sprint N-6", 34, 34, 35, 34, 1, 1, 0],
+        ["Sprint N-5", 36, 35, 36, 35, 2, 1, 1],
+        ["Sprint N-4", 35, 35, 34, 35, 1, 2, 0],
+        ["Sprint N-3", 37, 36, 36, 36, 2, 1, 1],
+        ["Sprint N-2", 36, 36, 36, 36, 1, 1, 0],
+        ["Sprint N-1", 38, 37, 38, 37, 2, 2, 1],
+      ];
+    } else if(variant === "overcommit"){
+      demo = [
+        ["Sprint N-6", 36, 35, 42, 34, 6, 1, 2],
+        ["Sprint N-5", 35, 34, 41, 33, 7, 2, 1],
+        ["Sprint N-4", 37, 35, 43, 34, 8, 2, 3],
+        ["Sprint N-3", 36, 34, 44, 32, 9, 3, 2],
+        ["Sprint N-2", 38, 36, 40, 35, 5, 4, 1],
+        ["Sprint N-1", 39, 38, 37, 38, 2, 5, 0], // correction
+      ];
+    } else {
+      // "recovery" default
+      demo = [
+        ["Sprint N-6", 33, 32, 36, 30, 6, 1, 3],
+        ["Sprint N-5", 34, 32, 37, 31, 7, 2, 2],
+        ["Sprint N-4", 35, 33, 36, 32, 5, 3, 4],
+        ["Sprint N-3", 36, 34, 35, 34, 3, 4, 2],
+        ["Sprint N-2", 37, 36, 36, 36, 2, 3, 1],
+        ["Sprint N-1", 39, 38, 38, 38, 1, 2, 0],
+      ];
+    }
 
     demo.forEach((d, i) => {
       rows[i].sprint = d[0];
@@ -275,11 +301,25 @@
     return rows;
   }
 
+  function getDemoVariant(){
+    const sel = qs("hist_demoVariant");
+    const v = sel ? String(sel.value || "").trim() : "";
+    if(v === "stable" || v === "recovery" || v === "overcommit") return v;
+    return "recovery";
+  }
+
   function doDemo(state){
-    state.rows = makeDemoRows();
+    const variant = getDemoVariant();
+    state.rows = makeDemoRows(variant);
     renderTable(state.rows);
     doSave(state.rows);
-    setStatus("Demo data loaded 🧪 (you can edit + Save anytime).");
+
+    const label =
+      variant === "stable" ? "Stable mature team" :
+      variant === "overcommit" ? "Overcommit streak → correction" :
+      "Chaos → recovery arc";
+
+    setStatus(`Demo data loaded 🧪 (${label}). You can edit + Save anytime.`);
   }
 
   // CSV helpers
