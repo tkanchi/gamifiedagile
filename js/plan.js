@@ -12,23 +12,43 @@
 
   // If IDs are missing in HTML, do NOT crash — only warn.
   const REQUIRED_IDS = [
-    "setup_sprintDays","setup_teamMembers","setup_leaveDays","setup_committedSP",
-    "setup_v1","setup_v2","setup_v3",
-    "setup_presetExcellent","setup_presetNormal","setup_presetRisky",
-    "setup_saveBtn","setup_saveStatus","setup_toast",
-
-    "forecastCard","forecast_setupSummary","confidenceBadge","forecast_forecastMode",
-    "forecast_velocityBox","forecast_capacityBox","forecast_formulaVelocity",
-    "forecast_velOverride","forecast_velN1","forecast_velN2","forecast_velN3",
-    "forecast_focusFactor","forecast_leaveWeight","forecast_spPerDay",
-    "forecast_warnBox","forecast_warnText",
-    "forecast_value","forecast_detailLine",
-    "forecast_formulaActual","capacity_liveValues",
-    "forecast_delta","forecast_overcommit","overcommitPill",
-
-    // Tiles
+    "setup_sprintDays",
+    "setup_teamMembers",
+    "setup_leaveDays",
+    "setup_committedSP",
+    "setup_v1",
+    "setup_v2",
+    "setup_v3",
+    "setup_presetExcellent",
+    "setup_presetNormal",
+    "setup_presetRisky",
+    "setup_saveBtn",
+    "setup_saveStatus",
+    "setup_toast",
+    "forecastCard",
+    "forecast_setupSummary",
+    "confidenceBadge",
+    "forecast_forecastMode",
+    "forecast_velocityBox",
+    "forecast_capacityBox",
+    "forecast_velOverride",
+    "forecast_velN1",
+    "forecast_velN2",
+    "forecast_velN3",
+    "forecast_focusFactor",
+    "forecast_leaveWeight",
+    "forecast_spPerDay",
+    "forecast_warnBox",
+    "forecast_warnText",
+    "capacityForecastMirror",
+    "forecast_detailLine",
+    "forecast_formulaActual",
+    "capacity_liveValues",
+    "forecast_delta",
+    "forecast_overcommit",
+    "overcommitPill",
     "committedMirror",
-    "avgVelocityMirror",
+    "avgVelocityMirror"
   ];
 
   function logMissingIds(){
@@ -101,11 +121,14 @@
     if(b) b.style.display = "none";
   }
 
-  function bumpForecastNumber(){
-    const el = qs("forecast_value");
-    if(!el) return;
+  function getForecastNumberEl(){
+    return qs("capacityForecastMirror") || qs("forecast_value");
+  }
 
-    el.classList.remove("num-bump");
+  function bumpForecastNumber(){
+    const el = getForecastNumberEl();
+    if(!el) return;
+el.classList.remove("num-bump");
     void el.offsetWidth;
     el.classList.add("num-bump");
     setTimeout(()=>el.classList.remove("num-bump"), 520);
@@ -123,10 +146,9 @@
   }
 
   function setForecastValue(v){
-    const el = qs("forecast_value");
+    const el = getForecastNumberEl();
     if(!el) return;
-
-    const prev = el.getAttribute("data-prev");
+const prev = el.getAttribute("data-prev");
     const next = (v == null) ? "—" : String(Math.round(v));
 
     el.textContent = next;
@@ -466,16 +488,19 @@
       return;
     }
 
-    setForecastValue(result.forecastSP);
+    const displayForecast = (capacityBaseline != null) ? capacityBaseline : result.forecastSP;
+    setForecastValue(displayForecast);
     setConfidenceBadge(result.confidence);
     setActualFormula(result.html);
 
     if(setup.committedSP != null){
-      setDetails(`Committed ${setup.committedSP} SP vs Forecast ~${Math.round(result.forecastSP)} SP.`);
+      const compareForecast = (capacityBaseline != null) ? capacityBaseline : result.forecastSP;
+      setDetails(`Committed ${setup.committedSP} SP vs Forecast ~${Math.round(compareForecast)} SP.`);
       // ✅ Gap/Over-commit ALWAYS vs capacity baseline (even in Velocity mode)
-      setOvercommitUI(setup.committedSP, capacityBaseline);
+      setOvercommitUI(setup.committedSP, capacityBaseline ?? compareForecast);
     } else {
-      setDetails(`Forecast ~${Math.round(result.forecastSP)} SP. (Add committed SP to compare.)`);
+      const compareForecast = (capacityBaseline != null) ? capacityBaseline : result.forecastSP;
+      setDetails(`Forecast ~${Math.round(compareForecast)} SP. (Add committed SP to compare.)`);
       setOvercommitUI(null, null);
     }
   }
