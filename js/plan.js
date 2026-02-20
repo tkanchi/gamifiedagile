@@ -6,6 +6,7 @@
 //  - Over-commit Ratio + Gap ALWAYS anchored to Capacity baseline (even in Velocity mode)
 //  - Safe reset function (resetSetupToBlank) + wiring to setup_resetBtn
 //  - Safe rendering even if some IDs are missing
+//  - ✅ Capacity Forecast tile wiring (capacityForecastMirror)
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
@@ -28,6 +29,7 @@
     "forecast_delta","forecast_overcommit","overcommitPill",
 
     // Tiles
+    "capacityForecastMirror", // ✅ NEW (so we can warn if missing)
     "committedMirror",
     "avgVelocityMirror",
   ];
@@ -174,6 +176,13 @@
   // ✅ Avg Velocity tile wiring
   function setAvgVelocityMirror(v){
     const el = qs("avgVelocityMirror");
+    if(!el) return;
+    el.textContent = (v == null || Number.isNaN(v)) ? "—" : String(Math.round(v));
+  }
+
+  // ✅ Capacity Forecast tile wiring (capacityForecastMirror)
+  function setCapacityForecastMirror(v){
+    const el = qs("capacityForecastMirror");
     if(!el) return;
     el.textContent = (v == null || Number.isNaN(v)) ? "—" : String(Math.round(v));
   }
@@ -498,8 +507,9 @@
 
     const result = (mode === "velocity") ? calcVelocity(setup) : calcCapacity(setup);
 
-    // ✅ Always compute capacity baseline for gap/ratio
+    // ✅ Always compute capacity baseline for gap/ratio AND capacity tile
     const capacityBaseline = calcCapacityBaseline(setup);
+    setCapacityForecastMirror(capacityBaseline); // ✅ NEW: fixes blank capacity tile
 
     if(!result){
       setForecastValue(null);
