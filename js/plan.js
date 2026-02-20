@@ -1,16 +1,16 @@
-// js/plan.js — Scrummer Plan (Stable v4.6.3)
+// js/plan.js — Scrummer Plan (Stable v4.6.2)
 // Fixes:
 //  - Avg Velocity tile wiring (avgVelocityMirror)
 //  - Committed SP tile wiring (committedMirror)
-//  - Capacity tile ALWAYS shows capacity forecast (capacityForecastMirror)
-//  - Mode forecast uses forecast_value
 //  - Prevent capacity calculations from leaking into velocity mode
+//  - Over-commit Ratio + Gap ALWAYS anchored to Capacity baseline (even in Velocity mode)
 //  - Safe rendering even if some IDs are missing
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
   const qs = (id) => document.getElementById(id);
 
+  // If IDs are missing in HTML, do NOT crash — only warn.
   const REQUIRED_IDS = [
     "setup_sprintDays","setup_teamMembers","setup_leaveDays","setup_committedSP",
     "setup_v1","setup_v2","setup_v3",
@@ -22,20 +22,13 @@
     "forecast_velOverride","forecast_velN1","forecast_velN2","forecast_velN3",
     "forecast_focusFactor","forecast_leaveWeight","forecast_spPerDay",
     "forecast_warnBox","forecast_warnText",
-
-    // Mode forecast
-    "forecast_value","forecast_detailLine","forecast_formulaActual",
-
-    // Capacity calc breakdown
-    "capacity_liveValues",
-
-    // Overcommit UI
+    "forecast_value","forecast_detailLine",
+    "forecast_formulaActual","capacity_liveValues",
     "forecast_delta","forecast_overcommit","overcommitPill",
 
     // Tiles
     "committedMirror",
     "avgVelocityMirror",
-    "capacityForecastMirror"
   ];
 
   function logMissingIds(){
@@ -129,24 +122,16 @@
     setTimeout(()=>fx.classList.remove("spark"), 720);
   }
 
-  // Mode forecast (dropdown-selected)
   function setForecastValue(v){
     const el = qs("forecast_value");
     if(!el) return;
 
     const prev = el.getAttribute("data-prev");
     const next = (v == null) ? "—" : String(Math.round(v));
-    el.textContent = next;
 
+    el.textContent = next;
     if(prev !== null && prev !== next) bumpForecastNumber();
     el.setAttribute("data-prev", next);
-  }
-
-  // Capacity tile forecast (ALWAYS capacity)
-  function setCapacityForecastMirror(v){
-    const el = qs("capacityForecastMirror");
-    if(!el) return;
-    el.textContent = (v == null || Number.isNaN(v)) ? "—" : String(Math.round(v));
   }
 
   function setConfidenceBadge(score){
@@ -178,12 +163,14 @@
     if(el) el.innerHTML = html || "—";
   }
 
+  // ✅ Committed SP tile wiring
   function setCommittedMirror(v){
     const el = qs("committedMirror");
     if(!el) return;
     el.textContent = (v == null || Number.isNaN(v)) ? "—" : String(Math.round(v));
   }
 
+  // ✅ Avg Velocity tile wiring
   function setAvgVelocityMirror(v){
     const el = qs("avgVelocityMirror");
     if(!el) return;
@@ -205,13 +192,6 @@
       return;
     }
 
-    // wrap-safe
-    ratioEl.style.whiteSpace = "normal";
-    ratioEl.style.overflowWrap = "anywhere";
-    ratioEl.style.wordBreak = "break-word";
-    ratioEl.style.maxWidth = "100%";
-    ratioEl.style.lineHeight = "1.2";
-
     const ratio = committed / forecast;
     const delta = committed - forecast;
 
@@ -230,9 +210,9 @@
       deltaEl.classList.add("good");
     }
 
-    const roundedForecast = Math.round(forecast);
+    // keep it compact to avoid overflow
     ratioEl.textContent = `Over-commit: ${ratio.toFixed(2)}×`;
-    ratioEl.title = `Over-commit Ratio: ${committed} ÷ ${roundedForecast} = ${ratio.toFixed(2)}×`;
+    ratioEl.title = `Over-commit Ratio: ${committed} ÷ ${Math.round(forecast)} = ${ratio.toFixed(2)}×`;
 
     const over = ratio > 1;
     pill.textContent = over ? "⚠ Over-commit" : "✅ OK";
@@ -276,6 +256,7 @@
     }catch{ return null; }
   }
 
+  // ✅ IMPORTANT: also toggles the capacity breakdown area in the shared calculations block
   function syncModeUI(mode){
     const vBox = qs("forecast_velocityBox");
     const cBox = qs("forecast_capacityBox");
@@ -286,10 +267,12 @@
     if(cBox) cBox.style.display = (mode === "capacity") ? "block" : "none";
     if(vFormula) vFormula.style.display = (mode === "velocity") ? "block" : "none";
 
-    // Hide capacity breakdown when NOT in capacity mode
+    // ✅ Hide capacity breakdown when NOT in capacity mode
     if(capVals){
       capVals.style.display = (mode === "capacity") ? "block" : "none";
-      if(mode !== "capacity") capVals.innerHTML = "";
+      if(mode !== "capacity"){
+        capVals.innerHTML = ""; // clear stale capacity calculations (prevents "leak")
+      }
     }
   }
 
@@ -426,22 +409,22 @@
       confidence,
       html:
         `<div class="kvKey" style="margin-bottom:6px;">Capacity calculations</div>
-         <div><b>1) Ideal Capacity per member (Days)</b> = Sprint Days × Focus Factor = <b>${idealPerPerson.toFixed(2)}</b></div>
-         <div style="margin-top:6px;"><b>2) Total Ideal Capacity (Days) </b> = Team Count ×  Ideal Capacity per member (Days) = <b>${totalIdealDays.toFixed(2)}</b></div>
-         <div style="margin-top:6px;"><b>3) Total Actual Capacity (Days)</b> = Total Ideal Capacity (Days) − (Leaves × Weight) = <b>${totalActualDays.toFixed(2)}</b></div>
-         <div style="margin-top:6px;"><b>4) Total Actual Capacity (Story Points)</b> = Total Actual Capacity (Days) × Story Points per member(Day) = <b>${forecastSP.toFixed(2)}</b></div>`
+         <div><b>1) Ideal/person</b> = Sprint Days × Focus Factor = <b>${idealPerPerson.toFixed(2)}</b></div>
+         <div style="margin-top:6px;"><b>2) Total Ideal Days</b> = Team × Ideal/person = <b>${totalIdealDays.toFixed(2)}</b></div>
+         <div style="margin-top:6px;"><b>3) Total Actual Days</b> = Total Ideal − (Leaves × Weight) = <b>${totalActualDays.toFixed(2)}</b></div>
+         <div style="margin-top:6px;"><b>4) Forecast SP</b> = max(0, Actual) × SP per Team Day = <b>${forecastSP.toFixed(2)}</b></div>`
     };
   }
 
-  // ALWAYS compute capacity tile forecast if inputs exist (quietly; no warn spam)
-  function calcCapacityQuiet(setup){
+  // ✅ NEW: Capacity baseline forecast (quiet, used for Gap/Over-commit even in Velocity mode)
+  function calcCapacityBaseline(setup){
     const sprintDays=setup.sprintDays;
     const teamMembers=setup.teamMembers;
     const leaveDays=setup.leaveDays;
 
-    const focus = num(qs("forecast_focusFactor")?.value);
-    const weight = num(qs("forecast_leaveWeight")?.value);
-    const spPerTeamDay = num(qs("forecast_spPerDay")?.value);
+    const focus=num(qs("forecast_focusFactor")?.value);
+    const weight=num(qs("forecast_leaveWeight")?.value);
+    const spPerTeamDay=num(qs("forecast_spPerDay")?.value);
 
     if([sprintDays,teamMembers,leaveDays,focus,weight,spPerTeamDay].some(v => v == null)) return null;
 
@@ -466,14 +449,14 @@
       setAvgVelocityMirror(null);
     }
 
-    // ✅ ALWAYS keep capacity tile correct
-    setCapacityForecastMirror(calcCapacityQuiet(setup));
-
     applyVelocityDefaultsFromSetup(setup);
     syncVelOverride(setup);
 
-    // Mode forecast drives forecast_value + details + overcommit
     const result = (mode === "velocity") ? calcVelocity(setup) : calcCapacity(setup);
+
+    // ✅ Always compute capacity baseline for gap/ratio
+    const capacityBaseline = calcCapacityBaseline(setup);
+
     if(!result){
       setForecastValue(null);
       setConfidenceBadge(50);
@@ -489,7 +472,8 @@
 
     if(setup.committedSP != null){
       setDetails(`Committed ${setup.committedSP} SP vs Forecast ~${Math.round(result.forecastSP)} SP.`);
-      setOvercommitUI(setup.committedSP, result.forecastSP);
+      // ✅ Gap/Over-commit ALWAYS vs capacity baseline (even in Velocity mode)
+      setOvercommitUI(setup.committedSP, capacityBaseline);
     } else {
       setDetails(`Forecast ~${Math.round(result.forecastSP)} SP. (Add committed SP to compare.)`);
       setOvercommitUI(null, null);
@@ -522,6 +506,7 @@
   }
 
   function attachHandlers(){
+    // clamp 3-digit numbers
     INT_IDS.forEach(id=>{
       const el = qs(id);
       if(!el) return;
@@ -529,10 +514,12 @@
       el.addEventListener("blur",()=>clampInputInt3(el));
     });
 
+    // presets
     qs("setup_presetExcellent")?.addEventListener("click",()=>applyPreset("excellent"));
     qs("setup_presetNormal")?.addEventListener("click",()=>applyPreset("normal"));
     qs("setup_presetRisky")?.addEventListener("click",()=>applyPreset("risky"));
 
+    // save
     qs("setup_saveBtn")?.addEventListener("click",()=>{
       const setup = readSetupFromUI();
       saveSetup(setup);
@@ -543,15 +530,19 @@
       renderForecast(setup);
     });
 
+    // mode / override toggles
     qs("forecast_forecastMode")?.addEventListener("change",()=>renderForecast(readSetupFromUI()));
     qs("forecast_velOverride")?.addEventListener("change",()=>renderForecast(readSetupFromUI()));
 
+    // live updates (setup fields)
     ["setup_sprintDays","setup_teamMembers","setup_leaveDays","setup_committedSP","setup_v1","setup_v2","setup_v3"]
       .forEach(id=>qs(id)?.addEventListener("input",()=>renderForecast(readSetupFromUI())));
 
+    // live updates (capacity knobs)
     ["forecast_focusFactor","forecast_leaveWeight","forecast_spPerDay"]
       .forEach(id=>qs(id)?.addEventListener("input",()=>renderForecast(readSetupFromUI())));
 
+    // live updates (velocity override)
     ["forecast_velN1","forecast_velN2","forecast_velN3"]
       .forEach(id=>qs(id)?.addEventListener("input",()=>renderForecast(readSetupFromUI())));
   }
@@ -559,6 +550,7 @@
   document.addEventListener("DOMContentLoaded",()=>{
     logMissingIds();
 
+    // Set defaults if blank
     const ff = qs("forecast_focusFactor");
     const lw = qs("forecast_leaveWeight");
     const sp = qs("forecast_spPerDay");
