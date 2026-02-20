@@ -1,294 +1,317 @@
-// js/plan.js
-// Single-page setup + forecast
-// - One Save button
-// - Forecast updates below
-// - Velocity auto-runs by default
-// - Capacity formulas only in capacity mode
-// - Overcommit highlight, delta, confidence badge
-// - Forecast number animation
-// - Enforce 3-digit max for integer fields
+// js/plan.js — Plan UX v3
+// Fixes requested:
+// 1) Show overcommit ratio formula (done in HTML)
+// 2) Clarify sprint days excludes holidays (HTML)
+// 3) Presets populate velocities too
+// 4) Replace confusing "effective days x 1SP day" with clear language + show live values under formulas
+// 5) Live values/calc updated under Forecast Formulas
+// 6) Save button under presets + save status under it
+// 7) Keep: animation, overcommit highlight, delta, confidence badge, 3-digit clamp
 
 (function () {
-  const SETUP_KEY = "scrummer_plan_setup_v1";
-
-  const el = (id) => document.getElementById(id);
+  const STORAGE_KEY = "scrummer_plan_setup_v3";
+  const qs = (id) => document.getElementById(id);
 
   function safeParse(str, fallback) {
     try { return JSON.parse(str); } catch { return fallback; }
   }
 
-  function clamp(n, a, b) {
-    return Math.max(a, Math.min(b, n));
-  }
-
-  function num(id) {
-    const e = el(id);
-    if (!e) return null;
-    const v = String(e.value ?? "").trim();
-    if (v === "") return null;
+  function num(v) {
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
   }
 
-  function setText(id, text) {
-    const e = el(id);
-    if (e) e.textContent = text;
+  function clampInt3(n) {
+    if (!Number.isFinite(n)) return null;
+    const x = Math.round(n);
+    return Math.max(0, Math.min(999, x));
   }
 
-  function show(id) { const e = el(id); if (e) e.style.display = ""; }
-  function hide(id) { const e = el(id); if (e) e.style.display = "none"; }
-
-  function toast(msg, showNow = true) {
-    const t = el("setup_toast");
-    if (!t) return;
-    t.textContent = msg || "—";
-    t.style.display = showNow ? "block" : "none";
+  function clampInputInt3(el) {
+    if (!el) return;
+    const raw = String(el.value ?? "").trim();
+    if (raw === "") return;
+    const n = num(raw);
+    if (n == null) { el.value = ""; return; }
+    el.value = String(clampInt3(n));
   }
 
-  function saveStatus(msg) {
-    setText("setup_saveStatus", msg || "—");
-  }
-
-  function readSetup() {
+  function readSetupFromUI() {
     return {
-      sprintDays: num("setup_sprintDays"),
-      teamMembers: num("setup_teamMembers"),
-      leaveDays: num("setup_leaveDays"),
-      committedSP: num("setup_committedSP"),
-      v1: num("setup_v1"),
-      v2: num("setup_v2"),
-      v3: num("setup_v3"),
+      sprintDays: clampInt3(num(qs("setup_sprintDays")?.value)),
+      teamMembers: clampInt3(num(qs("setup_teamMembers")?.value)),
+      leaveDays: clampInt3(num(qs("setup_leaveDays")?.value)),
+      committedSP: clampInt3(num(qs("setup_committedSP")?.value)),
+      v1: clampInt3(num(qs("setup_v1")?.value)),
+      v2: clampInt3(num(qs("setup_v2")?.value)),
+      v3: clampInt3(num(qs("setup_v3")?.value)),
       updatedAt: Date.now()
     };
   }
 
-  function writeSetup(s) {
-    if (!s) return;
+  function writeSetupToUI(data) {
+    if (!data) return;
+    if (qs("setup_sprintDays") && data.sprintDays != null) qs("setup_sprintDays").value = data.sprintDays;
+    if (qs("setup_teamMembers") && data.teamMembers != null) qs("setup_teamMembers").value = data.teamMembers;
+    if (qs("setup_leaveDays") && data.leaveDays != null) qs("setup_leaveDays").value = data.leaveDays;
+    if (qs("setup_committedSP") && data.committedSP != null) qs("setup_committedSP").value = data.committedSP;
 
-    if (el("setup_sprintDays") && s.sprintDays != null) el("setup_sprintDays").value = s.sprintDays;
-    if (el("setup_teamMembers") && s.teamMembers != null) el("setup_teamMembers").value = s.teamMembers;
-    if (el("setup_leaveDays") && s.leaveDays != null) el("setup_leaveDays").value = s.leaveDays;
-    if (el("setup_committedSP") && s.committedSP != null) el("setup_committedSP").value = s.committedSP;
-
-    if (el("setup_v1") && s.v1 != null) el("setup_v1").value = s.v1;
-    if (el("setup_v2") && s.v2 != null) el("setup_v2").value = s.v2;
-    if (el("setup_v3") && s.v3 != null) el("setup_v3").value = s.v3;
+    if (qs("setup_v1") && data.v1 != null) qs("setup_v1").value = data.v1;
+    if (qs("setup_v2") && data.v2 != null) qs("setup_v2").value = data.v2;
+    if (qs("setup_v3") && data.v3 != null) qs("setup_v3").value = data.v3;
   }
 
-  function persistSetup(s) {
-    try { localStorage.setItem(SETUP_KEY, JSON.stringify(s)); } catch {}
+  function saveSetup(data) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
   }
 
   function loadSetup() {
-    return safeParse(localStorage.getItem(SETUP_KEY) || "null", null);
-  }
-
-  // Enforce 3 digits for integer fields
-  function enforce3Digits() {
-    document.querySelectorAll("input.int3").forEach(inp => {
-      inp.addEventListener("input", () => {
-        // keep only digits + cut length
-        let v = String(inp.value ?? "");
-        v = v.replace(/[^\d]/g, "");
-        if (v.length > 3) v = v.slice(0, 3);
-        inp.value = v;
-      });
-    });
-  }
-
-  // ----------------------------
-  // Forecast: helpers
-  // ----------------------------
-  function computeVolatility(vs) {
-    const velocities = vs.filter(x => Number.isFinite(x) && x > 0);
-    if (velocities.length < 2) return 0;
-
-    const avg = velocities.reduce((a,b)=>a+b,0) / velocities.length;
-    if (avg <= 0) return 0;
-
-    const variance = velocities.reduce((acc,x)=>acc + Math.pow(x - avg,2),0) / velocities.length;
-    return Math.sqrt(variance) / avg; // ratio
-  }
-
-  function computeConfidence({ forecastSP, committedSP, velocities }) {
-    // Simple, explainable scoring similar to XP fallback concept
-    const vol = computeVolatility(velocities);
-
-    let over = null;
-    if (Number.isFinite(forecastSP) && forecastSP > 0 && Number.isFinite(committedSP) && committedSP >= 0) {
-      over = committedSP / forecastSP;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return safeParse(raw, null);
+    } catch {
+      return null;
     }
-
-    let risk = 0;
-
-    // Lack of data
-    const velCount = velocities.filter(v => Number.isFinite(v) && v > 0).length;
-    if (velCount < 3) risk += 12;        // some uncertainty
-    if (velCount === 0) risk += 18;      // high uncertainty
-
-    // Overcommit penalty
-    if (Number.isFinite(over) && over > 1) {
-      risk += clamp((over - 1) * 120, 0, 55);
-    }
-
-    // Volatility penalty
-    risk += clamp(vol * 90, 0, 35);
-
-    risk = clamp(Math.round(risk), 0, 90);
-    const confidence = clamp(Math.round(100 - risk), 10, 95);
-
-    return { confidence, overcommitRatio: over, volatility: vol };
   }
 
-  function setOvercommitUI(overRatio) {
-    const wrap = el("resultsWrap");
-    const tag = el("overcommitTag");
-
-    const isOver = Number.isFinite(overRatio) && overRatio > 1.0;
-
-    if (wrap) wrap.classList.toggle("overcommit", !!isOver);
-    if (tag) tag.style.display = isOver ? "inline-flex" : "none";
+  function setToast(msg, show = true) {
+    const toast = qs("setup_toast");
+    if (!toast) return;
+    toast.style.display = show ? "block" : "none";
+    toast.textContent = msg || "—";
   }
 
-  function animateForecastNumber() {
-    const n = el("forecastNumber");
-    if (!n) return;
-    n.classList.remove("pulse");
-    void n.offsetWidth;
-    n.classList.add("pulse");
+  function setSaveStatus(msg) {
+    const el = qs("setup_saveStatus");
+    if (!el) return;
+    el.textContent = msg;
   }
 
   function showWarn(msg) {
-    const box = el("forecast_warnBox");
-    const txt = el("forecast_warnText");
+    const box = qs("forecast_warnBox");
+    const txt = qs("forecast_warnText");
     if (!box || !txt) return;
     box.style.display = "block";
     txt.textContent = msg;
   }
 
   function hideWarn() {
-    const box = el("forecast_warnBox");
-    if (box) box.style.display = "none";
+    const box = qs("forecast_warnBox");
+    if (!box) return;
+    box.style.display = "none";
   }
 
-  function syncModeUI() {
-    const mode = el("forecast_forecastMode")?.value || "velocity";
-    const vBox = el("forecast_velocityBox");
-    const cBox = el("forecast_capacityBox");
-
-    if (vBox) vBox.style.display = (mode === "velocity") ? "block" : "none";
-    if (cBox) cBox.style.display = (mode === "capacity") ? "block" : "none";
-
-    // Note: formulas are already embedded in each mode box, so no extra toggling needed.
+  function animateForecastNumber() {
+    const el = qs("forecast_value");
+    if (!el) return;
+    el.classList.remove("num-bump");
+    void el.offsetWidth;
+    el.classList.add("num-bump");
+    setTimeout(() => el.classList.remove("num-bump"), 520);
   }
 
-  // Velocity override toggle
-  function syncVelOverride() {
-    const cb = el("forecast_velOverride");
-    const v1 = el("forecast_velN1");
-    const v2 = el("forecast_velN2");
-    const v3 = el("forecast_velN3");
+  function refreshSetupSummary(setup, mode) {
+    const el = qs("forecast_setupSummary");
+    if (!el) return;
+
+    const parts = [];
+    if (setup.sprintDays != null) parts.push(`Sprint Days: ${setup.sprintDays}`);
+    if (setup.teamMembers != null) parts.push(`Team: ${setup.teamMembers}`);
+    if (setup.leaveDays != null) parts.push(`Leaves: ${setup.leaveDays}`);
+    if (setup.committedSP != null) parts.push(`Committed: ${setup.committedSP} SP`);
+
+    if (mode === "velocity") {
+      const velOk = [setup.v1, setup.v2, setup.v3].every(v => v != null);
+      parts.push(velOk ? `Vel: ${setup.v1}/${setup.v2}/${setup.v3}` : `Vel: —`);
+    }
+
+    el.textContent = parts.length ? parts.join(" • ") : "—";
+  }
+
+  function setConfidenceBadge(score) {
+    const el = qs("confidenceBadge");
+    if (!el) return;
+
+    const s = Math.max(0, Math.min(100, Math.round(score)));
+    let label = "Low";
+    let cls = "badge-low";
+    if (s >= 75) { label = "High"; cls = "badge-high"; }
+    else if (s >= 55) { label = "Medium"; cls = "badge-med"; }
+
+    el.classList.remove("badge-high", "badge-med", "badge-low");
+    el.classList.add(cls);
+    el.textContent = `Confidence: ${label} (${s}%)`;
+  }
+
+  function setDeltaAndOvercommit(committed, forecast) {
+    const deltaEl = qs("forecast_delta");
+    const overEl = qs("forecast_overcommit");
+    const pill = qs("overcommitPill");
+    const card = qs("forecastCard");
+
+    if (!deltaEl || !overEl || !pill) return;
+
+    if (committed == null || forecast == null || forecast <= 0) {
+      deltaEl.style.display = "none";
+      overEl.style.display = "none";
+      pill.style.display = "none";
+      if (card) card.classList.remove("overcommit");
+      return;
+    }
+
+    const delta = committed - forecast; // + means over-committed
+    const abs = Math.round(Math.abs(delta));
+    const ratio = committed / forecast;
+
+    deltaEl.style.display = "inline-flex";
+    overEl.style.display = "inline-flex";
+    pill.style.display = "inline-flex";
+
+    if (delta > 0) {
+      deltaEl.textContent = `Δ +${abs} SP (over)`;
+      deltaEl.classList.remove("good");
+      deltaEl.classList.add("bad");
+    } else {
+      deltaEl.textContent = `Δ ${abs} SP (buffer)`;
+      deltaEl.classList.remove("bad");
+      deltaEl.classList.add("good");
+    }
+
+    overEl.textContent = `Over-commit Ratio: ${ratio.toFixed(2)}× (Committed ÷ Forecast)`;
+    overEl.classList.toggle("bad", ratio > 1);
+    overEl.classList.toggle("good", ratio <= 1);
+
+    pill.textContent = ratio > 1 ? "⚠ Over-commit" : "✅ OK";
+    pill.classList.toggle("bad", ratio > 1);
+    pill.classList.toggle("good", ratio <= 1);
+
+    if (card) card.classList.toggle("overcommit", ratio > 1);
+  }
+
+  function setForecastValue(n) {
+    const el = qs("forecast_value");
+    if (!el) return;
+
+    const prev = el.getAttribute("data-prev");
+    const next = (n == null) ? "—" : String(Math.round(n));
+
+    el.textContent = next;
+    if (prev !== null && prev !== next) animateForecastNumber();
+    el.setAttribute("data-prev", next);
+  }
+
+  function setDetails(line) {
+    const el = qs("forecast_detailLine");
+    if (el) el.textContent = line || "—";
+  }
+
+  function setActualFormula(html) {
+    const el = qs("forecast_formulaActual");
+    if (el) el.innerHTML = html || "—";
+  }
+
+  function setCapacityLiveValues(text) {
+    const el = qs("capacity_liveValues");
+    if (el) el.innerHTML = text || "—";
+  }
+
+  function syncModeUI(mode) {
+    const vBox = qs("forecast_velocityBox");
+    const cBox = qs("forecast_capacityBox");
+    const vFormula = qs("forecast_formulaVelocity");
+
+    if (vBox) vBox.style.display = mode === "velocity" ? "block" : "none";
+    if (cBox) cBox.style.display = mode === "capacity" ? "block" : "none";
+    if (vFormula) vFormula.style.display = mode === "velocity" ? "block" : "none";
+  }
+
+  function applyVelocityDefaultsFromSetup(setup) {
+    const v1 = qs("forecast_velN1");
+    const v2 = qs("forecast_velN2");
+    const v3 = qs("forecast_velN3");
+    if (!v1 || !v2 || !v3) return;
+
+    v1.value = setup.v1 ?? "";
+    v2.value = setup.v2 ?? "";
+    v3.value = setup.v3 ?? "";
+  }
+
+  function syncVelOverride(setup) {
+    const cb = qs("forecast_velOverride");
+    const v1 = qs("forecast_velN1");
+    const v2 = qs("forecast_velN2");
+    const v3 = qs("forecast_velN3");
     if (!cb || !v1 || !v2 || !v3) return;
 
     const editable = cb.checked;
     [v1, v2, v3].forEach(inp => {
       inp.disabled = !editable;
-      inp.style.opacity = editable ? "1" : "0.85";
+      inp.style.opacity = editable ? "1" : "0.86";
     });
 
-    if (!editable) {
-      // revert to setup values
-      v1.value = el("setup_v1")?.value ?? "";
-      v2.value = el("setup_v2")?.value ?? "";
-      v3.value = el("setup_v3")?.value ?? "";
-    }
+    if (!editable) applyVelocityDefaultsFromSetup(setup);
   }
 
-  function getEffectiveVelocities(setup) {
-    const cb = el("forecast_velOverride");
-    const useOverride = !!cb?.checked;
+  // -------- Forecast calculations --------
+  function calcVelocity(setup) {
+    const override = !!qs("forecast_velOverride")?.checked;
 
-    if (useOverride) {
-      return [
-        num("forecast_velN1"),
-        num("forecast_velN2"),
-        num("forecast_velN3")
-      ];
+    let a = setup.v1, b = setup.v2, c = setup.v3;
+    if (override) {
+      a = clampInt3(num(qs("forecast_velN1")?.value));
+      b = clampInt3(num(qs("forecast_velN2")?.value));
+      c = clampInt3(num(qs("forecast_velN3")?.value));
     }
 
-    return [setup.v1, setup.v2, setup.v3];
-  }
-
-  // ----------------------------
-  // Forecast calculations
-  // ----------------------------
-  function runVelocityForecast(setup) {
-    const velocities = getEffectiveVelocities(setup);
-    const a = velocities[0], b = velocities[1], c = velocities[2];
-
-    if ([a,b,c].some(v => !Number.isFinite(v) || v <= 0)) {
-      showWarn("Enter last 3 sprint velocities (N-1, N-2, N-3) to calculate Velocity forecast.");
-      setText("forecastNumber", "—");
-      setText("forecastSub", "Waiting for velocity inputs.");
-      setText("committedValue", setup.committedSP ?? "—");
-      setText("deltaValue", "—");
-      setText("overcommitRatio", "—");
-      setText("confidenceBadge", "Confidence: —");
-      setOvercommitUI(null);
-      return;
+    if ([a, b, c].some(v => v == null)) {
+      showWarn("Enter the last 3 sprint velocities (N-1, N-2, N-3).");
+      return null;
     }
 
     hideWarn();
-
     const avg = (a + b + c) / 3;
-    const forecastSP = Math.round(avg);
 
-    const committed = Number.isFinite(setup.committedSP) ? setup.committedSP : null;
-    const delta = (committed != null) ? (committed - forecastSP) : null;
+    // confidence from volatility (std/avg)
+    const mean = avg || 1;
+    const variance = ((a-avg)**2 + (b-avg)**2 + (c-avg)**2) / 3;
+    const stdev = Math.sqrt(variance);
+    const volatility = stdev / mean;
 
-    const { confidence, overcommitRatio } = computeConfidence({
-      forecastSP,
-      committedSP: committed,
-      velocities
-    });
+    let confidence = 90 - (volatility * 120);
+    confidence = Math.max(35, Math.min(95, confidence));
 
-    setText("forecastNumber", `${forecastSP} SP`);
-    setText("forecastSub", `Avg velocity: ${avg.toFixed(1)} SP`);
-
-    setText("committedValue", committed != null ? `${committed} SP` : "—");
-    setText("deltaValue", delta != null ? `${delta} SP` : "—");
-    setText("overcommitRatio", (Number.isFinite(overcommitRatio) && overcommitRatio > 0) ? `${overcommitRatio.toFixed(2)}×` : "—");
-
-    setText("confidenceBadge", `Confidence: ${confidence}%`);
-    setOvercommitUI(overcommitRatio);
-
-    animateForecastNumber();
+    return {
+      forecastSP: avg,
+      confidence,
+      calcHtml:
+        `<div class="kvKey" style="margin-bottom:6px;">🧮 Velocity Calculation</div>
+         <div>Avg = (${a} + ${b} + ${c}) / 3 = <b>${avg.toFixed(1)}</b></div>
+         <div class="mutedText" style="margin-top:8px;">Volatility ≈ ${(volatility*100).toFixed(0)}% (lower is better)</div>`
+    };
   }
 
-  function runCapacityForecast(setup) {
+  function calcCapacity(setup) {
     const sprintDays = setup.sprintDays;
     const teamMembers = setup.teamMembers;
     const leaveDays = setup.leaveDays;
 
-    const focus = num("forecast_focusFactor");
-    const weight = num("forecast_weight");
-    const spPerDay = num("forecast_spPerDay");
+    const focus = num(qs("forecast_focusFactor")?.value);
+    const weight = num(qs("forecast_leaveWeight")?.value);
+    const spPerTeamDay = num(qs("forecast_spPerDay")?.value);
 
     const missing = [];
-    if (!Number.isFinite(sprintDays) || sprintDays <= 0) missing.push("Sprint Days");
-    if (!Number.isFinite(teamMembers) || teamMembers <= 0) missing.push("Team Members");
-    if (!Number.isFinite(leaveDays) || leaveDays < 0) missing.push("Leave Days");
-    if (!Number.isFinite(focus)) missing.push("Focus Factor");
-    if (!Number.isFinite(weight)) missing.push("Leaves Weight");
-    if (!Number.isFinite(spPerDay)) missing.push("SP/Day");
+    if (sprintDays == null) missing.push("Sprint Days");
+    if (teamMembers == null) missing.push("Team Members");
+    if (leaveDays == null) missing.push("Leave Days");
+    if (focus == null) missing.push("Focus Factor");
+    if (weight == null) missing.push("Leaves Weight");
+    if (spPerTeamDay == null) missing.push("SP per Team Day");
 
     if (missing.length) {
       showWarn("Missing: " + missing.join(", "));
-      setText("forecastNumber", "—");
-      setText("forecastSub", "Save to generate capacity forecast.");
-      setText("confidenceBadge", "Confidence: —");
-      setOvercommitUI(null);
-      return;
+      setCapacityLiveValues("Save to see live values here.");
+      return null;
     }
 
     hideWarn();
@@ -296,140 +319,184 @@
     const idealPerPerson = sprintDays * focus;
     const totalIdealDays = teamMembers * idealPerPerson;
     const totalActualDays = totalIdealDays - (leaveDays * weight);
-    const safeDays = Math.max(0, totalActualDays);
-    const forecastSP = Math.round(safeDays * spPerDay);
+    const effectiveTeamDays = Math.max(0, totalActualDays);
+    const forecastSP = effectiveTeamDays * spPerTeamDay;
 
-    const committed = Number.isFinite(setup.committedSP) ? setup.committedSP : null;
-    const delta = (committed != null) ? (committed - forecastSP) : null;
+    // live values shown under formulas
+    setCapacityLiveValues(
+      `Sprint Days <b>${sprintDays}</b>, Focus <b>${focus}</b> → Ideal/person <b>${idealPerPerson.toFixed(2)}</b><br/>
+       Team <b>${teamMembers}</b> → Total Ideal Days <b>${totalIdealDays.toFixed(2)}</b><br/>
+       Leaves <b>${leaveDays}</b>, Weight <b>${weight}</b> → Total Actual Days <b>${totalActualDays.toFixed(2)}</b><br/>
+       Effective Team Days = max(0, Actual) = <b>${effectiveTeamDays.toFixed(2)}</b><br/>
+       Forecast SP = Effective Team Days × SP per Team Day = <b>${forecastSP.toFixed(2)}</b>`
+    );
 
-    const velocities = [setup.v1, setup.v2, setup.v3];
-    const { confidence, overcommitRatio } = computeConfidence({
+    let confidence = 88;
+    if (focus < 0.6) confidence -= 12;
+    if (totalActualDays < totalIdealDays * 0.7) confidence -= 14;
+    if (totalActualDays < totalIdealDays * 0.5) confidence -= 14;
+    if (totalActualDays <= 0) confidence -= 25;
+    confidence = Math.max(35, Math.min(95, confidence));
+
+    return {
       forecastSP,
-      committedSP: committed,
-      velocities
-    });
-
-    setText("forecastNumber", `${forecastSP} SP`);
-    setText("forecastSub", `${safeDays.toFixed(1)} effective days × ${spPerDay} SP/day`);
-
-    setText("committedValue", committed != null ? `${committed} SP` : "—");
-    setText("deltaValue", delta != null ? `${delta} SP` : "—");
-    setText("overcommitRatio", (Number.isFinite(overcommitRatio) && overcommitRatio > 0) ? `${overcommitRatio.toFixed(2)}×` : "—");
-
-    setText("confidenceBadge", `Confidence: ${confidence}%`);
-    setOvercommitUI(overcommitRatio);
-
-    animateForecastNumber();
+      confidence,
+      calcHtml:
+        `<div class="kvKey" style="margin-bottom:6px;">🧮 Capacity Calculation</div>
+         <div>Ideal/person = ${sprintDays} × ${focus} = <b>${idealPerPerson.toFixed(2)}</b> days</div>
+         <div>Total ideal days = ${teamMembers} × ${idealPerPerson.toFixed(2)} = <b>${totalIdealDays.toFixed(2)}</b></div>
+         <div>Total actual days = ${totalIdealDays.toFixed(2)} − (${leaveDays} × ${weight}) = <b>${totalActualDays.toFixed(2)}</b></div>
+         <div>Effective team days = max(0, ${totalActualDays.toFixed(2)}) = <b>${effectiveTeamDays.toFixed(2)}</b></div>
+         <div>Forecast SP = ${effectiveTeamDays.toFixed(2)} × ${spPerTeamDay} = <b>${forecastSP.toFixed(2)}</b></div>`
+    };
   }
 
-  function runForecast() {
-    const setup = readSetup();
+  function renderForecast(setup) {
+    const mode = qs("forecast_forecastMode")?.value || "capacity";
+    syncModeUI(mode);
+    refreshSetupSummary(setup, mode);
 
-    // Always reflect committed even if forecast can't compute yet
-    if (Number.isFinite(setup.committedSP)) setText("committedValue", `${setup.committedSP} SP`);
-    else setText("committedValue", "—");
+    applyVelocityDefaultsFromSetup(setup);
+    syncVelOverride(setup);
 
-    // keep forecast velocity inputs in sync when override is OFF
-    if (!el("forecast_velOverride")?.checked) {
-      if (el("forecast_velN1")) el("forecast_velN1").value = el("setup_v1")?.value ?? "";
-      if (el("forecast_velN2")) el("forecast_velN2").value = el("setup_v2")?.value ?? "";
-      if (el("forecast_velN3")) el("forecast_velN3").value = el("setup_v3")?.value ?? "";
+    let result = null;
+    if (mode === "velocity") result = calcVelocity(setup);
+    else result = calcCapacity(setup);
+
+    if (!result) {
+      setForecastValue(null);
+      setDetails("—");
+      setActualFormula("Save to see calculation details here.");
+      setConfidenceBadge(50);
+      setDeltaAndOvercommit(setup.committedSP, null);
+      return;
     }
 
-    const mode = el("forecast_forecastMode")?.value || "velocity";
-    if (mode === "capacity") runCapacityForecast(setup);
-    else runVelocityForecast(setup);
+    const forecast = result.forecastSP;
+    setForecastValue(forecast);
+    setConfidenceBadge(result.confidence);
+
+    const committed = setup.committedSP;
+    if (committed != null) {
+      const ratio = forecast > 0 ? committed / forecast : null;
+      if (ratio != null && ratio > 1) {
+        setDetails(`Committed ${committed} SP vs Forecast ~${Math.round(forecast)} SP → over-commit.`);
+      } else {
+        setDetails(`Committed ${committed} SP vs Forecast ~${Math.round(forecast)} SP.`);
+      }
+      setDeltaAndOvercommit(committed, forecast);
+    } else {
+      setDetails(`Forecast ~${Math.round(forecast)} SP. (Add committed SP to compare.)`);
+      setDeltaAndOvercommit(null, null);
+    }
+
+    setActualFormula(result.calcHtml);
   }
 
-  // ----------------------------
-  // Boot
-  // ----------------------------
-  document.addEventListener("DOMContentLoaded", () => {
-    enforce3Digits();
+  function attachClampHandlers() {
+    const intIds = [
+      "setup_sprintDays","setup_teamMembers","setup_leaveDays","setup_committedSP",
+      "setup_v1","setup_v2","setup_v3",
+      "forecast_velN1","forecast_velN2","forecast_velN3"
+    ];
 
-    // Load saved setup if exists
+    intIds.forEach(id => {
+      qs(id)?.addEventListener("input", (e) => clampInputInt3(e.target));
+      qs(id)?.addEventListener("blur", (e) => clampInputInt3(e.target));
+    });
+
+    ["forecast_spPerDay"].forEach(id => {
+      qs(id)?.addEventListener("blur", (e) => {
+        const el = e.target;
+        const n = num(el.value);
+        if (n == null) return;
+        el.value = String(Math.max(0, Math.min(999, n)));
+      });
+    });
+  }
+
+  // -------- Boot --------
+  document.addEventListener("DOMContentLoaded", () => {
+    attachClampHandlers();
+
     const saved = loadSetup();
     if (saved) {
-      writeSetup(saved);
-      saveStatus("Loaded saved setup.");
+      writeSetupToUI(saved);
+      setSaveStatus("Loaded saved setup.");
+    } else {
+      setSaveStatus("Not saved yet.");
     }
 
-    // Presets (DO NOT set velocities)
-    el("setup_presetExcellent")?.addEventListener("click", () => {
-      if (el("setup_sprintDays")) el("setup_sprintDays").value = "10";
-      if (el("setup_teamMembers")) el("setup_teamMembers").value = "7";
-      if (el("setup_leaveDays")) el("setup_leaveDays").value = "0";
-      if (el("setup_committedSP")) el("setup_committedSP").value = "40";
-      toast("🟢 Excellent preset applied. (Enter velocities manually)");
+    // defaults for capacity knobs
+    if (qs("forecast_focusFactor") && !qs("forecast_focusFactor").value) qs("forecast_focusFactor").value = "0.8";
+    if (qs("forecast_leaveWeight") && !qs("forecast_leaveWeight").value) qs("forecast_leaveWeight").value = "1.0";
+    if (qs("forecast_spPerDay") && !qs("forecast_spPerDay").value) qs("forecast_spPerDay").value = "4.0";
+
+    // Presets (NOW include velocities too)
+    qs("setup_presetExcellent")?.addEventListener("click", () => {
+      qs("setup_sprintDays").value = 10;
+      qs("setup_teamMembers").value = 7;
+      qs("setup_leaveDays").value = 0;
+      qs("setup_committedSP").value = 40;
+      qs("setup_v1").value = 38;
+      qs("setup_v2").value = 41;
+      qs("setup_v3").value = 39;
+      setToast("🟢 Excellent preset applied. (Includes sample velocities.)");
+      renderForecast(readSetupFromUI());
     });
 
-    el("setup_presetNormal")?.addEventListener("click", () => {
-      if (el("setup_sprintDays")) el("setup_sprintDays").value = "10";
-      if (el("setup_teamMembers")) el("setup_teamMembers").value = "6";
-      if (el("setup_leaveDays")) el("setup_leaveDays").value = "2";
-      if (el("setup_committedSP")) el("setup_committedSP").value = "35";
-      toast("🟡 Normal preset applied. (Enter velocities manually)");
+    qs("setup_presetNormal")?.addEventListener("click", () => {
+      qs("setup_sprintDays").value = 10;
+      qs("setup_teamMembers").value = 6;
+      qs("setup_leaveDays").value = 2;
+      qs("setup_committedSP").value = 38;
+      qs("setup_v1").value = 32;
+      qs("setup_v2").value = 36;
+      qs("setup_v3").value = 34;
+      setToast("🟡 Normal preset applied. (Includes sample velocities.)");
+      renderForecast(readSetupFromUI());
     });
 
-    el("setup_presetRisky")?.addEventListener("click", () => {
-      if (el("setup_sprintDays")) el("setup_sprintDays").value = "10";
-      if (el("setup_teamMembers")) el("setup_teamMembers").value = "5";
-      if (el("setup_leaveDays")) el("setup_leaveDays").value = "4";
-      if (el("setup_committedSP")) el("setup_committedSP").value = "45";
-      toast("🔴 Risky preset applied. (Enter velocities manually)");
+    qs("setup_presetRisky")?.addEventListener("click", () => {
+      qs("setup_sprintDays").value = 10;
+      qs("setup_teamMembers").value = 5;
+      qs("setup_leaveDays").value = 4;
+      qs("setup_committedSP").value = 42;
+      qs("setup_v1").value = 24;
+      qs("setup_v2").value = 30;
+      qs("setup_v3").value = 22;
+      setToast("🔴 Risky preset applied. (Includes sample velocities.)");
+      renderForecast(readSetupFromUI());
     });
 
-    // Save button
-    el("saveBtn")?.addEventListener("click", () => {
-      const setup = readSetup();
-      persistSetup(setup);
-      saveStatus("Saved ✔");
-      toast("Saved. Forecast updated below.", true);
-      syncModeUI();
-      syncVelOverride();
-      runForecast();
+    qs("forecast_forecastMode")?.addEventListener("change", () => {
+      renderForecast(readSetupFromUI());
     });
 
-    // Mode changes auto-run
-    el("forecast_forecastMode")?.addEventListener("change", () => {
-      syncModeUI();
-      runForecast();
-    });
-
-    // Velocity override toggle + changes
-    el("forecast_velOverride")?.addEventListener("change", () => {
-      syncVelOverride();
-      runForecast();
+    qs("forecast_velOverride")?.addEventListener("change", () => {
+      const setup = readSetupFromUI();
+      syncVelOverride(setup);
+      renderForecast(setup);
     });
 
     ["forecast_velN1","forecast_velN2","forecast_velN3"].forEach(id => {
-      el(id)?.addEventListener("input", () => runForecast());
+      qs(id)?.addEventListener("input", () => renderForecast(readSetupFromUI()));
     });
 
-    // Capacity field changes auto-run (once saved, it feels instant)
-    ["forecast_focusFactor","forecast_weight","forecast_spPerDay"].forEach(id => {
-      el(id)?.addEventListener("input", () => runForecast());
+    ["forecast_focusFactor","forecast_leaveWeight","forecast_spPerDay"].forEach(id => {
+      qs(id)?.addEventListener("input", () => renderForecast(readSetupFromUI()));
     });
 
-    // Setup field changes (do not auto-save; but keep velocity forecast inputs synced if override off)
-    ["setup_v1","setup_v2","setup_v3"].forEach(id => {
-      el(id)?.addEventListener("input", () => {
-        if (!el("forecast_velOverride")?.checked) {
-          if (el("forecast_velN1")) el("forecast_velN1").value = el("setup_v1")?.value ?? "";
-          if (el("forecast_velN2")) el("forecast_velN2").value = el("setup_v2")?.value ?? "";
-          if (el("forecast_velN3")) el("forecast_velN3").value = el("setup_v3")?.value ?? "";
-        }
-      });
+    // Save button: persists + refreshes forecast
+    qs("setup_saveBtn")?.addEventListener("click", () => {
+      const setup = readSetupFromUI();
+      saveSetup(setup);
+      setSaveStatus("Saved ✔");
+      setToast("Saved. Forecast updated below.", true);
+      renderForecast(setup);
     });
 
-    // Initial UI state
-    syncModeUI();
-    syncVelOverride();
-
-    // If there is saved setup, show forecast immediately (nice UX)
-    if (saved) {
-      runForecast();
-    }
+    renderForecast(readSetupFromUI());
   });
 
 })();
