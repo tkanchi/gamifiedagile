@@ -1,7 +1,8 @@
-// js/plan.js — Scrummer Plan (Stable v4.6)
+// js/plan.js — Scrummer Plan (Stable v4.6.1)
 // Fixes:
 //  - Avg Velocity tile wiring (avgVelocityMirror)
 //  - Committed SP tile wiring (committedMirror)
+//  - Prevent capacity calculations from leaking into velocity mode
 //  - Safe rendering even if some IDs are missing
 
 (function () {
@@ -252,13 +253,24 @@
     }catch{ return null; }
   }
 
+  // ✅ IMPORTANT: also toggles the capacity breakdown area in the shared calculations block
   function syncModeUI(mode){
     const vBox = qs("forecast_velocityBox");
     const cBox = qs("forecast_capacityBox");
     const vFormula = qs("forecast_formulaVelocity");
+    const capVals = qs("capacity_liveValues");
+
     if(vBox) vBox.style.display = (mode === "velocity") ? "block" : "none";
     if(cBox) cBox.style.display = (mode === "capacity") ? "block" : "none";
     if(vFormula) vFormula.style.display = (mode === "velocity") ? "block" : "none";
+
+    // ✅ Hide capacity breakdown when NOT in capacity mode
+    if(capVals){
+      capVals.style.display = (mode === "capacity") ? "block" : "none";
+      if(mode !== "capacity"){
+        capVals.innerHTML = ""; // clear stale capacity calculations (prevents "leak")
+      }
+    }
   }
 
   function refreshSetupSummary(setup, mode){
@@ -406,7 +418,7 @@
     syncModeUI(mode);
     refreshSetupSummary(setup, mode);
 
-    // ✅ Always update tiles (even if forecast can't be computed yet)
+    // Always update tiles
     setCommittedMirror(setup?.committedSP);
 
     if(setup && setup.v1 != null && setup.v2 != null && setup.v3 != null){
