@@ -535,3 +535,48 @@ p{ margin: 0 0 12px; }
   border-color: rgba(239,68,68,.50);
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
 }
+
+
+/* =========================================================
+   FIX: Theme dropdown text color in dark themes
+   (Native <select> + <option> need explicit colors)
+   ========================================================= */
+
+#themeSelect{
+  color: var(--text-main);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+}
+
+/* Some browsers ignore variables for options unless forced */
+:root[data-theme="neon"] #themeSelect{
+  background: #1d1d34;
+  color: rgba(255,255,255,0.92);
+}
+
+:root[data-theme="retro"] #themeSelect{
+  background: #241a40;
+  color: rgba(255,242,255,0.93);
+}
+
+/* Options list colors (dropdown menu) */
+:root[data-theme="neon"] #themeSelect option{
+  background: #1d1d34;
+  color: #ffffff;
+}
+
+:root[data-theme="retro"] #themeSelect option{
+  background: #241a40;
+  color: #ffffff;
+}
+
+/* Mint options (keep readable) */
+:root[data-theme="mint"] #themeSelect option{
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Optional: remove default OS glow/outline oddities */
+#themeSelect:focus{
+  outline: none;
+}
