@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Scrummer — Game Rules</title>
+<link href="css/style.css?v=3" rel="stylesheet"/>
+<!-- Unified Font (keep this on every page) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+</head>
+<body data-page="gamerules">
+<div class="appShell">
+<!-- SIDEBAR -->
+<aside class="sideNav">
+<div class="sideBrand">
+<div class="brandMark"><span>S</span></div>
+<div>
+<div class="brandName">SCRUMMER</div>
+<div class="brandTag">Gamified Scrum OS</div>
+</div>
+</div>
+<!-- Nav Bar -->
+<nav class="nav"><a class="navlink" href="index.html">🚀 Plan</a><a class="navlink" href="coach.html">🤖 Coach</a><a class="navlink active" href="Gamerules.html">🎮 Game Rules</a><a class="navlink" href="accounts.html">🔐 Account</a></nav>
+<!-- XP WIDGET -->
+<div class="xpWidget">
+<div class="xpTop">
+<div>
+<div class="lvl" id="xpLevel">Level 1</div>
+<div class="title" id="xpTitle">Rookie</div>
+</div>
+<div id="moodBadge">🐆 Calm</div>
+</div>
+<div class="xpBar">
+<div class="xpFill" id="xpFill"></div>
+</div>
+<div class="xpMeta">
+<span id="xpText">0 / 300 XP</span>
+<span id="streakText">🧊 streak reset</span>
+</div>
+</div>
+<button class="themeToggle" id="themeToggle" type="button">
+        Theme: <span id="themeMode">Light</span>
+</button>
+</aside>
+<!-- MAIN -->
+<main class="main">
+<div class="sectionCard">
+<div class="btnRow" style="margin-bottom:12px;">
+<button class="btnGhost" onclick="history.back()" type="button">← Back</button>
+<a class="btnGhost" href="index.html">🏠 Home</a>
+</div>
+<h1 class="sectionTitle">🎮 Game Rules</h1>
+<p class="sectionSub">
+          Scrummer helps you explain sprint performance with context — not blame.
+          Use it like a lightweight Scrum Master co-pilot: input → signals → actions.
+        </p>
+<!-- Help & Info -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">📌 Help &amp; Info</div>
+<div class="btnRow" style="margin-top:10px;">
+<a class="btnGhost" href="Gamerules.html">About</a>
+<a class="btnGhost" href="Gamerules.html">Feedback</a>
+</div>
+<div style="margin-top:10px; color:var(--text-muted); font-weight:450; line-height:1.6;">
+            Have an idea or something feels confusing? Send feedback — it goes directly to the Scrummer inbox.
+          </div>
+</div>
+<!-- How to use (real world) -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">🧭 How to use Scrummer in real life</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+<b>For Scrum Masters:</b> use it before planning and during the sprint to explain risks early. <br/>
+<b>For small teams (no Scrum Master):</b> use it as a checklist to avoid unrealistic commitments. <br/>
+<b>For leaders:</b> use Insights + Actions to understand why metrics shift without default blame on developers.
+          </div>
+</div>
+<!-- 1 -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">1️⃣ Setup = your sprint baseline</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+            Start with sprint inputs (team size, sprint length, leaves, focus factor, and recent velocities).
+            This becomes the baseline used across Forecast, Insights, Actions, and Copilot prompts.
+          </div>
+</div>
+<!-- 2 -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">📦 Forecast = realistic commitment</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+            Forecast helps you decide “how much is safe to commit” before planning.
+            It uses transparent math, so you can justify the number with confidence.
+            <div style="margin-top:10px;">
+              Use Forecast when:
+              <br/>• the team isn’t sure what to commit
+              <br/>• there are leaves/interruptions
+              <br/>• velocity is unstable
+            </div>
+</div>
+</div>
+<!-- 3 -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">📊 Insights = trends &amp; risk signals</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+            Insights converts your numbers into signals that are easier to explain:
+            <br/>• Stability (how predictable the team is)
+            <br/>• Confidence (how safe the commitment looks)
+            <br/>• Capacity Health (how realistic the plan is)
+            <div style="margin-top:10px;">
+              This is where Scrummer helps you explain <b>why metrics moved</b> without default blame.
+            </div>
+</div>
+</div>
+<!-- 4 -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">🎯 Actions = what to do next</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+            Actions gives tactical, sprint-ready moves (not generic Agile advice).
+            <div style="margin-top:10px;">
+              Examples:
+              <br/>• reduce commitment by X%
+              <br/>• add a mid-sprint checkpoint
+              <br/>• slice work smaller / limit WIP
+              <br/>• protect focus time for QA / automation
+            </div>
+</div>
+</div>
+<!-- 5 -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">🤖 Copilot = ceremony prompts</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+            Copilot supports your ceremonies with structured prompts so you can:
+            <br/>• ask better questions in refinement
+            <br/>• steer planning with clarity
+            <br/>• capture decisions and risks
+            <br/>• run sharper retrospectives
+          </div>
+</div>
+<!-- 6 -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">🏆 XP &amp; Mood = lightweight gamification</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+            XP is a fun layer — not the goal.
+            You earn XP for stable planning and healthier signals over time.
+            <div style="margin-top:10px;">
+              Mood Badge:
+              <br/>🐆 Calm → stable and predictable
+              <br/>⚡ Sprinting → risk rising / chaos incoming
+            </div>
+</div>
+</div>
+<!-- 7 -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">🔐 Cloud sync (optional)</div>
+<div style="color:var(--text-muted); font-weight:450; line-height:1.7;">
+            If you log in, your data can sync to the cloud.
+            If not, Scrummer still works locally in your browser.
+          </div>
+</div>
+<div class="btnRow" style="margin-top:16px;">
+<a class="btnGhost" href="index.html">Back to Setup</a>
+<a class="btnPrimary" href="index.html#forecast">Go to Forecast 📦</a>
+</div>
+</div>
+</main>
+</div>
+<script src="js/theme.js"></script>
+<script src="js/xp.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supa.js"></script>
+</body>
+</html>
