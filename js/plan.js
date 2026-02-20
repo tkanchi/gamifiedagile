@@ -1,6 +1,6 @@
-// js/plan.js — Scrummer Plan (Stable v4.4)
+// js/plan.js — Scrummer Plan (Stable v4.5)
 // Focus: FIX FUNCTIONALITY + never crash if HTML IDs are missing
-// Adds: XP sparkle on Save + Presets + Forecast update + Formulas + Neon spark-on-update
+// Adds: Avg Velocity tile wiring (avgVelocityMirror) + XP sparkle on Save + Presets + Forecast update + Formulas + Neon spark-on-update
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
@@ -21,7 +21,10 @@
     "forecast_warnBox","forecast_warnText",
     "forecast_value","forecast_detailLine","forecast_formulaActual",
     "capacity_liveValues",
-    "forecast_delta","forecast_overcommit","overcommitPill"
+    "forecast_delta","forecast_overcommit","overcommitPill",
+
+    // NEW: Avg Velocity tile
+    "avgVelocityMirror"
   ];
 
   function logMissingIds(){
@@ -155,6 +158,13 @@
   function setCapacityLiveValues(html){
     const el = qs("capacity_liveValues");
     if(el) el.innerHTML = html || "—";
+  }
+
+  // ✅ NEW: Avg Velocity tile writer
+  function setAvgVelocityMirror(v){
+    const el = qs("avgVelocityMirror");
+    if(!el) return;
+    el.textContent = (v == null || Number.isNaN(v)) ? "—" : String(Math.round(v));
   }
 
   function setOvercommitUI(committed, forecast){
@@ -385,6 +395,13 @@
     const mode = qs("forecast_forecastMode")?.value || "capacity";
     syncModeUI(mode);
     refreshSetupSummary(setup, mode);
+
+    // ✅ NEW: compute avg velocity tile from setup values
+    if(setup && setup.v1 != null && setup.v2 != null && setup.v3 != null){
+      setAvgVelocityMirror((setup.v1 + setup.v2 + setup.v3) / 3);
+    } else {
+      setAvgVelocityMirror(null);
+    }
 
     applyVelocityDefaultsFromSetup(setup);
     syncVelOverride(setup);
