@@ -1,5 +1,9 @@
-// js/plan.js — Scrummer Plan (Stable v4.2)
+// js/plan.js — Scrummer Plan (Stable v4.3)
 // Adds: XP sparkle burst on Save + Preset
+// Fixes:
+// - Neon spark triggers ONLY in Neon theme and only on number change
+// - Presets reliably apply + clear warnings
+// - Avoid overwriting velocity override inputs while user is typing
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
@@ -46,25 +50,28 @@
   function showWarn(msg){ const b=qs("forecast_warnBox"), t=qs("forecast_warnText"); if(!b||!t) return; t.textContent=msg||""; b.style.display="block"; }
   function hideWarn(){ const b=qs("forecast_warnBox"); if(b) b.style.display="none"; }
 
- function bumpForecastNumber(){
-  const el = qs("forecast_value");
-  if(!el) return;
+  function bumpForecastNumber(){
+    const el = qs("forecast_value");
+    if(!el) return;
 
-  // number bump
-  el.classList.remove("num-bump");
-  void el.offsetWidth;
-  el.classList.add("num-bump");
-  setTimeout(()=>el.classList.remove("num-bump"),520);
+    // number bump
+    el.classList.remove("num-bump");
+    void el.offsetWidth;
+    el.classList.add("num-bump");
+    setTimeout(()=>el.classList.remove("num-bump"),520);
 
-  // ⚡ Neon spark (only on update)
-  const fx = el.closest(".forecastNumber.neonFx");
-  if(fx){
-    fx.classList.remove("spark");
-    void fx.offsetWidth;
-    fx.classList.add("spark");
-    setTimeout(()=>fx.classList.remove("spark"), 720);
+    // ⚡ Neon spark ONLY in Neon theme
+    const theme = document.documentElement.getAttribute("data-theme") || "light";
+    if(theme !== "neon") return;
+
+    const fx = el.closest(".forecastNumber.neonFx");
+    if(fx){
+      fx.classList.remove("spark");
+      void fx.offsetWidth;
+      fx.classList.add("spark");
+      setTimeout(()=>fx.classList.remove("spark"), 720);
+    }
   }
-}
 
   function setForecastValue(v){
     const el=qs("forecast_value");
@@ -194,6 +201,11 @@
   function applyVelocityDefaultsFromSetup(setup){
     const n1=qs("forecast_velN1"), n2=qs("forecast_velN2"), n3=qs("forecast_velN3");
     if(!n1||!n2||!n3) return;
+
+    // If override is ON, do not overwrite what user is typing
+    const override = !!qs("forecast_velOverride")?.checked;
+    if(override) return;
+
     n1.value=setup.v1 ?? "";
     n2.value=setup.v2 ?? "";
     n3.value=setup.v3 ?? "";
@@ -208,7 +220,12 @@
       inp.disabled=!editable;
       inp.style.opacity=editable?"1":"0.86";
     });
-    if(!editable) applyVelocityDefaultsFromSetup(setup);
+    if(!editable) {
+      // if turning override off, reset to setup values
+      n1.value=setup.v1 ?? "";
+      n2.value=setup.v2 ?? "";
+      n3.value=setup.v3 ?? "";
+    }
   }
 
   function calcVelocity(setup){
@@ -255,11 +272,6 @@
     if(focus==null) missing.push("Focus Factor");
     if(weight==null) missing.push("Leaves weight");
     if(spPerTeamDay==null) missing.push("SP per Team Day");
-
-    if(sprintDays!=null && focus!=null){
-      const idealPerPerson=sprintDays*focus;
-      setCapacityLiveValues(`Ideal/person = <b>${sprintDays}</b> × <b>${focus}</b> = <b>${idealPerPerson.toFixed(2)}</b>`);
-    }
 
     if(missing.length){ showWarn("Missing: "+missing.join(", ")); return null; }
     hideWarn();
@@ -345,6 +357,7 @@
     qs("setup_v2").value=p.v2;
     qs("setup_v3").value=p.v3;
 
+    hideWarn();
     sparkleXP();
     showToast(`✅ ${name[0].toUpperCase()+name.slice(1)} preset applied. Edit values anytime, then hit Save.`);
     setSaveStatus("Preset applied (not saved yet).");
@@ -366,6 +379,7 @@
     qs("setup_saveBtn")?.addEventListener("click",()=>{
       const setup=readSetupFromUI();
       saveSetup(setup);
+      hideWarn();
       sparkleXP();
       setSaveStatus("Saved ✔");
       showToast("Saved. Forecast updated below.");
