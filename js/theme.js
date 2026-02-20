@@ -1,25 +1,50 @@
 // js/theme.js
-// 4 themes: light + neon + cyber(mint-pop) + retro
+// Themes: light + mint + neon + retro
+// Fixes:
+// - validates allowed theme values
+// - maps legacy theme names (e.g., "cyber") to "mint"
+// - always allows switching back to light
+// - persists selection
 
 (function () {
   const STORAGE_KEY = "scrummer_theme";
-  const ALLOWED = new Set(["light", "neon", "cyber", "retro"]);
+  const root = document.documentElement;
+
+  const ALLOWED = new Set(["light", "mint", "neon", "retro"]);
+
+  // Legacy theme name mapping (older builds)
+  const LEGACY_MAP = {
+    cyber: "mint",
+    "mint-pop": "mint",
+    "mintpop": "mint"
+  };
+
+  function normalize(theme) {
+    const t = String(theme || "").toLowerCase().trim();
+    const mapped = LEGACY_MAP[t] || t;
+    return ALLOWED.has(mapped) ? mapped : "light";
+  }
 
   function applyTheme(theme) {
-    const t = ALLOWED.has(theme) ? theme : "light";
-    document.documentElement.setAttribute("data-theme", t);
-    try { localStorage.setItem(STORAGE_KEY, t); } catch {}
+    const safe = normalize(theme);
+
+    root.setAttribute("data-theme", safe);
 
     const sel = document.getElementById("themeSelect");
-    if (sel && sel.value !== t) sel.value = t;
+    if (sel) sel.value = safe;
+
+    try { localStorage.setItem(STORAGE_KEY, safe); } catch (e) {}
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     let saved = "light";
-    try { saved = localStorage.getItem(STORAGE_KEY) || "light"; } catch {}
+    try { saved = localStorage.getItem(STORAGE_KEY) || "light"; } catch (e) {}
+
     applyTheme(saved);
 
     const sel = document.getElementById("themeSelect");
-    if (sel) sel.addEventListener("change", () => applyTheme(sel.value));
+    if (sel) {
+      sel.addEventListener("change", () => applyTheme(sel.value));
+    }
   });
 })();
