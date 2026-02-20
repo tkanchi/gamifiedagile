@@ -438,3 +438,64 @@
 
   document.addEventListener("DOMContentLoaded", init);
 })();
+
+// ✅ Re-render charts correctly when tabs open + on mobile resize
+function wireHistoryChartRefresh() {
+  const tryRender = () => {
+    // Only render when canvases have a real width (not 0 when hidden)
+    const anyCanvas =
+      document.getElementById("hist_velocityChart") ||
+      document.getElementById("chart_velocity");
+
+    if (!anyCanvas) return;
+
+    const w = anyCanvas.clientWidth;
+    if (!w || w < 40) {
+      // Tab still hidden or layout not ready; retry shortly
+      clearTimeout(tryRender._t);
+      tryRender._t = setTimeout(tryRender, 120);
+      return;
+    }
+
+    // Render both sets
+    renderAllHistoryCharts();
+    renderSnapshotCharts();
+  };
+
+  // Initial attempt (may be hidden → will retry)
+  tryRender();
+
+  // Buttons in coach.html (history table)
+  ["hist_demoBtn", "hist_saveBtn", "hist_resetBtn", "hist_autofillBtn"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("click", () => setTimeout(tryRender, 120));
+  });
+
+  // Your coach-history.js emits this
+  window.addEventListener("scrummer:historyChanged", () => setTimeout(tryRender, 120));
+
+  // ✅ IMPORTANT: when you click any tab, re-render after it becomes visible
+  document.querySelectorAll(".tabBtn").forEach(btn => {
+    btn.addEventListener("click", () => setTimeout(tryRender, 140));
+  });
+
+  // Hash navigation (coach.html#health)
+  window.addEventListener("hashchange", () => setTimeout(tryRender, 140));
+
+  // Mobile orientation/layout changes
+  window.addEventListener("resize", () => {
+    clearTimeout(tryRender._r);
+    tryRender._r = setTimeout(tryRender, 200);
+  });
+
+  // ✅ ResizeObserver: re-render if the chart container changes size (best for phone)
+  const wrap = document.querySelector(".chartGrid") || document.querySelector(".coachWrap") || document.body;
+  if ("ResizeObserver" in window && wrap) {
+    const ro = new ResizeObserver(() => {
+      clearTimeout(tryRender._ro);
+      tryRender._ro = setTimeout(tryRender, 180);
+    });
+    ro.observe(wrap);
+  }
+}
