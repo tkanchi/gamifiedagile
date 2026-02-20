@@ -1121,3 +1121,61 @@ body{
     max-width: 100% !important;
   }
 }
+
+/* ================================
+   MOBILE: stop sideNav from eating the whole screen
+   and restore normal page scrolling
+   ================================ */
+@media (max-width: 900px){
+
+  /* Make body the scroll container */
+  html, body{
+    height: auto !important;
+    min-height: 100%;
+    overflow: auto !important;
+  }
+
+  /* App shell must not lock scrolling */
+  .appShell{
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important;
+  }
+
+  /* If you have any inner scroll containers, disable on mobile */
+  .main, .sideNav{
+    overflow: visible !important;
+  }
+
+  /* Key fix: sideNav should size to content, not viewport */
+  .sideNav{
+    height: auto !important;
+    max-height: none !important;
+    position: relative !important;
+  }
+
+  /* If you have a sticky/fixed nav, remove it on mobile */
+  .sideNav.sticky,
+  .sideNav.fixed{
+    position: relative !important;
+    top: auto !important;
+  }
+
+  /* If your layout uses grid with fixed columns, stack it */
+  .appShell{
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Ensure main is visible and full width */
+  .main{
+    width: 100% !important;
+    min-width: 0;
+    display: block !important;
+  }
+
+  /* Reduce sidebar padding a bit (optional) */
+  .sideNav{
+    padding-bottom: 10px;
+  }
+}
