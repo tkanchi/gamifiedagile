@@ -1068,3 +1068,56 @@ body{
   border-color: rgba(34,197,94,0.35);
   background: rgba(34,197,94,0.06);
 }
+
+/* ================================
+   Mobile layout fix: show MAIN content
+   ================================ */
+
+/* 1) Ensure the app shell doesn't clip main content */
+.appShell,
+.appShell * {
+  box-sizing: border-box;
+}
+
+/* If you have any overflow hidden on the shell, neutralize it on small screens */
+@media (max-width: 900px) {
+  .appShell {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important; /* prevents "only sidebar visible" */
+    display: flex;
+    flex-direction: column;       /* stack sidebar above content */
+  }
+
+  /* 2) Sidebar becomes a top section (NOT fixed) */
+  .sideNav {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* 3) Main must be visible and take full width */
+  .main {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0;
+    overflow: visible !important;
+  }
+
+  /* 4) Prevent horizontal scroll caused by fixed sidebar widths/padding */
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* Optional: if you have a fixed-width grid wrapper */
+@media (max-width: 900px) {
+  .planWrap,
+  .mainContent,
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
