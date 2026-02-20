@@ -1,10 +1,11 @@
 /* =========================================================
-   SCRUMMER — style.css (FULL, UPDATED v11)
+   SCRUMMER — style.css (FULL, UPDATED v12)
    Adds:
    - Neon electric glow ⚡
    - Retro pixelated focus 🎲
    - XP sparkle burst on Save 😄
-   - Neon crackle behind forecast number + optional digit glow
+   - Neon forecast crackle spark ONLY on update (requires JS to toggle .spark)
+   - Optional Neon digit glow
    ========================================================= */
 
 /* =======================
@@ -541,25 +542,35 @@ body{
   color: #0f172a;
 }
 
-/* =======================
-   NEON FORECAST FX (optional + crackle)
-   Works with: <div class="forecastNumber neonFx">
-   ======================= */
+/* =========================================================
+   NEON: forecast crackle spark ONLY on update
+   HTML: <div class="forecastNumber neonFx">
+   JS must toggle: .spark (added briefly on update)
+   ========================================================= */
+
 :root[data-theme="neon"] .forecastNumber.neonFx{
   position: relative;
   isolation: isolate;
 }
 
-/* crackle streak layer */
-:root[data-theme="neon"] .forecastNumber.neonFx::before{
+/* default OFF */
+:root[data-theme="neon"] .forecastNumber.neonFx::before,
+:root[data-theme="neon"] .forecastNumber.neonFx::after{
   content:"";
   position:absolute;
+  z-index:-1;
+  opacity:0;
+  pointer-events:none;
+}
+
+/* crackle streak */
+:root[data-theme="neon"] .forecastNumber.neonFx::before{
   left:-10px;
   right:-10px;
   top: 50%;
   height: 26px;
   transform: translateY(-50%);
-  z-index: -1;
+  border-radius: 14px;
 
   background:
     linear-gradient(90deg,
@@ -578,42 +589,43 @@ body{
       rgba(167,139,250,0.14) 12px 13px,
       transparent 13px 22px);
 
-  border-radius: 14px;
   filter:
     blur(0.2px)
     drop-shadow(0 0 10px rgba(34,211,238,0.25))
     drop-shadow(0 0 18px rgba(34,211,238,0.18));
-  opacity: 0.65;
-
-  animation: neonCrackle 1.6s ease-in-out infinite;
 }
 
 /* shimmer sweep */
 :root[data-theme="neon"] .forecastNumber.neonFx::after{
-  content:"";
-  position:absolute;
   inset:-6px -12px;
-  z-index: -1;
+  border-radius: 18px;
   background:
     radial-gradient(circle at 20% 50%, rgba(34,211,238,0.18), transparent 60%),
     radial-gradient(circle at 80% 50%, rgba(167,139,250,0.14), transparent 60%);
-  border-radius: 18px;
-  opacity: 0.55;
-  animation: neonSweep 2.2s ease-in-out infinite;
 }
 
-@keyframes neonCrackle{
-  0%   { opacity:0.45; transform: translateY(-50%) scaleX(0.98); }
-  45%  { opacity:0.80; transform: translateY(-50%) scaleX(1.02); }
-  100% { opacity:0.50; transform: translateY(-50%) scaleX(0.99); }
+/* ON: spark burst animations */
+:root[data-theme="neon"] .forecastNumber.neonFx.spark::before{
+  opacity: 0.75;
+  animation: neonCrackleOnce 520ms ease;
 }
-@keyframes neonSweep{
-  0%   { opacity:0.35; filter: blur(0.0px); }
-  50%  { opacity:0.70; filter: blur(0.2px); }
-  100% { opacity:0.40; filter: blur(0.0px); }
+:root[data-theme="neon"] .forecastNumber.neonFx.spark::after{
+  opacity: 0.60;
+  animation: neonSweepOnce 700ms ease;
 }
 
-/* ✅ Optional: digit glow */
+@keyframes neonCrackleOnce{
+  0%   { opacity:0; transform: translateY(-50%) scaleX(0.96); }
+  35%  { opacity:0.85; transform: translateY(-50%) scaleX(1.03); }
+  100% { opacity:0; transform: translateY(-50%) scaleX(0.99); }
+}
+@keyframes neonSweepOnce{
+  0%   { opacity:0; filter: blur(0.0px); }
+  50%  { opacity:0.7; filter: blur(0.2px); }
+  100% { opacity:0; filter: blur(0.0px); }
+}
+
+/* ✅ Optional: digit glow (Neon only) */
 :root[data-theme="neon"] #forecast_value{
   text-shadow:
     0 0 10px rgba(34,211,238,0.28),
@@ -622,9 +634,10 @@ body{
 
 /* respect reduced motion */
 @media (prefers-reduced-motion: reduce){
-  :root[data-theme="neon"] .forecastNumber.neonFx::before,
-  :root[data-theme="neon"] .forecastNumber.neonFx::after{
+  :root[data-theme="neon"] .forecastNumber.neonFx.spark::before,
+  :root[data-theme="neon"] .forecastNumber.neonFx.spark::after{
     animation: none !important;
+    opacity: 0 !important;
   }
 }
 
@@ -673,8 +686,8 @@ body{
   --shadow:0 18px 44px rgba(0,0,0,0.45);
   --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
 
-  --accent:#22d3ee;
-  --accent-2:#a78bfa;
+  --accent:#22d3ee;   /* cyan electric */
+  --accent-2:#a78bfa; /* purple */
 
   --input-bg:rgba(255,255,255,0.08);
   --input-border:rgba(255,255,255,0.16);
@@ -701,7 +714,7 @@ body{
   --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
 
   --accent:#f472b6;
-  --accent-2:#facc15;
+  --accent-2:#facc15; /* yellow pop */
 
   --input-bg:rgba(255,255,255,0.08);
   --input-border:rgba(255,255,255,0.16);
