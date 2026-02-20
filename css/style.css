@@ -477,3 +477,86 @@ body.dark-mode .healthTable tr:hover{
 
 hr{ border:none; border-top: 1px solid var(--border); }
 strong,b{ font-weight: 650; }
+
+
+/* =========================================================
+   🎮 SCRUMMER — Gaming Themes (Overrides)
+   Uses your existing variable system: bg/text/border/accent
+   ========================================================= */
+
+/* ⚡ Neon Arena */
+:root[data-theme="neon"]{
+  --bg-app:#0f0f1a;
+  --bg-panel:#17172a;
+  --bg-soft:rgba(255,255,255,0.06);
+
+  --text-main:rgba(255,255,255,0.92);
+  --text-muted:rgba(200,205,255,0.74);
+  --text-soft:rgba(200,205,255,0.55);
+
+  --border:rgba(99,102,241,0.22);
+  --border-strong:rgba(99,102,241,0.28);
+
+  --shadow:0 18px 44px rgba(0,0,0,0.55);
+  --shadow-soft:0 12px 26px rgba(0,0,0,0.35);
+
+  --accent:#6366f1;
+
+  --input-bg:rgba(255,255,255,0.06);
+  --input-border:rgba(255,255,255,0.14);
+  --input-focus:rgba(99,102,241,0.35);
+}
+
+/* 🧠 Cyber Mint */
+:root[data-theme="cyber"]{
+  --bg-app:#071513;
+  --bg-panel:#0f211f;
+  --bg-soft:rgba(255,255,255,0.06);
+
+  --text-main:rgba(230,255,250,0.92);
+  --text-muted:rgba(125,211,199,0.78);
+  --text-soft:rgba(125,211,199,0.55);
+
+  --border:rgba(16,185,129,0.20);
+  --border-strong:rgba(16,185,129,0.26);
+
+  --shadow:0 18px 44px rgba(0,0,0,0.55);
+  --shadow-soft:0 12px 26px rgba(0,0,0,0.35);
+
+  --accent:#10b981;
+
+  --input-bg:rgba(255,255,255,0.06);
+  --input-border:rgba(255,255,255,0.14);
+  --input-focus:rgba(16,185,129,0.28);
+}
+
+/* 🎲 Retro Arcade */
+:root[data-theme="retro"]{
+  --bg-app:#120f24;
+  --bg-panel:#1a1736;
+  --bg-soft:rgba(255,255,255,0.06);
+
+  --text-main:rgba(255,232,255,0.93);
+  --text-muted:rgba(255,159,243,0.78);
+  --text-soft:rgba(255,159,243,0.55);
+
+  --border:rgba(236,72,153,0.25);
+  --border-strong:rgba(236,72,153,0.32);
+
+  --shadow:0 18px 44px rgba(0,0,0,0.55);
+  --shadow-soft:0 12px 26px rgba(0,0,0,0.35);
+
+  --accent:#ec4899;
+
+  --input-bg:rgba(255,255,255,0.06);
+  --input-border:rgba(255,255,255,0.14);
+  --input-focus:rgba(236,72,153,0.28);
+}
+
+/* Make primary buttons follow --accent automatically */
+.btnPrimary,
+.btnStage-next{
+  background: color-mix(in oklab, var(--accent) 92%, white);
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+  box-shadow: 0 10px 24px color-mix(in oklab, var(--accent) 18%, transparent);
+}
