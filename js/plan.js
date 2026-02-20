@@ -1,12 +1,8 @@
-// js/plan.js — Plan UX v3
-// Fixes requested:
-// 1) Show overcommit ratio formula (done in HTML)
-// 2) Clarify sprint days excludes holidays (HTML)
-// 3) Presets populate velocities too
-// 4) Replace confusing "effective days x 1SP day" with clear language + show live values under formulas
-// 5) Live values/calc updated under Forecast Formulas
-// 6) Save button under presets + save status under it
-// 7) Keep: animation, overcommit highlight, delta, confidence badge, 3-digit clamp
+// js/plan.js — Plan UX v3.1
+// Fixes included in this version:
+// 1) Default "SP per Team Day" = 1.0
+// 2) Over-commit ratio display shows exact math (Committed ÷ Forecast = ratio)
+// 3) Keeps: animation, overcommit highlight, delta, confidence badge, 3-digit clamp
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
@@ -160,7 +156,7 @@
       return;
     }
 
-    const delta = committed - forecast; // + means over-committed
+    const delta = committed - forecast;
     const abs = Math.round(Math.abs(delta));
     const ratio = committed / forecast;
 
@@ -178,7 +174,8 @@
       deltaEl.classList.add("good");
     }
 
-    overEl.textContent = `Over-commit Ratio: ${ratio.toFixed(2)}× (Committed ÷ Forecast)`;
+    // ✅ Now shows EXACT math for clarity
+    overEl.textContent = `Over-commit Ratio: ${committed} ÷ ${Math.round(forecast)} = ${ratio.toFixed(2)}×`;
     overEl.classList.toggle("bad", ratio > 1);
     overEl.classList.toggle("good", ratio <= 1);
 
@@ -253,7 +250,6 @@
     if (!editable) applyVelocityDefaultsFromSetup(setup);
   }
 
-  // -------- Forecast calculations --------
   function calcVelocity(setup) {
     const override = !!qs("forecast_velOverride")?.checked;
 
@@ -272,7 +268,6 @@
     hideWarn();
     const avg = (a + b + c) / 3;
 
-    // confidence from volatility (std/avg)
     const mean = avg || 1;
     const variance = ((a-avg)**2 + (b-avg)**2 + (c-avg)**2) / 3;
     const stdev = Math.sqrt(variance);
@@ -322,7 +317,6 @@
     const effectiveTeamDays = Math.max(0, totalActualDays);
     const forecastSP = effectiveTeamDays * spPerTeamDay;
 
-    // live values shown under formulas
     setCapacityLiveValues(
       `Sprint Days <b>${sprintDays}</b>, Focus <b>${focus}</b> → Ideal/person <b>${idealPerPerson.toFixed(2)}</b><br/>
        Team <b>${teamMembers}</b> → Total Ideal Days <b>${totalIdealDays.toFixed(2)}</b><br/>
@@ -415,7 +409,6 @@
     });
   }
 
-  // -------- Boot --------
   document.addEventListener("DOMContentLoaded", () => {
     attachClampHandlers();
 
@@ -427,57 +420,23 @@
       setSaveStatus("Not saved yet.");
     }
 
-    // defaults for capacity knobs
+    // ✅ DEFAULTS (SP per Team Day must be 1.0)
     if (qs("forecast_focusFactor") && !qs("forecast_focusFactor").value) qs("forecast_focusFactor").value = "0.8";
     if (qs("forecast_leaveWeight") && !qs("forecast_leaveWeight").value) qs("forecast_leaveWeight").value = "1.0";
-    if (qs("forecast_spPerDay") && !qs("forecast_spPerDay").value) qs("forecast_spPerDay").value = "4.0";
+    if (qs("forecast_spPerDay") && !qs("forecast_spPerDay").value) qs("forecast_spPerDay").value = "1.0";
 
-    // Presets (NOW include velocities too)
-    qs("setup_presetExcellent")?.addEventListener("click", () => {
-      qs("setup_sprintDays").value = 10;
-      qs("setup_teamMembers").value = 7;
-      qs("setup_leaveDays").value = 0;
-      qs("setup_committedSP").value = 40;
-      qs("setup_v1").value = 38;
-      qs("setup_v2").value = 41;
-      qs("setup_v3").value = 39;
-      setToast("🟢 Excellent preset applied. (Includes sample velocities.)");
-      renderForecast(readSetupFromUI());
-    });
-
-    qs("setup_presetNormal")?.addEventListener("click", () => {
-      qs("setup_sprintDays").value = 10;
-      qs("setup_teamMembers").value = 6;
-      qs("setup_leaveDays").value = 2;
-      qs("setup_committedSP").value = 38;
-      qs("setup_v1").value = 32;
-      qs("setup_v2").value = 36;
-      qs("setup_v3").value = 34;
-      setToast("🟡 Normal preset applied. (Includes sample velocities.)");
-      renderForecast(readSetupFromUI());
-    });
-
-    qs("setup_presetRisky")?.addEventListener("click", () => {
-      qs("setup_sprintDays").value = 10;
-      qs("setup_teamMembers").value = 5;
-      qs("setup_leaveDays").value = 4;
-      qs("setup_committedSP").value = 42;
-      qs("setup_v1").value = 24;
-      qs("setup_v2").value = 30;
-      qs("setup_v3").value = 22;
-      setToast("🔴 Risky preset applied. (Includes sample velocities.)");
-      renderForecast(readSetupFromUI());
-    });
-
-    qs("forecast_forecastMode")?.addEventListener("change", () => {
-      renderForecast(readSetupFromUI());
-    });
-
-    qs("forecast_velOverride")?.addEventListener("change", () => {
+    // Save button
+    qs("setup_saveBtn")?.addEventListener("click", () => {
       const setup = readSetupFromUI();
-      syncVelOverride(setup);
+      saveSetup(setup);
+      setSaveStatus("Saved ✔");
+      setToast("Saved. Forecast updated below.", true);
       renderForecast(setup);
     });
+
+    // Recalc on mode changes / override
+    qs("forecast_forecastMode")?.addEventListener("change", () => renderForecast(readSetupFromUI()));
+    qs("forecast_velOverride")?.addEventListener("change", () => renderForecast(readSetupFromUI()));
 
     ["forecast_velN1","forecast_velN2","forecast_velN3"].forEach(id => {
       qs(id)?.addEventListener("input", () => renderForecast(readSetupFromUI()));
@@ -487,16 +446,6 @@
       qs(id)?.addEventListener("input", () => renderForecast(readSetupFromUI()));
     });
 
-    // Save button: persists + refreshes forecast
-    qs("setup_saveBtn")?.addEventListener("click", () => {
-      const setup = readSetupFromUI();
-      saveSetup(setup);
-      setSaveStatus("Saved ✔");
-      setToast("Saved. Forecast updated below.", true);
-      renderForecast(setup);
-    });
-
     renderForecast(readSetupFromUI());
   });
-
 })();
