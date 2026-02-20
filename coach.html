@@ -79,27 +79,6 @@
   </style>
 </head>
 
-<!-- Charts Section -->
-<div class="info-banner" style="margin-top:14px;">
-  <div class="kvKey">Sprint Trends</div>
-
-  <div style="display:grid; gap:18px; margin-top:12px;">
-    <div>
-      <div class="mutedText" style="margin-bottom:6px;">Velocity Trend (Completed SP)</div>
-      <canvas id="hist_velocityChart" height="120"></canvas>
-    </div>
-
-    <div>
-      <div class="mutedText" style="margin-bottom:6px;">Commitment vs Completion</div>
-      <canvas id="hist_commitmentChart" height="120"></canvas>
-    </div>
-
-    <div>
-      <div class="mutedText" style="margin-bottom:6px;">Forecast vs Actual Capacity</div>
-      <canvas id="hist_capacityChart" height="120"></canvas>
-    </div>
-  </div>
-</div>
 <body data-page="coach">
   <div class="appShell">
     <aside class="sideNav">
@@ -262,6 +241,29 @@
 
               <div class="mutedText" id="hist_status" style="margin-top:10px;">—</div>
             </div>
+
+<!-- Charts Section -->
+<div class="info-banner" style="margin-top:14px;">
+  <div class="kvKey">Sprint Trends</div>
+
+  <div style="display:grid; gap:18px; margin-top:12px;">
+    <div>
+      <div class="mutedText" style="margin-bottom:6px;">Velocity Trend (Completed SP)</div>
+      <canvas id="hist_velocityChart" height="120"></canvas>
+    </div>
+
+    <div>
+      <div class="mutedText" style="margin-bottom:6px;">Commitment vs Completion</div>
+      <canvas id="hist_commitmentChart" height="120"></canvas>
+    </div>
+
+    <div>
+      <div class="mutedText" style="margin-bottom:6px;">Forecast vs Actual Capacity</div>
+      <canvas id="hist_capacityChart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
             <!-- /added block -->
 
             <div class="info-banner" id="health_toast" style="display:none; margin-top:12px; border-left:4px solid rgba(99,102,241,.55);">—</div>
