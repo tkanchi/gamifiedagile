@@ -2,11 +2,12 @@
 // Fixes:
 //  - Avg Velocity tile wiring (avgVelocityMirror)
 //  - Committed SP tile wiring (committedMirror)
+//  - Capacity Forecast tile wiring (capacityForecastMirror) ✅
 //  - Prevent capacity calculations from leaking into velocity mode
 //  - Over-commit Ratio + Gap ALWAYS anchored to Capacity baseline (even in Velocity mode)
+//  - Sprint Capacity Forecast tile subtext always reflects CAPACITY baseline ✅
 //  - Safe reset function (resetSetupToBlank) + wiring to setup_resetBtn
 //  - Safe rendering even if some IDs are missing
-//  - ✅ Capacity Forecast tile wiring (capacityForecastMirror)
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
@@ -29,7 +30,7 @@
     "forecast_delta","forecast_overcommit","overcommitPill",
 
     // Tiles
-    "capacityForecastMirror", // ✅ NEW (so we can warn if missing)
+    "capacityForecastMirror",
     "committedMirror",
     "avgVelocityMirror",
   ];
@@ -268,8 +269,6 @@
 
   // ✅ Reset (safe, stable)
   function resetSetupToBlank(){
-
-    // Clear primary setup inputs
     const ids = [
       "setup_sprintDays",
       "setup_teamMembers",
@@ -285,26 +284,21 @@
       if(el) el.value = "";
     });
 
-    // Clear velocity override inputs too (if present)
     ["forecast_velN1","forecast_velN2","forecast_velN3"].forEach(id=>{
       const el = qs(id);
       if(el) el.value = "";
     });
 
-    // Reset override toggle
     const ov = qs("forecast_velOverride");
     if(ov) ov.checked = false;
 
-    // Clear saved storage
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
 
-    // Reset UI messages
     hideWarn();
     setSaveStatus("Reset ✔ (not saved)");
     hideToast();
     showToast("Reset done. Enter new sprint details.");
 
-    // Re-render with blank setup
     const freshSetup = readSetupFromUI();
     renderForecast(freshSetup);
   }
@@ -320,11 +314,10 @@
     if(cBox) cBox.style.display = (mode === "capacity") ? "block" : "none";
     if(vFormula) vFormula.style.display = (mode === "velocity") ? "block" : "none";
 
-    // ✅ Hide capacity breakdown when NOT in capacity mode
     if(capVals){
       capVals.style.display = (mode === "capacity") ? "block" : "none";
       if(mode !== "capacity"){
-        capVals.innerHTML = ""; // clear stale capacity calculations (prevents "leak")
+        capVals.innerHTML = "";
       }
     }
   }
@@ -469,7 +462,7 @@
     };
   }
 
-  // ✅ NEW: Capacity baseline forecast (quiet, used for Gap/Over-commit even in Velocity mode)
+  // ✅ Capacity baseline forecast (quiet, used for Gap/Over-commit even in Velocity mode)
   function calcCapacityBaseline(setup){
     const sprintDays=setup.sprintDays;
     const teamMembers=setup.teamMembers;
@@ -509,7 +502,12 @@
 
     // ✅ Always compute capacity baseline for gap/ratio AND capacity tile
     const capacityBaseline = calcCapacityBaseline(setup);
-    setCapacityForecastMirror(capacityBaseline); // ✅ NEW: fixes blank capacity tile
+    setCapacityForecastMirror(capacityBaseline);
+
+    // For the capacity tile subtext
+    const capShown = (capacityBaseline == null || Number.isNaN(capacityBaseline))
+      ? null
+      : Math.round(capacityBaseline);
 
     if(!result){
       setForecastValue(null);
@@ -524,12 +522,21 @@
     setConfidenceBadge(result.confidence);
     setActualFormula(result.html);
 
+    // ✅ IMPORTANT: the Sprint Capacity Forecast tile subtext should always reflect CAPACITY
     if(setup.committedSP != null){
-      setDetails(`Committed ${setup.committedSP} SP vs Forecast ~${Math.round(result.forecastSP)} SP.`);
-      // ✅ Gap/Over-commit ALWAYS vs capacity baseline (even in Velocity mode)
-      setOvercommitUI(setup.committedSP, capacityBaseline);
+      if(capShown != null){
+        setDetails(`Committed ${setup.committedSP} SP vs Capacity ~${capShown} SP.`);
+        setOvercommitUI(setup.committedSP, capacityBaseline);
+      } else {
+        setDetails(`Committed ${setup.committedSP} SP. (Fill capacity inputs to compare.)`);
+        setOvercommitUI(setup.committedSP, null);
+      }
     } else {
-      setDetails(`Forecast ~${Math.round(result.forecastSP)} SP. (Add committed SP to compare.)`);
+      if(capShown != null){
+        setDetails(`Capacity ~${capShown} SP. (Add committed SP to compare.)`);
+      } else {
+        setDetails("—");
+      }
       setOvercommitUI(null, null);
     }
   }
@@ -584,7 +591,7 @@
       renderForecast(setup);
     });
 
-    // reset (safe: only runs if button exists)
+    // reset
     qs("setup_resetBtn")?.addEventListener("click",()=>{
       resetSetupToBlank();
     });
