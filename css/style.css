@@ -1179,3 +1179,36 @@ body{
     padding-bottom: 10px;
   }
 }
+
+
+/* ===== Mobile layout fix: prevent sideNav from consuming full viewport ===== */
+@media (max-width: 900px){
+  html, body{
+    height: auto !important;
+    min-height: 100%;
+    overflow: auto !important;
+  }
+
+  .appShell{
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .sideNav{
+    position: relative !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .main{
+    width: 100% !important;
+    min-width: 0;
+    overflow: visible !important;
+    display: block !important;
+  }
+}
