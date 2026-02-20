@@ -8,6 +8,101 @@
   <link href="css/style.css?v=7" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
+  <style>
+    .planWrap{ max-width: 980px; }
+
+    .splitHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+
+    .forecastCard{
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, color-mix(in oklab, var(--accent) 7%, transparent), transparent),
+        var(--bg-panel);
+      padding: 16px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .forecastTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .forecastNumber{
+      font-size: 34px;
+      font-weight: 850;
+      letter-spacing: -0.6px;
+      line-height: 1.1;
+      display:flex;
+      align-items:baseline;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .forecastNumber .unit{
+      font-size: 14px;
+      font-weight: 650;
+      color: var(--text-muted);
+      letter-spacing: 0.1px;
+    }
+
+    .metaLine{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .deltaPill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      font-weight: 750;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .deltaPill.good{
+      border-color: rgba(34,197,94,.45);
+      background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10));
+    }
+    .deltaPill.bad{
+      border-color: rgba(239,68,68,.55);
+      background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
+    }
+
+    .warnCard{
+      border-left: 4px solid rgba(239,68,68,.55);
+      display:none;
+      margin-top: 12px;
+    }
+
+    .formulaBlock{
+      margin-top: 14px;
+    }
+
+    .helperRow{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+      margin-top: 10px;
+    }
+    .helperRow .info-banner{ flex: 1; min-width: 260px; }
+  </style>
 </head>
 
 <body data-page="plan">
@@ -44,215 +139,240 @@
       </div>
     </div>
 
-    <div class="themeBlock">
+    <div style="margin-top:14px;">
       <div class="mutedText" style="margin-bottom:6px;">🎮 Theme</div>
       <select class="fun-input" id="themeSelect">
         <option value="light">🌤️ Light</option>
+        <option value="mint">🍃 Mint Arcade</option>
         <option value="neon">⚡ Neon Arena</option>
-        <option value="cyber">🍃 Mint Pop</option>
         <option value="retro">🎲 Retro Arcade</option>
       </select>
     </div>
   </aside>
 
   <main class="main">
+    <div class="planWrap">
 
-    <!-- ================= SETUP ================= -->
-    <section class="sectionCard">
-      <div class="sectionHeaderRow">
-        <div>
-          <h1 class="sectionTitle">Enter Sprint History</h1>
-          <p class="sectionSub">Enter these once. Forecast updates below when you click Save.</p>
-        </div>
-        <button class="btnStage btnStage-next" id="saveBtn" type="button">Save</button>
-      </div>
-
-      <div class="info-banner">
-        <strong>Tip:</strong> Accurate history = better confidence + fewer surprises.
-      </div>
-
-      <div class="fieldGrid" style="margin-top:14px;">
-        <div>
-          <div class="kvKey">Sprint length (working days)</div>
-          <input class="fun-input numSm int3" id="setup_sprintDays" type="number" min="1" max="999" placeholder="10" />
-        </div>
-
-        <div>
-          <div class="kvKey">Team members</div>
-          <input class="fun-input numSm int3" id="setup_teamMembers" type="number" min="1" max="999" placeholder="7" />
-        </div>
-
-        <div>
-          <div class="kvKey">Leave days (total person-days)</div>
-          <input class="fun-input numSm int3" id="setup_leaveDays" type="number" min="0" max="999" placeholder="0" />
-        </div>
-
-        <div>
-          <div class="kvKey">Committed story points</div>
-          <input class="fun-input numSm int3" id="setup_committedSP" type="number" min="0" max="999" placeholder="40" />
-        </div>
-      </div>
-
-      <div class="info-banner" style="margin-top:14px;">
-        <div class="kvKey">Last 3 sprint velocities (completed SP)</div>
-        <div class="mutedText">Used for Velocity forecast + confidence. Presets won’t fill these.</div>
-
-        <div class="velocityRow" style="margin-top:12px;">
-          <div class="velItem">
-            <div class="velLabel">Sprint N-1</div>
-            <input class="fun-input numSm int3" id="setup_v1" type="number" min="0" max="999" placeholder="36" />
-          </div>
-          <div class="velItem">
-            <div class="velLabel">Sprint N-2</div>
-            <input class="fun-input numSm int3" id="setup_v2" type="number" min="0" max="999" placeholder="41" />
-          </div>
-          <div class="velItem">
-            <div class="velLabel">Sprint N-3</div>
-            <input class="fun-input numSm int3" id="setup_v3" type="number" min="0" max="999" placeholder="38" />
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:14px;">
-        <div class="kvKey">Quick presets</div>
-        <div class="btnRow" style="margin-top:8px;">
-          <button class="btnGhost" id="setup_presetExcellent" type="button">🟢 Excellent</button>
-          <button class="btnGhost" id="setup_presetNormal" type="button">🟡 Normal</button>
-          <button class="btnGhost" id="setup_presetRisky" type="button">🔴 Risky</button>
-        </div>
-        <div class="mutedText" style="margin-top:8px;">Presets fill only Sprint/Team/Leaves/Committed. Velocities are always manual.</div>
-      </div>
-
-      <div class="info-banner" id="setup_toast" style="display:none; margin-top:14px; border-left:4px solid color-mix(in oklab, var(--accent) 55%, transparent);">
-        —
-      </div>
-
-      <div class="info-banner" style="margin-top:14px;">
-        <div class="kvKey">Save status</div>
-        <div class="mutedText" id="setup_saveStatus">Not saved yet.</div>
-      </div>
-    </section>
-
-    <!-- ================= FORECAST ================= -->
-    <section class="sectionCard" style="margin-top:16px;" id="forecastCard">
-      <div class="forecastHeader">
-        <div>
-          <h2 class="sectionTitle" style="font-size:22px;">Forecast</h2>
-          <p class="sectionSub" style="margin-top:4px;">Updates when you click Save. Velocity auto-runs by default.</p>
-        </div>
-
-        <div class="forecastMeta">
-          <span class="confidenceBadge" id="confidenceBadge">Confidence: —</span>
-          <span class="miniTag" id="overcommitTag" style="display:none;">⚠ Over-commit</span>
-        </div>
-      </div>
-
-      <div class="info-banner" style="margin-top:10px;">
-        <div class="kvKey">Forecast Mode</div>
-        <select class="fun-input" id="forecast_forecastMode" style="max-width:420px;">
-          <option value="velocity" selected>🔵 Velocity</option>
-          <option value="capacity">🟢 Capacity</option>
-        </select>
-        <div class="mutedText" style="margin-top:6px;">
-          Velocity shows results immediately using your last 3 sprint velocities.
-        </div>
-      </div>
-
-      <!-- Velocity -->
-      <div class="info-banner" id="forecast_velocityBox" style="margin-top:14px;">
-        <div class="kvKey">🔵 Velocity Forecast</div>
-
-        <div class="toggleRow" style="margin-top:10px;">
-          <input id="forecast_velOverride" type="checkbox" />
-          <label for="forecast_velOverride">Override velocities for this forecast</label>
-        </div>
-
-        <div class="velocityRow" style="margin-top:12px;">
-          <div class="velItem">
-            <div class="velLabel">N-1</div>
-            <input class="fun-input numSm int3" id="forecast_velN1" type="number" min="0" max="999" disabled />
-          </div>
-          <div class="velItem">
-            <div class="velLabel">N-2</div>
-            <input class="fun-input numSm int3" id="forecast_velN2" type="number" min="0" max="999" disabled />
-          </div>
-          <div class="velItem">
-            <div class="velLabel">N-3</div>
-            <input class="fun-input numSm int3" id="forecast_velN3" type="number" min="0" max="999" disabled />
-          </div>
-        </div>
-
-        <div class="formulaBox" id="velocityFormulaBox" style="margin-top:12px;">
-          <div class="kvKey">📘 Velocity Formula</div>
-          <div class="mutedText">(Sprint N + Sprint N-1 + Sprint N-2) / 3</div>
-        </div>
-      </div>
-
-      <!-- Capacity -->
-      <div class="info-banner" id="forecast_capacityBox" style="margin-top:14px; display:none;">
-        <div class="kvKey">🟢 Capacity Forecast</div>
-
-        <div class="fieldGrid3" style="margin-top:12px;">
+      <section class="sectionCard">
+        <div class="splitHeader">
           <div>
-            <div class="velLabel">Focus Factor (0–1)</div>
-            <input class="fun-input numSm" id="forecast_focusFactor" type="number" min="0" max="1" step="0.05" value="0.60" />
-          </div>
-          <div>
-            <div class="velLabel">Leaves Weight (0–1)</div>
-            <input class="fun-input numSm" id="forecast_weight" type="number" min="0" max="1" step="0.05" value="0.50" />
-          </div>
-          <div>
-            <div class="velLabel">SP / Day (per member)</div>
-            <input class="fun-input numSm" id="forecast_spPerDay" type="number" min="0" max="999" step="0.1" value="4.0" />
+            <h1 class="sectionTitle">Enter Sprint History</h1>
+            <p class="sectionSub">Enter once. Forecast updates immediately when you hit <b>Save</b>.</p>
           </div>
         </div>
 
-        <div class="formulaBox" id="capacityFormulaBox" style="margin-top:12px;">
-          <div class="kvKey">📘 Forecast Formulas (Reference)</div>
-          <div class="mutedText" style="line-height:1.7;">
-            <b>1) Ideal Capacity (Days per person)</b><br/>
-            Ideal = Sprint Days × Focus Factor<br/><br/>
-            <b>2) Total Ideal Capacity (Days)</b><br/>
-            Total Ideal Days = Team Count × Ideal<br/><br/>
-            <b>3) Total Actual Capacity (Days)</b><br/>
-            Total Actual Days = Total Ideal Days − (Leaves × Weight)<br/><br/>
-            <b>4) Total Actual Capacity (SP)</b><br/>
-            Forecast SP = max(0, Total Actual Days) × SP/day
-          </div>
-        </div>
-      </div>
-
-      <!-- Results -->
-      <div class="resultsWrap" id="resultsWrap" style="margin-top:14px;">
-        <div class="resultsMain">
-          <div class="resultLabel">Forecast</div>
-          <div class="resultNumber" id="forecastNumber">—</div>
-          <div class="resultSub" id="forecastSub">Save to generate forecast.</div>
+        <div class="info-banner">
+          <strong>Tip:</strong> Sprint length = <b>working days only</b> (exclude weekends + holidays). Leave days are already handled separately.
         </div>
 
-        <div class="resultsSide">
-          <div class="miniStat">
-            <div class="miniLabel">Committed</div>
-            <div class="miniValue" id="committedValue">—</div>
+        <div style="margin-top:12px;">
+          <div class="fieldGrid fieldGrid-even">
+            <div>
+              <div class="kvKey" style="margin-bottom:6px;">Sprint length (working days only)</div>
+              <input class="fun-input numSm" id="setup_sprintDays" type="number" min="0" max="999" step="1" inputmode="numeric" />
+            </div>
+
+            <div>
+              <div class="kvKey" style="margin-bottom:6px;">Team members</div>
+              <input class="fun-input numSm" id="setup_teamMembers" type="number" min="0" max="999" step="1" inputmode="numeric" />
+            </div>
+
+            <div>
+              <div class="kvKey" style="margin-bottom:6px;">Leave days (total person-days)</div>
+              <input class="fun-input numSm" id="setup_leaveDays" type="number" min="0" max="999" step="1" inputmode="numeric" />
+            </div>
+
+            <div>
+              <div class="kvKey" style="margin-bottom:6px;">Committed story points</div>
+              <input class="fun-input numSm" id="setup_committedSP" type="number" min="0" max="999" step="1" inputmode="numeric" />
+            </div>
           </div>
-          <div class="miniStat">
-            <div class="miniLabel">Delta (Committed − Forecast)</div>
-            <div class="miniValue" id="deltaValue">—</div>
+
+          <div class="info-banner" style="margin-top:14px;">
+            <div class="kvKey">Last 3 sprint velocities (completed SP)</div>
+            <div class="mutedText" style="margin-top:6px;">Used for Velocity forecast + volatility confidence.</div>
+
+            <div class="velocityRow" style="margin-top:10px;">
+              <div class="velItem">
+                <div class="velLabel">Sprint N-1</div>
+                <input class="fun-input numSm" id="setup_v1" type="number" min="0" max="999" step="1" inputmode="numeric" />
+              </div>
+              <div class="velItem">
+                <div class="velLabel">Sprint N-2</div>
+                <input class="fun-input numSm" id="setup_v2" type="number" min="0" max="999" step="1" inputmode="numeric" />
+              </div>
+              <div class="velItem">
+                <div class="velLabel">Sprint N-3</div>
+                <input class="fun-input numSm" id="setup_v3" type="number" min="0" max="999" step="1" inputmode="numeric" />
+              </div>
+            </div>
           </div>
-          <div class="miniStat">
-            <div class="miniLabel">Over-commit Ratio</div>
-            <div class="miniValue" id="overcommitRatio">—</div>
+
+          <!-- Presets -->
+          <div style="margin-top:14px;">
+            <div class="kvKey" style="margin-bottom:6px;">Quick presets</div>
+            <div class="mutedText" style="margin-top:-2px;">Sets team + days + leaves + commitment + sample velocities (edit anytime).</div>
+            <div class="btnRow" style="margin-top:10px;">
+              <button class="btnGhost" id="setup_presetExcellent" type="button">🟢 Excellent</button>
+              <button class="btnGhost" id="setup_presetNormal" type="button">🟡 Normal</button>
+              <button class="btnGhost" id="setup_presetRisky" type="button">🔴 Risky</button>
+            </div>
           </div>
+
+          <!-- Save button under presets -->
+          <div style="margin-top:14px;">
+            <button class="btnStage btnStage-next" id="setup_saveBtn" type="button">Save</button>
+            <div class="mutedText" id="setup_saveStatus" style="margin-top:8px;">Not saved yet.</div>
+          </div>
+
+          <div class="info-banner" id="setup_toast" style="display:none; margin-top:14px; border-left:4px solid color-mix(in oklab, var(--accent) 55%, transparent);">
+            —
+          </div>
+
+          <!-- ================= FORECAST ================= -->
+          <div class="forecastCard" id="forecastCard">
+            <div class="forecastTop">
+              <div>
+                <div class="kvKey">Forecast</div>
+                <div class="mutedText" id="forecast_setupSummary" style="margin-top:6px;">—</div>
+              </div>
+
+              <div>
+                <span class="badge" id="confidenceBadge">Confidence: —</span>
+              </div>
+            </div>
+
+            <div style="margin-top:14px; max-width:560px;">
+              <div class="kvKey">Forecast Mode</div>
+              <select class="fun-input" id="forecast_forecastMode">
+                <option value="velocity">🔵 Velocity-Based (Avg of last 3)</option>
+                <option selected value="capacity">🟢 Capacity-Based (Focus + Leaves Weight)</option>
+              </select>
+            </div>
+
+            <!-- Overcommit explainer always visible -->
+            <div class="info-banner" style="margin-top:14px;">
+              <div class="kvKey">📘 What is Over-commit Ratio?</div>
+              <div class="mutedText" style="margin-top:6px;">
+                <b>Over-commit Ratio = Committed SP ÷ Forecast SP</b><br/>
+                If ratio > 1 → you're committing more than forecast (risk). If < 1 → buffer.
+              </div>
+            </div>
+
+            <!-- Velocity Mode -->
+            <div class="info-banner" id="forecast_velocityBox" style="margin-top:14px; display:none;">
+              <div class="kvKey">🔵 Velocity-Based</div>
+              <div class="mutedText" style="margin-top:6px;">Formula: (N-1 + N-2 + N-3) / 3</div>
+
+              <div class="toggleRow" style="margin-top:10px;">
+                <input id="forecast_velOverride" type="checkbox" />
+                <label for="forecast_velOverride">Override velocities (otherwise uses setup)</label>
+              </div>
+
+              <div class="velocityRow" style="margin-top:10px;">
+                <div class="velItem">
+                  <div class="velLabel">Sprint N-1</div>
+                  <input class="fun-input numSm" id="forecast_velN1" type="number" min="0" max="999" step="1" inputmode="numeric" disabled />
+                </div>
+                <div class="velItem">
+                  <div class="velLabel">Sprint N-2</div>
+                  <input class="fun-input numSm" id="forecast_velN2" type="number" min="0" max="999" step="1" inputmode="numeric" disabled />
+                </div>
+                <div class="velItem">
+                  <div class="velLabel">Sprint N-3</div>
+                  <input class="fun-input numSm" id="forecast_velN3" type="number" min="0" max="999" step="1" inputmode="numeric" disabled />
+                </div>
+              </div>
+            </div>
+
+            <!-- Capacity Mode -->
+            <div class="info-banner" id="forecast_capacityBox" style="margin-top:14px;">
+              <div class="kvKey">🟢 Capacity-Based</div>
+              <div class="mutedText" style="margin-top:6px;">
+                Uses your sprint days + team + leaves to compute <b>Effective Team Days</b>, then multiplies by <b>SP per Team Day</b>.
+              </div>
+
+              <div class="fieldGrid fieldGrid-even" style="margin-top:10px;">
+                <div>
+                  <div class="velLabel">Focus factor (0.1–1.0)</div>
+                  <input class="fun-input numSm" id="forecast_focusFactor" type="number" min="0.1" max="1" step="0.05" inputmode="decimal" />
+                </div>
+
+                <div>
+                  <div class="velLabel">Leaves weight (0.5–1.5)</div>
+                  <input class="fun-input numSm" id="forecast_leaveWeight" type="number" min="0.5" max="1.5" step="0.1" inputmode="decimal" />
+                </div>
+
+                <div>
+                  <div class="velLabel">SP per Team Day</div>
+                  <input class="fun-input numSm" id="forecast_spPerDay" type="number" min="0" max="999" step="0.1" inputmode="decimal" />
+                </div>
+              </div>
+
+              <!-- Reference formulas + live values -->
+              <div class="formulaBlock" id="forecast_formulaReference">
+                <div class="kvKey" style="margin-bottom:6px;">📘 Forecast Formulas (Reference)</div>
+
+                <div><b>1) Ideal Capacity (Days per person)</b></div>
+                <div>Ideal = Sprint Days × Focus Factor</div>
+
+                <div style="margin-top:8px;"><b>2) Total Ideal Capacity (Days)</b></div>
+                <div>Total Ideal Days = Team Count × Ideal</div>
+
+                <div style="margin-top:8px;"><b>3) Total Actual Capacity (Days)</b></div>
+                <div>Total Actual Days = Total Ideal Days − (Leaves × Weight)</div>
+
+                <div style="margin-top:8px;"><b>4) Total Actual Capacity (SP)</b></div>
+                <div>Forecast SP = max(0, Total Actual Days) × SP per Team Day</div>
+
+                <div class="info-banner" style="margin-top:12px;">
+                  <div class="kvKey">📌 Current Values</div>
+                  <div class="mutedText" id="capacity_liveValues" style="margin-top:6px;">Save to see live values here.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-banner warnCard" id="forecast_warnBox">
+              <div class="kvKey">⚠ Fix inputs</div>
+              <div id="forecast_warnText" class="mutedText" style="margin-top:6px;"></div>
+            </div>
+
+            <div style="margin-top:14px;">
+              <div class="kvKey">Result</div>
+
+              <div class="forecastNumber">
+                <span id="forecast_value" class="forecastValue">—</span>
+                <span class="unit">SP</span>
+                <span class="deltaPill" id="overcommitPill" style="display:none;">—</span>
+              </div>
+
+              <div class="metaLine">
+                <span id="forecast_delta" class="deltaPill" style="display:none;">—</span>
+                <span id="forecast_overcommit" class="deltaPill" style="display:none;">—</span>
+              </div>
+
+              <div class="helperRow">
+                <div class="info-banner">
+                  <div class="kvKey">Details</div>
+                  <div class="mutedText" id="forecast_detailLine" style="margin-top:6px;">—</div>
+                </div>
+
+                <div class="info-banner" id="forecast_formulaVelocity" style="display:none;">
+                  <div class="kvKey">📘 Velocity Formula</div>
+                  <div class="mutedText" style="margin-top:6px;">(Sprint N-1 + Sprint N-2 + Sprint N-3) / 3</div>
+                </div>
+              </div>
+
+              <div class="info-banner" id="forecast_formulaActual" style="margin-top:12px;">
+                Save to see calculation details here.
+              </div>
+            </div>
+          </div>
+          <!-- /forecast -->
         </div>
-      </div>
+      </section>
 
-      <div class="info-banner" id="forecast_warnBox" style="display:none; margin-top:12px;">
-        <div class="kvKey">⚠ Check Inputs</div>
-        <div id="forecast_warnText" class="mutedText" style="margin-top:6px;"></div>
-      </div>
-
-    </section>
-
+    </div>
   </main>
 </div>
 
