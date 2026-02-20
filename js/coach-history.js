@@ -1,445 +1,371 @@
-// js/coach-history.js — Scrummer Coach (Sprint History v1.2)
-// Safe add-on: does NOT depend on existing coach.js internals.
-// Features:
-//  - 6-sprint editable table (Sprint N-6 .. Sprint N-1)
-//  - Save/Load to localStorage
-//  - Reset (clear localStorage + reset UI)
-//  - Auto-fill from Plan localStorage: committed (N-1) + last 3 velocities as completed (N-1..N-3)
-//  - CSV upload (template format) + template download
-//  - Demo data loader with variant dropdown (stable / recovery / overcommit)
+// js/coach-history.js — Scrummer Coach (History Table)
+// - 6 sprints: N-6 → N-1
+// - Save/Reset
+// - Demo data variants
+// - CSV upload + template download
+// - Emits: window.ScrummerCoachHistory.getRows()
 
-(function () {
-  const qs = (id) => document.getElementById(id);
+(() => {
+  const KEY = "scrummer_coach_history_v1";
 
-  const HISTORY_KEY = "scrummer_sprint_history_v1";
-  const PLAN_KEY = "scrummer_plan_setup_v3";
+  const $ = (id) => document.getElementById(id);
 
-  const ROW_COUNT = 6;
-  // Historical ONLY (no Sprint N here)
-  const DEFAULT_ROWS = ["Sprint N-6", "Sprint N-5", "Sprint N-4", "Sprint N-3", "Sprint N-2", "Sprint N-1"];
+  const SPRINTS = ["Sprint N-6","Sprint N-5","Sprint N-4","Sprint N-3","Sprint N-2","Sprint N-1"];
 
-  // Forecast capacity estimation defaults (matches Plan defaults)
-  const DEFAULT_FOCUS = 0.60;
-  const DEFAULT_LEAVE_WEIGHT = 1.0;
-  const DEFAULT_SP_PER_TEAM_DAY = 1.0;
+  function safeParse(str, fallback){
+    try { return JSON.parse(str); } catch { return fallback; }
+  }
 
-  function num(v) {
+  function numOrBlank(v){
+    if (v === "" || v === null || v === undefined) return "";
     const n = Number(v);
-    return Number.isFinite(n) ? n : null;
+    return Number.isFinite(n) ? n : "";
   }
 
-  function clampInt3(n){
-    if(!Number.isFinite(n)) return null;
-    const x = Math.round(n);
-    return Math.max(0, Math.min(999, x));
+  function clamp0(n){
+    n = Number(n);
+    if (!Number.isFinite(n)) return "";
+    return Math.max(0, n);
   }
 
-  function setStatus(msg){
-    const el = qs("hist_status");
-    if(el) el.textContent = msg || "—";
-  }
-
-  function safeParse(str, fallback) { try { return JSON.parse(str); } catch { return fallback; } }
-
-  function loadHistory(){
-    try{
-      const raw = localStorage.getItem(HISTORY_KEY);
-      if(!raw) return null;
-      const data = safeParse(raw, null);
-      if(!Array.isArray(data)) return null;
-      return data;
-    }catch{
-      return null;
-    }
-  }
-
-  function saveHistory(rows){
-    try{
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(rows));
-      return true;
-    }catch{
-      return false;
-    }
-  }
-
-  function clearHistory(){
-    try{ localStorage.removeItem(HISTORY_KEY); }catch{}
-  }
-
-  function loadPlanSetup(){
-    try{
-      const raw = localStorage.getItem(PLAN_KEY);
-      if(!raw) return null;
-      return safeParse(raw, null);
-    }catch{
-      return null;
-    }
-  }
-
-  function calcCapacityForecastFromPlan(plan){
-    if(!plan) return null;
-
-    const sprintDays = clampInt3(num(plan.sprintDays));
-    const teamMembers = clampInt3(num(plan.teamMembers));
-    const leaveDays = clampInt3(num(plan.leaveDays));
-
-    if([sprintDays, teamMembers, leaveDays].some(v => v == null)) return null;
-
-    const idealPerPerson = sprintDays * DEFAULT_FOCUS;
-    const totalIdealDays = teamMembers * idealPerPerson;
-    const totalActualDays = totalIdealDays - (leaveDays * DEFAULT_LEAVE_WEIGHT);
-    const effectiveDays = Math.max(0, totalActualDays);
-    const forecastSP = effectiveDays * DEFAULT_SP_PER_TEAM_DAY;
-
-    return forecastSP;
-  }
-
-  function makeBlankRows(){
-    return DEFAULT_ROWS.map((label) => ({
-      sprint: label,
-      forecastCapacity: null,
-      actualCapacity: null,
-      committedSP: null,
-      completedSP: null,
-      addedMid: null,
-      removedMid: null,
-      sickLeaveDays: null,
-      _meta: { auto: {} }
+  function defaultRows(){
+    return SPRINTS.map(s => ({
+      sprint: s,
+      forecastCap: "",
+      actualCap: "",
+      committed: "",
+      completed: "",
+      addedMid: "",
+      removedMid: "",
+      sickLeave: ""
     }));
   }
 
-  function normalizeRows(rows){
-    const base = makeBlankRows();
-    if(!Array.isArray(rows)) return base;
+  function loadRows(){
+    const raw = localStorage.getItem(KEY);
+    const rows = safeParse(raw || "null", null);
+    if (!Array.isArray(rows) || rows.length !== 6) return defaultRows();
 
-    return base.map((b, i) => {
-      const r = rows[i] || {};
-      return {
-        sprint: r.sprint || b.sprint,
-        forecastCapacity: num(r.forecastCapacity),
-        actualCapacity: num(r.actualCapacity),
-        committedSP: num(r.committedSP),
-        completedSP: num(r.completedSP),
-        addedMid: num(r.addedMid),
-        removedMid: num(r.removedMid),
-        sickLeaveDays: num(r.sickLeaveDays),
-        _meta: r._meta && typeof r._meta === "object" ? r._meta : { auto: {} }
-      };
-    });
+    // normalize
+    return rows.map((r, i) => ({
+      sprint: SPRINTS[i],
+      forecastCap: numOrBlank(r.forecastCap),
+      actualCap: numOrBlank(r.actualCap),
+      committed: numOrBlank(r.committed),
+      completed: numOrBlank(r.completed),
+      addedMid: numOrBlank(r.addedMid),
+      removedMid: numOrBlank(r.removedMid),
+      sickLeave: numOrBlank(r.sickLeave),
+    }));
   }
 
-  function renderTable(rows){
-    const tbody = qs("hist_rows");
-    if(!tbody) return;
+  function saveRows(rows){
+    localStorage.setItem(KEY, JSON.stringify(rows));
+  }
 
+  function setStatus(msg){
+    const el = $("hist_status");
+    if (el) el.textContent = msg || "—";
+  }
+
+  function emitChanged(){
+    window.dispatchEvent(new CustomEvent("scrummer:historyChanged"));
+  }
+
+  function cellInput({ value, onInput, placeholder="—" }){
+    const inp = document.createElement("input");
+    inp.className = "fun-input numSm";
+    inp.type = "number";
+    inp.min = "0";
+    inp.max = "9999";
+    inp.step = "1";
+    inp.inputMode = "numeric";
+    inp.value = (value === "" ? "" : String(value));
+    inp.placeholder = placeholder;
+    inp.addEventListener("input", () => onInput(inp.value));
+    return inp;
+  }
+
+  function render(){
+    const tbody = $("hist_rows");
+    if (!tbody) return;
+
+    const rows = loadRows();
     tbody.innerHTML = "";
 
-    rows.slice(0, ROW_COUNT).forEach((r, idx) => {
+    rows.forEach((r, idx) => {
       const tr = document.createElement("tr");
 
-      const tdSprint = document.createElement("td");
-      tdSprint.innerHTML = `<span class="histSprint">${r.sprint || DEFAULT_ROWS[idx]}</span>`;
-      tr.appendChild(tdSprint);
+      // Sprint label
+      const tdS = document.createElement("td");
+      tdS.style.fontWeight = "850";
+      tdS.textContent = r.sprint;
+      tr.appendChild(tdS);
 
-      function addNumCell(field, placeholder){
+      function addNumCell(key){
         const td = document.createElement("td");
-        td.setAttribute("align","right");
-
-        const inp = document.createElement("input");
-        inp.className = "fun-input numSm histNum";
-        inp.type = "number";
-        inp.min = "0";
-        inp.max = "999";
-        inp.step = "1";
-        inp.inputMode = "numeric";
-        inp.placeholder = placeholder || "—";
-        inp.value = (r[field] == null || Number.isNaN(r[field])) ? "" : String(Math.round(r[field]));
-
-        inp.addEventListener("input", () => {
-          const v = clampInt3(num(inp.value));
-          r[field] = v;
-          if(r._meta && r._meta.auto) r._meta.auto[field] = false;
-        });
-
-        td.appendChild(inp);
-
-        const isAuto = !!(r._meta && r._meta.auto && r._meta.auto[field]);
-        if(isAuto){
-          const pill = document.createElement("span");
-          pill.className = "histAutoPill";
-          pill.textContent = "Auto";
-          td.appendChild(pill);
-        }
-
+        td.align = "right";
+        td.appendChild(cellInput({
+          value: r[key],
+          onInput: (v) => {
+            const rowsNow = loadRows();
+            rowsNow[idx][key] = clamp0(v === "" ? "" : Number(v));
+            saveRows(rowsNow);
+            setStatus("Edited (not saved as snapshot — charts update on Save / Demo / CSV).");
+          }
+        }));
         tr.appendChild(td);
       }
 
-      addNumCell("forecastCapacity","—");
-      addNumCell("actualCapacity","—");
-      addNumCell("committedSP","—");
-      addNumCell("completedSP","—");
-      addNumCell("addedMid","0");
-      addNumCell("removedMid","0");
-      addNumCell("sickLeaveDays","0");
+      addNumCell("forecastCap");
+      addNumCell("actualCap");
+      addNumCell("committed");
+      addNumCell("completed");
+      addNumCell("addedMid");
+      addNumCell("removedMid");
+      addNumCell("sickLeave");
 
       tbody.appendChild(tr);
     });
+
+    setStatus("Ready.");
   }
 
-  function doSave(rows){
-    const ok = saveHistory(rows);
-    setStatus(ok ? "Saved ✔ Sprint history stored locally." : "Could not save (browser storage blocked).");
-  }
+  // ---------- Demo data ----------
+  function demoRows(variant){
+    const v = String(variant || "recovery");
 
-  function doReset(){
-    clearHistory();
-    const rows = makeBlankRows();
-    renderTable(rows);
-    setStatus("Reset ✔ Table cleared.");
-    return rows;
-  }
-
-  // Auto-fill strategy:
-  // - Map Plan committedSP + capacity forecast to latest sprint: Sprint N-1 (last row)
-  // - Map v1,v2,v3 (N-1,N-2,N-3 velocities) to completedSP on corresponding rows:
-  //    N-1 => last row
-  //    N-2 => second last
-  //    N-3 => third last
-  function doAutofill(rows){
-    const plan = loadPlanSetup();
-    if(!plan){
-      setStatus("No Plan setup found. Go to Plan → Save once, then try Auto-fill.");
-      return rows;
+    if (v === "stable") {
+      // steady velocity, low churn, good predictability
+      const base = [
+        {fc:38, ac:36, com:36, done:35, add:2, rem:1, sick:1},
+        {fc:40, ac:39, com:40, done:39, add:3, rem:2, sick:0},
+        {fc:39, ac:38, com:38, done:38, add:2, rem:1, sick:1},
+        {fc:41, ac:40, com:41, done:40, add:2, rem:2, sick:0},
+        {fc:40, ac:39, com:39, done:39, add:1, rem:1, sick:0},
+        {fc:42, ac:41, com:41, done:41, add:2, rem:1, sick:0},
+      ];
+      return base.map((x,i)=>({
+        sprint: SPRINTS[i],
+        forecastCap:x.fc, actualCap:x.ac,
+        committed:x.com, completed:x.done,
+        addedMid:x.add, removedMid:x.rem,
+        sickLeave:x.sick
+      }));
     }
 
-    const committed = clampInt3(num(plan.committedSP));
-    const capForecast = calcCapacityForecastFromPlan(plan);
+    if (v === "overcommit") {
+      // overcommit streak then correction
+      const base = [
+        {fc:34, ac:32, com:44, done:30, add:10, rem:2, sick:2},
+        {fc:35, ac:33, com:46, done:31, add:9,  rem:3, sick:1},
+        {fc:36, ac:34, com:45, done:33, add:8,  rem:4, sick:1},
+        {fc:36, ac:35, com:42, done:35, add:5,  rem:5, sick:1},
+        {fc:38, ac:37, com:39, done:37, add:3,  rem:4, sick:0},
+        {fc:40, ac:39, com:38, done:39, add:2,  rem:3, sick:0},
+      ];
+      return base.map((x,i)=>({
+        sprint: SPRINTS[i],
+        forecastCap:x.fc, actualCap:x.ac,
+        committed:x.com, completed:x.done,
+        addedMid:x.add, removedMid:x.rem,
+        sickLeave:x.sick
+      }));
+    }
 
-    const idxN1 = ROW_COUNT - 1; // last row = Sprint N-1
-
-    rows[idxN1].committedSP = committed;
-    rows[idxN1].forecastCapacity = capForecast != null ? Math.round(capForecast) : null;
-    rows[idxN1]._meta = rows[idxN1]._meta || { auto: {} };
-    rows[idxN1]._meta.auto = rows[idxN1]._meta.auto || {};
-    if(committed != null) rows[idxN1]._meta.auto.committedSP = true;
-    if(capForecast != null) rows[idxN1]._meta.auto.forecastCapacity = true;
-
-    const v1 = clampInt3(num(plan.v1)); // N-1
-    const v2 = clampInt3(num(plan.v2)); // N-2
-    const v3 = clampInt3(num(plan.v3)); // N-3
-
-    const map = [
-      { row: idxN1,     v: v1 }, // N-1
-      { row: idxN1 - 1, v: v2 }, // N-2
-      { row: idxN1 - 2, v: v3 }, // N-3
+    // recovery (default): chaos → improved predictability
+    const base = [
+      {fc:30, ac:24, com:40, done:18, add:14, rem:3, sick:4},
+      {fc:32, ac:28, com:42, done:24, add:12, rem:5, sick:3},
+      {fc:35, ac:32, com:40, done:30, add:8,  rem:6, sick:2},
+      {fc:38, ac:36, com:39, done:34, add:6,  rem:5, sick:2},
+      {fc:40, ac:38, com:38, done:37, add:3,  rem:4, sick:1},
+      {fc:42, ac:40, com:40, done:40, add:2,  rem:3, sick:1},
     ];
+    return base.map((x,i)=>({
+      sprint: SPRINTS[i],
+      forecastCap:x.fc, actualCap:x.ac,
+      committed:x.com, completed:x.done,
+      addedMid:x.add, removedMid:x.rem,
+      sickLeave:x.sick
+    }));
+  }
 
-    map.forEach(({row, v}) => {
-      if(row < 0) return;
-      rows[row]._meta = rows[row]._meta || { auto: {} };
-      rows[row]._meta.auto = rows[row]._meta.auto || {};
-      if(v != null){
-        rows[row].completedSP = v;
-        rows[row]._meta.auto.completedSP = true;
-      }
+  // ---------- CSV ----------
+  function toCsv(rows){
+    const header = ["sprint","forecastCap","actualCap","committed","completed","addedMid","removedMid","sickLeave"];
+    const lines = [header.join(",")];
+
+    rows.forEach(r => {
+      const vals = header.map(k => {
+        const v = r[k] ?? "";
+        const s = String(v);
+        // simple escaping
+        if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+          return `"${s.replaceAll('"','""')}"`;
+        }
+        return s;
+      });
+      lines.push(vals.join(","));
     });
 
-    renderTable(rows);
-    setStatus("Auto-fill applied ✨ You can override any cell.");
-    return rows;
+    return lines.join("\n");
   }
 
-  // Demo scenarios (6 rows: N-6..N-1, oldest->newest)
-  function makeDemoRows(variant){
-    const rows = makeBlankRows();
-
-    // sprint, forecast, actual, committed, completed, added, removed, sick
-    let demo;
-
-    if(variant === "stable"){
-      demo = [
-        ["Sprint N-6", 34, 34, 35, 34, 1, 1, 0],
-        ["Sprint N-5", 36, 35, 36, 35, 2, 1, 1],
-        ["Sprint N-4", 35, 35, 34, 35, 1, 2, 0],
-        ["Sprint N-3", 37, 36, 36, 36, 2, 1, 1],
-        ["Sprint N-2", 36, 36, 36, 36, 1, 1, 0],
-        ["Sprint N-1", 38, 37, 38, 37, 2, 2, 1],
-      ];
-    } else if(variant === "overcommit"){
-      demo = [
-        ["Sprint N-6", 36, 35, 42, 34, 6, 1, 2],
-        ["Sprint N-5", 35, 34, 41, 33, 7, 2, 1],
-        ["Sprint N-4", 37, 35, 43, 34, 8, 2, 3],
-        ["Sprint N-3", 36, 34, 44, 32, 9, 3, 2],
-        ["Sprint N-2", 38, 36, 40, 35, 5, 4, 1],
-        ["Sprint N-1", 39, 38, 37, 38, 2, 5, 0], // correction
-      ];
-    } else {
-      // "recovery" default
-      demo = [
-        ["Sprint N-6", 33, 32, 36, 30, 6, 1, 3],
-        ["Sprint N-5", 34, 32, 37, 31, 7, 2, 2],
-        ["Sprint N-4", 35, 33, 36, 32, 5, 3, 4],
-        ["Sprint N-3", 36, 34, 35, 34, 3, 4, 2],
-        ["Sprint N-2", 37, 36, 36, 36, 2, 3, 1],
-        ["Sprint N-1", 39, 38, 38, 38, 1, 2, 0],
-      ];
-    }
-
-    demo.forEach((d, i) => {
-      rows[i].sprint = d[0];
-      rows[i].forecastCapacity = d[1];
-      rows[i].actualCapacity = d[2];
-      rows[i].committedSP = d[3];
-      rows[i].completedSP = d[4];
-      rows[i].addedMid = d[5];
-      rows[i].removedMid = d[6];
-      rows[i].sickLeaveDays = d[7];
-      rows[i]._meta = { auto: {} }; // demo counts as manual
-    });
-
-    return rows;
-  }
-
-  function getDemoVariant(){
-    const sel = qs("hist_demoVariant");
-    const v = sel ? String(sel.value || "").trim() : "";
-    if(v === "stable" || v === "recovery" || v === "overcommit") return v;
-    return "recovery";
-  }
-
-  function doDemo(state){
-    const variant = getDemoVariant();
-    state.rows = makeDemoRows(variant);
-    renderTable(state.rows);
-    doSave(state.rows);
-
-    const label =
-      variant === "stable" ? "Stable mature team" :
-      variant === "overcommit" ? "Overcommit streak → correction" :
-      "Chaos → recovery arc";
-
-    setStatus(`Demo data loaded 🧪 (${label}). You can edit + Save anytime.`);
-  }
-
-  // CSV helpers
-  function downloadTemplateCSV(){
-    const header = "Sprint,ForecastCapacitySP,ActualCapacitySP,CommittedSP,CompletedSP,AddedMid,RemovedMid,SickLeaveDays\n";
-    const lines = DEFAULT_ROWS.map(s =>
-      `${s},,,,0,0,0,0`
-    ).join("\n");
-    const csv = header + lines + "\n";
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  function downloadText(filename, text){
+    const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
-    a.download = "scrummer_sprint_history_template.csv";
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-
-    setStatus("Template downloaded ✔");
   }
 
-  function parseCSV(text){
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    if(lines.length < 2) return null;
+  function parseCsv(text){
+    // Simple CSV parser for this template (supports quoted cells).
+    const rows = [];
+    let i = 0, field = "", inQ = false;
+    const out = [];
+    function pushField(){ out.push(field); field = ""; }
+    function pushRow(){ rows.push(out.slice()); out.length = 0; }
 
-    const header = lines[0].split(",").map(h => h.trim());
-    const idx = (name) => header.findIndex(h => h.toLowerCase() === name.toLowerCase());
+    while (i < text.length) {
+      const c = text[i];
 
-    const iSprint = idx("Sprint");
-    const iFC = idx("ForecastCapacitySP");
-    const iAC = idx("ActualCapacitySP");
-    const iCom = idx("CommittedSP");
-    const iDone = idx("CompletedSP");
-    const iAdd = idx("AddedMid");
-    const iRem = idx("RemovedMid");
-    const iSick = idx("SickLeaveDays");
-
-    if(iSprint < 0) return null;
-
-    const rows = makeBlankRows();
-
-    for(let li=1; li<lines.length && li<=ROW_COUNT; li++){
-      const cols = lines[li].split(",").map(c => c.trim());
-      const r = rows[li-1];
-
-      r.sprint = cols[iSprint] || r.sprint;
-
-      const read = (i) => (i >= 0 && i < cols.length) ? cols[i] : "";
-      const toNum = (s) => {
-        const n = num(s);
-        return n == null ? null : clampInt3(n);
-      };
-
-      if(iFC >= 0) r.forecastCapacity = toNum(read(iFC));
-      if(iAC >= 0) r.actualCapacity = toNum(read(iAC));
-      if(iCom >= 0) r.committedSP = toNum(read(iCom));
-      if(iDone >= 0) r.completedSP = toNum(read(iDone));
-      if(iAdd >= 0) r.addedMid = toNum(read(iAdd));
-      if(iRem >= 0) r.removedMid = toNum(read(iRem));
-      if(iSick >= 0) r.sickLeaveDays = toNum(read(iSick));
-
-      r._meta = { auto: {} };
+      if (inQ) {
+        if (c === '"') {
+          const nxt = text[i+1];
+          if (nxt === '"') { field += '"'; i += 2; continue; }
+          inQ = false; i++; continue;
+        } else {
+          field += c; i++; continue;
+        }
+      } else {
+        if (c === '"') { inQ = true; i++; continue; }
+        if (c === ",") { pushField(); i++; continue; }
+        if (c === "\n") { pushField(); pushRow(); i++; continue; }
+        if (c === "\r") { i++; continue; }
+        field += c; i++; continue;
+      }
     }
+    pushField();
+    if (out.length) pushRow();
 
-    return rows;
+    if (!rows.length) return null;
+
+    const header = rows[0].map(s => String(s || "").trim());
+    const idx = (name) => header.indexOf(name);
+
+    const need = ["sprint","forecastCap","actualCap","committed","completed","addedMid","removedMid","sickLeave"];
+    if (need.some(k => idx(k) === -1)) return null;
+
+    const data = defaultRows();
+    for (let r = 1; r < rows.length && r <= 6; r++){
+      const row = rows[r];
+      const sprint = String(row[idx("sprint")] || "").trim();
+      const pos = SPRINTS.indexOf(sprint);
+      const iPos = (pos >= 0 ? pos : (r-1));
+      if (iPos < 0 || iPos > 5) continue;
+
+      data[iPos] = {
+        sprint: SPRINTS[iPos],
+        forecastCap: clamp0(row[idx("forecastCap")]),
+        actualCap: clamp0(row[idx("actualCap")]),
+        committed: clamp0(row[idx("committed")]),
+        completed: clamp0(row[idx("completed")]),
+        addedMid: clamp0(row[idx("addedMid")]),
+        removedMid: clamp0(row[idx("removedMid")]),
+        sickLeave: clamp0(row[idx("sickLeave")]),
+      };
+    }
+    return data;
   }
 
-  function attachHandlers(state){
-    const btnSave = qs("hist_saveBtn");
-    const btnReset = qs("hist_resetBtn");
-    const btnAuto = qs("hist_autofillBtn");
-    const btnDemo = qs("hist_demoBtn");
-    const btnUpload = qs("hist_uploadCsvBtn");
-    const btnTpl = qs("hist_downloadTplBtn");
-    const fileInput = qs("hist_csvInput");
+  function wire(){
+    $("hist_demoBtn")?.addEventListener("click", () => {
+      const variant = $("hist_demoVariant")?.value || "recovery";
+      const rows = demoRows(variant);
+      saveRows(rows);
+      render();
+      setStatus(`✅ Demo loaded (${variant}). Click Save to refresh charts.`);
+    });
 
-    btnSave?.addEventListener("click", () => doSave(state.rows));
-    btnReset?.addEventListener("click", () => { state.rows = doReset(); });
-    btnAuto?.addEventListener("click", () => { state.rows = doAutofill(state.rows); });
-    btnDemo?.addEventListener("click", () => doDemo(state));
-    btnTpl?.addEventListener("click", () => downloadTemplateCSV());
+    $("hist_saveBtn")?.addEventListener("click", () => {
+      // already persisted on every input; Save is a “commit + refresh”
+      setStatus("✅ Saved. Charts refreshed.");
+      emitChanged();
+    });
 
-    btnUpload?.addEventListener("click", () => fileInput?.click());
+    $("hist_resetBtn")?.addEventListener("click", () => {
+      saveRows(defaultRows());
+      render();
+      emitChanged();
+      setStatus("Reset ✔");
+    });
 
-    fileInput?.addEventListener("change", async () => {
-      const file = fileInput.files && fileInput.files[0];
-      if(!file) return;
+    $("hist_downloadTplBtn")?.addEventListener("click", () => {
+      downloadText("scrummer_sprint_history_template.csv", toCsv(defaultRows()));
+      setStatus("Template downloaded ✔");
+    });
 
-      const text = await file.text();
-      const parsed = parseCSV(text);
+    $("hist_uploadCsvBtn")?.addEventListener("click", () => {
+      $("hist_csvInput")?.click();
+    });
 
-      if(!parsed){
-        setStatus("CSV format not recognized. Use Download Template and fill it.");
-        fileInput.value = "";
+    $("hist_csvInput")?.addEventListener("change", async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+
+      const text = await f.text();
+      const parsed = parseCsv(text);
+      if (!parsed) {
+        setStatus("⚠️ CSV format not recognized. Use Download Template.");
+        e.target.value = "";
         return;
       }
 
-      state.rows = normalizeRows(parsed);
-      renderTable(state.rows);
-      doSave(state.rows);
-      setStatus("CSV imported ✔ Saved locally.");
-      fileInput.value = "";
+      saveRows(parsed);
+      render();
+      emitChanged();
+      setStatus("✅ CSV imported. Charts refreshed.");
+      e.target.value = "";
     });
   }
 
+  // Public API for charts module
+  function getRows(){
+    return loadRows();
+  }
+
+  // Boot
   document.addEventListener("DOMContentLoaded", () => {
-    const tbody = qs("hist_rows");
-    if(!tbody) return;
+    render();
+    wire();
 
-    const saved = loadHistory();
-    const rows = normalizeRows(saved || makeBlankRows());
+    // Tabs (only health + copilot)
+    const btns = Array.from(document.querySelectorAll(".tabBtn"));
+    const panels = {
+      health: $("panel-health"),
+      copilot: $("panel-copilot"),
+    };
+    function setActive(name){
+      btns.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+      Object.entries(panels).forEach(([k, el]) => {
+        if (!el) return;
+        el.classList.toggle("hidden", k !== name);
+      });
+      if (history.replaceState) history.replaceState(null, "", "#" + name);
+    }
+    btns.forEach(b => b.addEventListener("click", () => setActive(b.dataset.tab)));
 
-    const state = { rows };
+    const hash = (location.hash || "").replace("#","");
+    const initial = (hash && panels[hash]) ? hash : "health";
+    setActive(initial);
 
-    renderTable(state.rows);
-    setStatus(saved ? "Loaded saved sprint history." : "No sprint history yet. Use Auto-fill, Demo, or enter values, then Save.");
-
-    attachHandlers(state);
+    // expose
+    window.ScrummerCoachHistory = { getRows, KEY, emitChanged };
   });
 })();
