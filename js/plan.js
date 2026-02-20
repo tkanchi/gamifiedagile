@@ -46,14 +46,25 @@
   function showWarn(msg){ const b=qs("forecast_warnBox"), t=qs("forecast_warnText"); if(!b||!t) return; t.textContent=msg||""; b.style.display="block"; }
   function hideWarn(){ const b=qs("forecast_warnBox"); if(b) b.style.display="none"; }
 
-  function bumpForecastNumber(){
-    const el=qs("forecast_value");
-    if(!el) return;
-    el.classList.remove("num-bump");
-    void el.offsetWidth;
-    el.classList.add("num-bump");
-    setTimeout(()=>el.classList.remove("num-bump"),520);
+ function bumpForecastNumber(){
+  const el = qs("forecast_value");
+  if(!el) return;
+
+  // number bump
+  el.classList.remove("num-bump");
+  void el.offsetWidth;
+  el.classList.add("num-bump");
+  setTimeout(()=>el.classList.remove("num-bump"),520);
+
+  // ⚡ Neon spark (only on update)
+  const fx = el.closest(".forecastNumber.neonFx");
+  if(fx){
+    fx.classList.remove("spark");
+    void fx.offsetWidth;
+    fx.classList.add("spark");
+    setTimeout(()=>fx.classList.remove("spark"), 720);
   }
+}
 
   function setForecastValue(v){
     const el=qs("forecast_value");
