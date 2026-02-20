@@ -1,11 +1,9 @@
 /* =========================================================
-   SCRUMMER — style.css (FULL, UPDATED)
-   Includes:
-   - Even grid alignment (no jump)
-   - Fixed label height
-   - Input underline glow via .inputWrap (reliable)
-   - Dark theme dropdown fix
-   - Themes: light + mint + neon + retro
+   SCRUMMER — style.css (FULL, UPDATED v10)
+   Adds:
+   - Neon electric glow ⚡
+   - Retro pixelated focus 🎲
+   - XP sparkle burst on Save 😄 (CSS only, JS triggers class)
    ========================================================= */
 
 /* =======================
@@ -36,6 +34,11 @@
   --input-bg: #ffffff;
   --input-border: rgba(17,24,39,0.12);
   --input-focus: rgba(99,102,241,0.25);
+
+  /* FX helpers */
+  --glow-strong: 0 0 18px color-mix(in oklab, var(--accent) 35%, transparent);
+  --glow-soft: 0 0 10px color-mix(in oklab, var(--accent) 22%, transparent);
+  --pixel-shadow: 2px 2px 0 rgba(0,0,0,0.35);
 }
 
 /* =======================
@@ -154,7 +157,7 @@ body{
   color: var(--text-main);
   background: transparent;
   font-weight: 650;
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
 }
 .navlink:hover{
   transform: translateY(-1px);
@@ -166,6 +169,11 @@ body{
   border-color: color-mix(in oklab, var(--accent) 24%, transparent);
 }
 
+/* Neon: active nav electric */
+:root[data-theme="neon"] .navlink.active{
+  box-shadow: var(--glow-soft);
+}
+
 /* =======================
    XP WIDGET
    ======================= */
@@ -175,6 +183,8 @@ body{
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--bg-soft);
+  position: relative;
+  overflow: hidden;
 }
 .xpTop{
   display:flex;
@@ -217,6 +227,35 @@ body{
   font-size: 13px;
 }
 
+/* ✅ XP Sparkle burst */
+.xpWidget.xp-sparkle::before,
+.xpWidget.xp-sparkle::after{
+  content:"";
+  position:absolute;
+  inset:-40px;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(255,255,255,0.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 35%, rgba(255,255,255,0.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 55% 70%, rgba(255,255,255,0.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 20% 75%, rgba(255,255,255,0.7) 0 2px, transparent 3px);
+  opacity: 0;
+  transform: scale(0.98);
+  animation: sparkleBurst 520ms ease;
+  pointer-events:none;
+}
+.xpWidget.xp-sparkle::after{
+  background:
+    radial-gradient(circle at 40% 30%, color-mix(in oklab, var(--accent) 65%, white) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 60%, color-mix(in oklab, var(--accent-2) 65%, white) 0 2px, transparent 3px),
+    radial-gradient(circle at 15% 55%, color-mix(in oklab, var(--accent) 65%, white) 0 2px, transparent 3px);
+  animation-duration: 620ms;
+}
+@keyframes sparkleBurst{
+  0%{ opacity:0; transform: scale(0.98); }
+  25%{ opacity:0.9; transform: scale(1.02); }
+  100%{ opacity:0; transform: scale(1.03); }
+}
+
 /* =======================
    CARDS
    ======================= */
@@ -244,7 +283,7 @@ body{
   border: 1px solid var(--border);
   background: var(--bg-soft);
   color: var(--text-main);
-  transition: transform .12s ease, filter .12s ease;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
 }
 .btnGhost:hover{ transform: translateY(-1px); }
 
@@ -259,7 +298,7 @@ body{
   align-items:center;
   justify-content:center;
   gap:10px;
-  transition: transform .12s ease, filter .12s ease;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
   user-select:none;
 }
 .btnStage:hover{ transform: translateY(-1px); }
@@ -270,6 +309,16 @@ body{
   box-shadow: 0 10px 24px color-mix(in oklab, var(--accent) 18%, transparent);
 }
 .btnStage-next:hover{ filter: brightness(1.05); }
+
+/* Neon: button electric glow */
+:root[data-theme="neon"] .btnStage-next{
+  box-shadow:
+    0 10px 26px color-mix(in oklab, var(--accent) 22%, transparent),
+    var(--glow-strong);
+}
+:root[data-theme="neon"] .btnGhost:hover{
+  box-shadow: var(--glow-soft);
+}
 
 /* =======================
    INPUTS
@@ -284,7 +333,7 @@ body{
   color: var(--text-main);
   font-weight: 500;
   outline: none;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease, filter .2s ease;
 }
 .fun-input:focus{
   border-color: color-mix(in oklab, var(--accent) 55%, transparent);
@@ -292,7 +341,7 @@ body{
   transform: translateY(-1px);
 }
 
-/* Keep compact vibe but aligned */
+/* compact vibe but aligned */
 .fun-input.numSm{
   width: 100% !important;
   max-width: 140px;
@@ -303,15 +352,8 @@ body{
    ======================= */
 .inputWrap{
   position: relative;
-  width: fit-content;
-}
-.fieldGrid.fieldGrid-even .inputWrap,
-.velocityRow .inputWrap,
-#themeSelect.inputWrap,
-.inputWrap:has(select){
   width: 100%;
 }
-
 .inputWrap::after{
   content: "";
   position: absolute;
@@ -325,15 +367,62 @@ body{
   );
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.22s ease;
+  transition: transform 0.22s ease, filter .2s ease, opacity .2s ease;
   border-radius: 2px;
   pointer-events: none;
+  opacity: 0.92;
   filter: drop-shadow(0 0 8px color-mix(in oklab, var(--accent) 35%, transparent));
-  opacity: 0.95;
+}
+.inputWrap:focus-within::after{ transform: scaleX(1); }
+
+/* ⚡ Neon: electric underline flicker */
+:root[data-theme="neon"] .inputWrap::after{
+  opacity: 1;
+  filter:
+    drop-shadow(0 0 10px color-mix(in oklab, var(--accent) 55%, transparent))
+    drop-shadow(0 0 18px color-mix(in oklab, var(--accent) 35%, transparent));
+}
+:root[data-theme="neon"] .inputWrap:focus-within::after{
+  animation: neonPulse 880ms ease-in-out infinite;
+}
+@keyframes neonPulse{
+  0%,100%{ filter: drop-shadow(0 0 10px color-mix(in oklab, var(--accent) 55%, transparent)); }
+  50%{ filter: drop-shadow(0 0 18px color-mix(in oklab, var(--accent) 70%, transparent)); }
+}
+:root[data-theme="neon"] .fun-input:focus{
+  box-shadow:
+    0 0 0 4px color-mix(in oklab, var(--accent) 26%, transparent),
+    0 0 22px color-mix(in oklab, var(--accent) 24%, transparent);
 }
 
-.inputWrap:focus-within::after{
-  transform: scaleX(1);
+/* 🎲 Retro: pixel focus */
+:root[data-theme="retro"] .fun-input{
+  border-radius: 10px;
+}
+:root[data-theme="retro"] .fun-input:focus{
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 28%, transparent),
+    var(--pixel-shadow);
+  transform: translateY(0); /* pixel feel: no float */
+}
+:root[data-theme="retro"] .inputWrap::after{
+  height: 3px;
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(90deg,
+      color-mix(in oklab, var(--accent) 70%, white) 0 6px,
+      color-mix(in oklab, var(--accent-2) 70%, white) 6px 12px);
+  image-rendering: pixelated;
+  filter: none;
+  opacity: 0.95;
+}
+:root[data-theme="retro"] .inputWrap:focus-within::after{
+  animation: pixelBlink 420ms steps(2,end) infinite;
+}
+@keyframes pixelBlink{
+  0%{ opacity: 1; }
+  50%{ opacity: 0.55; }
+  100%{ opacity: 1; }
 }
 
 /* =======================
@@ -345,14 +434,13 @@ body{
   gap: 18px;
   align-items: start;
 }
-
 .fieldGrid.fieldGrid-even > div{
   display:flex;
   flex-direction:column;
   gap: 8px;
 }
 
-/* Fix label height so inputs never jump */
+/* fixed label height */
 .fieldGrid.fieldGrid-even .kvKey{
   font-size: 13px;
   line-height: 1.25;
@@ -361,9 +449,7 @@ body{
   align-items:flex-end;
 }
 
-/* =======================
-   Velocity row (aligned)
-   ======================= */
+/* Velocity row aligned */
 .velocityRow{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -380,7 +466,7 @@ body{
   align-items:flex-end;
 }
 
-/* Responsive */
+/* responsive */
 @media (max-width: 980px){
   .fieldGrid.fieldGrid-even{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fun-input.numSm{ max-width: 100%; }
@@ -402,7 +488,6 @@ body{
   font-size: 12px;
   white-space: nowrap;
 }
-
 .badge-high{
   border-color: rgba(34,197,94,.45);
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.12));
@@ -436,7 +521,6 @@ body{
   background: var(--input-bg);
   border: 1px solid var(--input-border);
 }
-
 :root[data-theme="neon"] #themeSelect{
   background: #1d1d34;
   color: rgba(255,255,255,0.92);
@@ -445,7 +529,6 @@ body{
   background: #241a40;
   color: rgba(255,242,255,0.93);
 }
-
 :root[data-theme="neon"] #themeSelect option{
   background: #1d1d34;
   color: #ffffff;
@@ -504,12 +587,14 @@ body{
   --shadow:0 18px 44px rgba(0,0,0,0.45);
   --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
 
-  --accent:#818cf8;
-  --accent-2:#22c55e;
-
+  --accent:#22d3ee;   /* cyan electric */
+  --accent-2:#a78bfa; /* purple */
   --input-bg:rgba(255,255,255,0.08);
   --input-border:rgba(255,255,255,0.16);
-  --input-focus:rgba(129,140,248,0.28);
+  --input-focus:rgba(34,211,238,0.22);
+
+  --glow-strong: 0 0 22px rgba(34,211,238,0.40);
+  --glow-soft: 0 0 14px rgba(34,211,238,0.26);
 }
 
 /* Retro Arcade */
@@ -529,11 +614,12 @@ body{
   --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
 
   --accent:#f472b6;
-  --accent-2:#818cf8;
-
+  --accent-2:#facc15; /* yellow pop */
   --input-bg:rgba(255,255,255,0.08);
   --input-border:rgba(255,255,255,0.16);
-  --input-focus:rgba(244,114,182,0.26);
+  --input-focus:rgba(244,114,182,0.18);
+
+  --pixel-shadow: 3px 3px 0 rgba(0,0,0,0.45);
 }
 
 /* Mood badge variants */
