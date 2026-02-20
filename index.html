@@ -147,6 +147,12 @@ margin-top: 10px;
 <a class="navlink" href="accounts.html">🔐 Account</a>
 </nav>
 
+  <!-- 🎮 Mini Runner Game -->
+<div class="mini-game-container">
+  <canvas id="gameCanvas" width="210" height="78"></canvas>
+  <div class="game-hint">Tap / Space</div>
+</div>
+
 <div class="xpWidget">
 <div class="xpTop">
 <div>
@@ -337,8 +343,7 @@ margin-top: 10px;
 <div class="tileLabel">Gap</div>
 <div class="deltaRow">
 <span id="forecast_delta" class="deltaPill" style="display:none;">—</span>
-<span id="forecast_overcommit" class="deltaPill" style="display:none;">—</span>
-</div>
+<span id="forecast_overcommit" class="deltaPill deltaPill--wrap" style="display:none;">—</span></div>
 <div class="tileSub">Shows buffer vs overcommit.</div>
 </div>
 
@@ -470,5 +475,6 @@ If ratio &gt; 1 → you're committing more than forecast (risk). If &lt; 1 → b
 <script src="js/theme.js"></script>
 <script src="js/xp.js"></script>
 <script src="js/plan.js"></script>
+<script src="js/minigame.js"></script>
 </body>
 </html>
