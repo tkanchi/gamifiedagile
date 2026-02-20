@@ -463,3 +463,43 @@ p{ margin: 0 0 12px; }
   border-color: rgba(239,68,68,.50);
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
 }
+
+
+/* =========================================================
+   FIX: Theme Dropdown Text Color in Dark Modes
+   ========================================================= */
+
+/* Make select follow theme colors */
+.fun-input,
+select.fun-input {
+  color: var(--text-main);
+  background: var(--input-bg);
+  border-color: var(--input-border);
+}
+
+/* Specifically target theme dropdown */
+#themeSelect {
+  color: var(--text-main);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+}
+
+/* Fix dropdown options in dark themes */
+:root[data-theme="neon"] #themeSelect,
+:root[data-theme="retro"] #themeSelect {
+  color: var(--text-main);
+  background: var(--input-bg);
+}
+
+/* Force option colors for dark modes */
+:root[data-theme="neon"] #themeSelect option,
+:root[data-theme="retro"] #themeSelect option {
+  color: #ffffff;
+  background: #1d1d34;
+}
+
+/* Optional: better contrast for mint (light theme variant) */
+:root[data-theme="mint"] #themeSelect option {
+  color: #0f172a;
+  background: #ffffff;
+}
