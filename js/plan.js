@@ -2,8 +2,8 @@
 // Fixes:
 // - Quick Presets populate velocities too
 // - Forecast always recalculates (presets + input changes + save)
-// - ✅ Formulas display always (Velocity + Capacity)
-// - ✅ Capacity "Current Values" updates live (no waiting for Save)
+// - Formulas display always (Velocity + Capacity)
+// - Capacity "Current Values" updates live
 // - SP per Team Day defaults to 1.0
 // - Over-commit formula transparent: Committed ÷ Forecast
 // - 3-digit clamp for integer fields
@@ -186,14 +186,13 @@
 
   function writeSetupToUI(s) {
     if (!s) return;
-    if (qs("setup_sprintDays")) qs("setup_sprintDays").value = s.sprintDays ?? "";
-    if (qs("setup_teamMembers")) qs("setup_teamMembers").value = s.teamMembers ?? "";
-    if (qs("setup_leaveDays")) qs("setup_leaveDays").value = s.leaveDays ?? "";
-    if (qs("setup_committedSP")) qs("setup_committedSP").value = s.committedSP ?? "";
-
-    if (qs("setup_v1")) qs("setup_v1").value = s.v1 ?? "";
-    if (qs("setup_v2")) qs("setup_v2").value = s.v2 ?? "";
-    if (qs("setup_v3")) qs("setup_v3").value = s.v3 ?? "";
+    qs("setup_sprintDays").value = s.sprintDays ?? "";
+    qs("setup_teamMembers").value = s.teamMembers ?? "";
+    qs("setup_leaveDays").value = s.leaveDays ?? "";
+    qs("setup_committedSP").value = s.committedSP ?? "";
+    qs("setup_v1").value = s.v1 ?? "";
+    qs("setup_v2").value = s.v2 ?? "";
+    qs("setup_v3").value = s.v3 ?? "";
   }
 
   function saveSetup(s) {
@@ -204,16 +203,13 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       return safeParse(raw, null);
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 
   function syncModeUI(mode) {
     const vBox = qs("forecast_velocityBox");
     const cBox = qs("forecast_capacityBox");
     const vFormula = qs("forecast_formulaVelocity");
-
     if (vBox) vBox.style.display = (mode === "velocity") ? "block" : "none";
     if (cBox) cBox.style.display = (mode === "capacity") ? "block" : "none";
     if (vFormula) vFormula.style.display = (mode === "velocity") ? "block" : "none";
@@ -237,13 +233,11 @@
     el.textContent = parts.length ? parts.join(" • ") : "—";
   }
 
-  // -------- Velocity forecast --------
   function applyVelocityDefaultsFromSetup(setup) {
     const n1 = qs("forecast_velN1");
     const n2 = qs("forecast_velN2");
     const n3 = qs("forecast_velN3");
     if (!n1 || !n2 || !n3) return;
-
     n1.value = setup.v1 ?? "";
     n2.value = setup.v2 ?? "";
     n3.value = setup.v3 ?? "";
@@ -302,7 +296,6 @@
     };
   }
 
-  // -------- Capacity forecast --------
   function calcCapacity(setup) {
     const sprintDays = setup.sprintDays;
     const teamMembers = setup.teamMembers;
@@ -320,7 +313,6 @@
     if (weight == null) missing.push("Leaves weight");
     if (spPerTeamDay == null) missing.push("SP per Team Day");
 
-    // Live values should still show partial math if possible
     if (sprintDays != null && focus != null) {
       const idealPerPerson = sprintDays * focus;
       setCapacityLiveValues(`Ideal/person = <b>${sprintDays}</b> × <b>${focus}</b> = <b>${idealPerPerson.toFixed(2)}</b>`);
@@ -371,13 +363,10 @@
     syncModeUI(mode);
     refreshSetupSummary(setup, mode);
 
-    // keep velocity override values in sync
     applyVelocityDefaultsFromSetup(setup);
     syncVelOverride(setup);
 
-    let result = null;
-    if (mode === "velocity") result = calcVelocity(setup);
-    else result = calcCapacity(setup);
+    let result = (mode === "velocity") ? calcVelocity(setup) : calcCapacity(setup);
 
     if (!result) {
       setForecastValue(null);
@@ -401,13 +390,13 @@
     }
   }
 
-  // -------- Quick presets --------
   function applyPreset(presetName) {
     const presets = {
       excellent: { sprintDays: 10, teamMembers: 7, leaveDays: 2, committedSP: 35, v1: 36, v2: 41, v3: 38 },
       normal:    { sprintDays: 10, teamMembers: 7, leaveDays: 6, committedSP: 40, v1: 30, v2: 32, v3: 28 },
       risky:     { sprintDays: 10, teamMembers: 7, leaveDays: 12, committedSP: 45, v1: 22, v2: 25, v3: 20 }
     };
+
     const p = presets[presetName];
     if (!p) return;
 
