@@ -1,37 +1,41 @@
-//js/plan.js
-
+// js/plan.js
 // ----------------------------
-// STEP FLOW LOGIC
+// STEP FLOW LOGIC (Configure → Forecast)
 // ----------------------------
 
 function switchToTab(tabName) {
-  document.querySelectorAll(".tabPanel").forEach(panel => {
+  document.querySelectorAll(".tabPanel").forEach((panel) => {
     panel.classList.toggle("hidden", panel.id !== `panel-${tabName}`);
   });
 
-  document.querySelectorAll(".step").forEach(step => {
+  document.querySelectorAll(".step").forEach((step) => {
     step.classList.toggle("active", step.dataset.tab === tabName);
   });
 }
 
-// Stepper Click
-document.querySelectorAll(".step").forEach(step => {
-  step.addEventListener("click", () => {
-    switchToTab(step.dataset.tab);
-  });
-});
-
-// Generate Forecast button
-document.getElementById("goToForecastBtn")?.addEventListener("click", () => {
-  switchToTab("forecast");
-});
-
-// Back to Setup button
-document.getElementById("backToSetupBtn")?.addEventListener("click", () => {
-  switchToTab("setup");
-});
-
-// Default state
 document.addEventListener("DOMContentLoaded", () => {
-  switchToTab("setup");
+  // Stepper click
+  document.querySelectorAll(".step").forEach((step) => {
+    step.addEventListener("click", () => switchToTab(step.dataset.tab));
+
+    // optional keyboard support (Enter/Space)
+    step.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        switchToTab(step.dataset.tab);
+      }
+    });
+  });
+
+  // Buttons
+  const goBtn = document.getElementById("goToForecastBtn");
+  if (goBtn) goBtn.addEventListener("click", () => switchToTab("forecast"));
+
+  const backBtn = document.getElementById("backToSetupBtn");
+  if (backBtn) backBtn.addEventListener("click", () => switchToTab("setup"));
+
+  // Default tab (supports deep links: #forecast)
+  const hash = (location.hash || "").replace("#", "").toLowerCase();
+  const startTab = hash === "forecast" ? "forecast" : "setup";
+  switchToTab(startTab);
 });
