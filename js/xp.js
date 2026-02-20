@@ -1,12 +1,22 @@
 /* =========================================================
    SCRUMMER XP SYSTEM (Gamified v1 + Cheetah Mood + XP Bump)
+   FIXES:
+   1) Reads setup from BOTH keys:
+      - scrummer_plan_setup_v1 (new)
+      - scrummer_setup_v1 (legacy)
+   2) Auto-refresh on:
+      - storage changes (setup saved)
+      - theme changes (data-theme swap)
    ========================================================= */
 
 (function () {
 
-  const SETUP_KEY = "scrummer_setup_v1";
-  const XP_KEY = "scrummer_xp_v1";
+  // NEW primary setup key used by plan.js
+  const SETUP_KEY_PRIMARY = "scrummer_plan_setup_v1";
+  // Legacy key fallback (older builds)
+  const SETUP_KEY_LEGACY  = "scrummer_setup_v1";
 
+  const XP_KEY = "scrummer_xp_v1";
   const LEVEL_SIZE = 300;
 
   const LEVEL_TITLES = [
@@ -20,13 +30,12 @@
 
   const el = (id) => document.getElementById(id);
 
-  /* ---------- Animation helper (Step 4B) ---------- */
+  /* ---------- Animation helper ---------- */
   function bumpXpWidget() {
     const w = document.querySelector(".xpWidget");
     if (!w) return;
     w.classList.remove("xp-bump");
-    // force reflow so animation can re-trigger
-    void w.offsetWidth;
+    void w.offsetWidth; // reflow so animation can re-trigger
     w.classList.add("xp-bump");
     setTimeout(() => w.classList.remove("xp-bump"), 450);
   }
@@ -47,17 +56,26 @@
   }
 
   /* ---------- Load Setup ---------- */
+  function loadSetupFromLocalStorage() {
+    // prefer new key, then fallback to legacy
+    const raw1 = localStorage.getItem(SETUP_KEY_PRIMARY);
+    if (raw1) return safeParse(raw1, {});
+    const raw2 = localStorage.getItem(SETUP_KEY_LEGACY);
+    if (raw2) return safeParse(raw2, {});
+    return {};
+  }
+
   function loadSetup() {
+    // If a shared API exists, use it
     const api = window.Scrummer && window.Scrummer.setup;
     if (api && typeof api.loadSetup === "function") {
       try { return api.loadSetup() || {}; } catch {}
     }
-    return safeParse(localStorage.getItem(SETUP_KEY) || "{}", {});
+    return loadSetupFromLocalStorage();
   }
 
   /* ---------- Fallback Metrics ---------- */
   function computeFallback(setup) {
-
     const sprintDays   = num(setup.sprintDays)   ?? 0;
     const teamMembers  = num(setup.teamMembers)  ?? 0;
     const leaveDays    = num(setup.leaveDays)    ?? 0;
@@ -167,28 +185,23 @@
     const conf = Number(metrics.confidence);
     const over = Number(metrics.overcommitRatio);
 
-    // missing data -> calm
     if (!Number.isFinite(risk) || !Number.isFinite(conf)) {
       return { kind: "calm", text: "🐆 Calm" };
     }
 
-    // Sprinting (high risk)
     if (risk >= 70 || (Number.isFinite(over) && over > 1.15) || conf < 55) {
       return { kind: "sprinting", text: "🐆💨 Sprinting" };
     }
 
-    // Alert (watchlist)
     if (risk >= 40 || (Number.isFinite(over) && over > 1.0) || conf < 70) {
       return { kind: "alert", text: "🐆⚡ Alert" };
     }
 
-    // Calm (stable)
     return { kind: "calm", text: "🐆 Calm" };
   }
 
   /* ---------- XP Award (once/day) ---------- */
   function awardXp(state, metrics) {
-
     const today = todayKey();
     if (state.lastAwardDay === today) return;
 
@@ -233,13 +246,11 @@
 
   /* ---------- Render ---------- */
   function render(state, metrics) {
-
     const info = levelInfo(state.totalXp);
 
     if (el("xpLevel")) el("xpLevel").textContent = `Level ${info.level}`;
     if (el("xpTitle")) el("xpTitle").textContent = info.title;
 
-    // XP fill + bump when changed (Step 4B)
     const fill = el("xpFill");
     if (fill) {
       const pct = (info.inLevel / info.next) * 100;
@@ -249,9 +260,7 @@
       fill.style.width = `${pct}%`;
       fill.setAttribute("data-pct", next);
 
-      if (prev !== null && prev !== next) {
-        bumpXpWidget();
-      }
+      if (prev !== null && prev !== next) bumpXpWidget();
     }
 
     if (el("xpText"))
@@ -264,7 +273,6 @@
           : `🧊 streak reset`;
     }
 
-    // mood badge (CSS classes)
     const badge = el("moodBadge");
     if (badge) {
       const m = mood(metrics);
@@ -278,8 +286,8 @@
     }
   }
 
-  /* ---------- Init ---------- */
-  function init() {
+  /* ---------- Refresh ---------- */
+  function refresh() {
     if (!el("xpLevel")) return;
 
     const setup = loadSetup();
@@ -290,6 +298,27 @@
     saveXpState(state);
 
     render(state, metrics);
+  }
+
+  /* ---------- Init ---------- */
+  function init() {
+    refresh();
+
+    // Refresh when setup is saved in another tab / or same app triggers storage write
+    window.addEventListener("storage", (e) => {
+      if (!e || !e.key) return;
+      if (e.key === SETUP_KEY_PRIMARY || e.key === SETUP_KEY_LEGACY) {
+        refresh();
+      }
+      if (e.key === "scrummer_theme" || e.key === "scrummer-theme") {
+        // theme changed; re-render badge state (styles come from CSS)
+        refresh();
+      }
+    });
+
+    // Refresh when theme changes in the same tab (MutationObserver on html[data-theme])
+    const obs = new MutationObserver(() => refresh());
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   }
 
   document.addEventListener("DOMContentLoaded", init);
