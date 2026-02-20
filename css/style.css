@@ -1241,3 +1241,81 @@ body{
     min-width: 0 !important;
   }
 }
+
+/* ===== Charts (Classy / polished) ===== */
+.chartGrid{
+  display:grid;
+  gap:14px;
+  margin-top:12px;
+}
+.chartCard{
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--bg-soft) 92%, rgba(99,102,241,0.03));
+  border-radius: 16px;
+  padding: 12px;
+  overflow:hidden;
+  box-shadow: 0 10px 24px rgba(17,24,39,0.06);
+}
+.chartHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.chartTitle{
+  font-weight:800;
+  font-size:13px;
+  color: var(--text-main);
+  letter-spacing:.2px;
+}
+.chartSub{
+  font-size:12px;
+  color: var(--text-muted);
+  margin-top:4px;
+}
+.chartLegend{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.legendPill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--border-soft);
+  background: color-mix(in oklab, var(--bg-soft) 82%, rgba(17,24,39,0.02));
+  color: var(--text-muted);
+  font-weight:700;
+  font-size:11px;
+  white-space:nowrap;
+}
+.legendDot{
+  width:10px;
+  height:10px;
+  border-radius:99px;
+  background: var(--dot, #6366f1);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--dot, #6366f1) 18%, transparent);
+}
+.chartCanvas{
+  width:100%;
+  display:block;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--bg-soft) 86%, rgba(17,24,39,0.015));
+  border: 1px solid var(--border-soft);
+}
+
+/* Desktop grid */
+@media (min-width: 980px){
+  .chartGrid{ grid-template-columns: 1fr 1fr; }
+  .chartGrid .span2{ grid-column: 1 / -1; }
+}
+
+/* Phone: single column + comfortable height */
+@media (max-width: 560px){
+  .chartCard{ padding: 12px; }
+  canvas.chartCanvas{ height: 190px; }
+}
