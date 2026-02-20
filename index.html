@@ -5,7 +5,7 @@
   <meta content="width=device-width,initial-scale=1" name="viewport" />
   <title>Scrummer — Plan</title>
 
-  <link href="css/style.css?v=11" rel="stylesheet" />
+  <link href="css/style.css?v=13" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <style>
@@ -283,6 +283,7 @@
 
             <!-- Result tiles (data first) -->
             <div class="forecastGrid">
+
               <div class="forecastTile">
                 <div class="tileLabel">Expected Sprint Capacity</div>
                 <div class="forecastNumber neonFx" style="margin-top:8px;">
@@ -291,10 +292,21 @@
                 </div>
                 <div class="tileSub" id="forecast_detailLine" style="margin-top:8px;">—</div>
               </div>
+              
+              
+              <div class="forecastTile">
+                <div class="tileLabel">Avg Velocity</div>
+                <div class="forecastNumber neonFx" style="margin-top:8px;">
+                  <span id="avgVelocityMirror">—</span> 
+                  <span class="unit">SP</span>
+                </div>
+                <div class="tileSub">Average of Sprint N-1, N-2, N-3.</div>
+             </div>
 
               <div class="forecastTile">
                 <div class="tileLabel">Committed</div>
-                <div class="bigNum" style="margin-top:8px;"><span id="committedMirror">—</span> <span class="unit">SP</span></div>
+                <div class="forecastNumber neonFx" style="margin-top:8px;">
+                <span id="committedMirror">—</span> <span class="unit">SP</span></div>
                 <div class="tileSub">From your Sprint N input above.</div>
               </div>
 
@@ -306,6 +318,7 @@
                 </div>
                 <div class="tileSub">Shows buffer vs overcommit.</div>
               </div>
+
             </div>
 
             <!-- Calculations (kept outside tiles like "What is Over-commit Ratio?") -->
