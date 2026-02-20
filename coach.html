@@ -55,30 +55,82 @@
     .historyTable td:last-child, .historyTable th:last-child{ padding-right: 12px; }
     .fileInput{ display:none; }
 
-    /* ===== Charts ===== */
+    /* ==========================================================
+       ✅ Charts — premium / classy layout (ONLY coach.html change)
+       ========================================================== */
     .chartGrid{
       display:grid;
       gap:14px;
       margin-top:12px;
     }
+
     .chartCard{
       border: 1px solid var(--border);
-      background: var(--bg-soft);
-      border-radius: 14px;
+      background: color-mix(in oklab, var(--bg-soft) 92%, rgba(99,102,241,0.03));
+      border-radius: 16px;
       padding: 12px;
       overflow:hidden;
+      box-shadow: 0 10px 24px rgba(17,24,39,0.06);
     }
+
+    .chartHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
     .chartTitle{
-      font-weight:750;
+      font-weight:850;
       font-size:13px;
-      color: var(--text-muted);
-      margin-bottom:8px;
+      color: var(--text-main);
+      letter-spacing:.2px;
+      margin:0;
     }
+
+    .chartSub{
+      font-size:12px;
+      color: var(--text-muted);
+      margin-top:4px;
+      line-height:1.4;
+    }
+
+    .chartLegend{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .legendPill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border-soft);
+      background: color-mix(in oklab, var(--bg-soft) 82%, rgba(17,24,39,0.02));
+      color: var(--text-muted);
+      font-weight:750;
+      font-size:11px;
+      white-space:nowrap;
+    }
+
+    .legendDot{
+      width:10px;
+      height:10px;
+      border-radius:99px;
+      background: var(--dot, #6366f1);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--dot, #6366f1) 18%, transparent);
+      flex:0 0 auto;
+    }
+
     canvas.chartCanvas{
       width:100%;
       display:block;
-      border-radius: 12px;
-      background: color-mix(in oklab, var(--bg-soft) 80%, rgba(17,24,39,0.02));
+      border-radius: 14px;
+      background: color-mix(in oklab, var(--bg-soft) 86%, rgba(17,24,39,0.015));
       border: 1px solid var(--border-soft);
     }
 
@@ -90,9 +142,12 @@
       .chartGrid .span2{ grid-column: 1 / -1; }
     }
 
-    /* ✅ Phone fix: give charts a comfortable height */
+    /* ✅ Phone: one column, more breathing space, bigger chart height */
     @media (max-width: 560px){
-      canvas.chartCanvas{ height: 180px; }
+      .chartCard{ padding: 12px; }
+      .chartHeader{ gap:8px; }
+      .chartLegend{ justify-content:flex-start; }
+      canvas.chartCanvas{ height: 190px; }
     }
   </style>
 </head>
@@ -217,46 +272,115 @@
               </div>
 
               <div class="chartGrid">
+
                 <div class="chartCard">
-                  <div class="chartTitle">Velocity Trend (Completed SP)</div>
-                  <canvas class="chartCanvas" id="hist_velocityChart" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Velocity Trend</div>
+                      <div class="chartSub">Completed SP (last 6 sprints)</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="hist_velocityChart" height="160"></canvas>
                 </div>
 
                 <div class="chartCard">
-                  <div class="chartTitle">Predictability (Committed vs Completed)</div>
-                  <canvas class="chartCanvas" id="hist_predictChart" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Predictability</div>
+                      <div class="chartSub">Committed vs Completed</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#6366f1;"><span class="legendDot"></span>Committed</span>
+                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="hist_predictChart" height="160"></canvas>
                 </div>
 
                 <div class="chartCard">
-                  <div class="chartTitle">Forecast vs Actual Capacity</div>
-                  <canvas class="chartCanvas" id="hist_capacityChart" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Capacity Accuracy</div>
+                      <div class="chartSub">Forecast vs Actual Capacity</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#f59e0b;"><span class="legendDot"></span>Forecast</span>
+                      <span class="legendPill" style="--dot:#06b6d4;"><span class="legendDot"></span>Actual</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="hist_capacityChart" height="160"></canvas>
                 </div>
 
                 <div class="chartCard">
-                  <div class="chartTitle">Disruption (Added vs Removed)</div>
-                  <canvas class="chartCanvas" id="hist_disruptionChart" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Scope Disruption</div>
+                      <div class="chartSub">Added vs Removed mid-sprint</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Added</span>
+                      <span class="legendPill" style="--dot:#ef4444;"><span class="legendDot"></span>Removed</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="hist_disruptionChart" height="160"></canvas>
                 </div>
 
                 <div class="chartCard span2">
-                  <div class="chartTitle">Team Health (Sick leave)</div>
-                  <canvas class="chartCanvas" id="hist_sickChart" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Team Health</div>
+                      <div class="chartSub">Sick leave (person-days)</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#ef4444;"><span class="legendDot"></span>Sick leave</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="hist_sickChart" height="160"></canvas>
                 </div>
 
                 <!-- Optional Snapshot charts (only if you already store snapshots elsewhere) -->
                 <div class="chartCard">
-                  <div class="chartTitle">Snapshot Velocity (avgVelocity)</div>
-                  <canvas class="chartCanvas" id="chart_velocity" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Snapshot Velocity</div>
+                      <div class="chartSub">avgVelocity (last 10 snapshots)</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Velocity</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="chart_velocity" height="160"></canvas>
                 </div>
 
                 <div class="chartCard">
-                  <div class="chartTitle">Snapshot Risk Score</div>
-                  <canvas class="chartCanvas" id="chart_risk" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Snapshot Risk</div>
+                      <div class="chartSub">riskScore (last 10 snapshots)</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#ef4444;"><span class="legendDot"></span>Risk</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="chart_risk" height="160"></canvas>
                 </div>
 
                 <div class="chartCard span2">
-                  <div class="chartTitle">Snapshot Predictability (Committed ÷ Capacity)</div>
-                  <canvas class="chartCanvas" id="chart_predictability" height="140"></canvas>
+                  <div class="chartHeader">
+                    <div>
+                      <div class="chartTitle">Snapshot Predictability</div>
+                      <div class="chartSub">Committed ÷ Capacity (last 10 snapshots)</div>
+                    </div>
+                    <div class="chartLegend">
+                      <span class="legendPill" style="--dot:#6366f1;"><span class="legendDot"></span>Predictability</span>
+                    </div>
+                  </div>
+                  <canvas class="chartCanvas" id="chart_predictability" height="160"></canvas>
                 </div>
+
               </div>
             </div>
 
