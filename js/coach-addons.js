@@ -1,198 +1,100 @@
 /**
  * Scrummer — Coach Addons (Safe Extension)
  * -----------------------------------------
- * - DOES NOT override history
+ * - DOES NOT override history table logic
  * - DOES NOT modify setup
  * - Reads history safely
  * - Draws charts with theme-aware colors (light/dark)
+ * - Mobile-safe: re-renders when tab becomes visible (canvas width > 0)
  */
 
 (() => {
-  // ---------- Theme helpers ----------
+  // -----------------------------
+  // Theme + color helpers
+  // -----------------------------
   function cssVar(name, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return v || fallback;
   }
 
-  const COLORS = {
-    // Lines
-    green:  cssVar("--green",  "#22c55e"),
-    red:    cssVar("--red",    "#ef4444"),
-    indigo: cssVar("--indigo", "#6366f1"),
-    amber:  cssVar("--amber",  "#f59e0b"),
-    cyan:   cssVar("--cyan",   "#06b6d4"),
+  function computeColors() {
+    return {
+      // Lines
+      green:  cssVar("--green",  "#22c55e"),
+      red:    cssVar("--red",    "#ef4444"),
+      indigo: cssVar("--indigo", "#6366f1"),
+      amber:  cssVar("--amber",  "#f59e0b"),
+      cyan:   cssVar("--cyan",   "#06b6d4"),
 
-    // UI
-    axis:   cssVar("--border-soft", "rgba(17,24,39,0.18)"),
-    text:   cssVar("--text-muted",  "#6b7280"),
-    ink:    cssVar("--text-main",   "#111827"),
-    bgSoft: cssVar("--bg-soft",     "#ffffff"),
-  };
+      // UI
+      axis:   cssVar("--border-soft", "rgba(17,24,39,0.18)"),
+      text:   cssVar("--text-muted",  "#6b7280"),
+      ink:    cssVar("--text-main",   "#111827"),
+      bgSoft: cssVar("--bg-soft",     "#ffffff"),
+    };
+  }
 
-  // ---------- Snapshot charts (window.Scrummer.history) ----------
-  function getHistorySafe() {
-    return window.Scrummer?.history?.getHistory?.() || [];
+  let COLORS = computeColors();
+
+  // Recompute colors after theme toggle
+  function wireThemeColorRefresh() {
+    // Your theme toggle button
+    const themeBtn = document.getElementById("themeToggle");
+    if (themeBtn) {
+      themeBtn.addEventListener("click", () => {
+        // theme.js likely updates DOM classes/vars asynchronously
+        setTimeout(() => {
+          COLORS = computeColors();
+          requestRender();
+        }, 80);
+      });
+    }
+
+    // If OS theme changes (optional)
+    if (window.matchMedia) {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      mq.addEventListener?.("change", () => {
+        setTimeout(() => {
+          COLORS = computeColors();
+          requestRender();
+        }, 80);
+      });
+    }
+  }
+
+  // -----------------------------
+  // Utils
+  // -----------------------------
+  const $ = (id) => document.getElementById(id);
+  const dpr = () => (window.devicePixelRatio || 1);
+
+  function safeParse(str, fallback) {
+    try { return JSON.parse(str); } catch { return fallback; }
   }
 
   function lastN(arr, n) {
     return arr.slice(-n);
   }
 
-  function drawSimpleLine(canvasId, values, color) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width = canvas.offsetWidth;
-    const h = canvas.height; // keep height attribute
-
-    ctx.clearRect(0, 0, w, h);
-
-    if (!values.length) {
-      ctx.fillStyle = COLORS.text;
-      ctx.font = "12px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.fillText("No data yet", 10, 20);
-      return;
-    }
-
-    const max = Math.max(...values, 1);
-    const min = Math.min(...values, 0);
-    const range = max - min || 1;
-
-    const pad = 20;
-    const stepX = (w - pad * 2) / (values.length - 1 || 1);
-
-    // axis
-    ctx.strokeStyle = COLORS.axis;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pad, pad);
-    ctx.lineTo(pad, h - pad);
-    ctx.lineTo(w - pad, h - pad);
-    ctx.stroke();
-
-    // line
-    ctx.beginPath();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = color;
-
-    values.forEach((v, i) => {
-      const x = pad + i * stepX;
-      const y = h - pad - ((v - min) / range) * (h - pad * 2);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-
-    ctx.stroke();
-
-    // dots
-    ctx.fillStyle = color;
-    values.forEach((v, i) => {
-      const x = pad + i * stepX;
-      const y = h - pad - ((v - min) / range) * (h - pad * 2);
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  }
-
-  function renderSnapshotCharts() {
-    const history = lastN(getHistorySafe(), 10);
-
-    const velocity = history.map(h => Number(h.avgVelocity || 0));
-    const risk = history.map(h => Number(h.riskScore || 0));
-    const predictability = history.map(h => {
-      const cap = Number(h.capacitySP || 0);
-      const com = Number(h.committedSP || 0);
-      return cap > 0 ? (com / cap) : 0;
-    });
-
-    drawSimpleLine("chart_velocity", velocity, COLORS.green);
-    drawSimpleLine("chart_risk", risk, COLORS.red);
-    drawSimpleLine("chart_predictability", predictability, COLORS.indigo);
-  }
-
-  function autoRefreshHook() {
-    const originalSave = window.Scrummer?.history?.saveSnapshot;
-    if (!originalSave) return;
-
-    window.Scrummer.history.saveSnapshot = function (...args) {
-      const result = originalSave.apply(this, args);
-      setTimeout(() => {
-        renderSnapshotCharts();
-        renderAllHistoryCharts();
-      }, 60);
-      return result;
-    };
-  }
-
-  // ---------- History table charts (ScrummerCoachHistory / localStorage) ----------
-  const $ = (id) => document.getElementById(id);
-  function safeParse(str, fallback) { try { return JSON.parse(str); } catch { return fallback; } }
-
-  function loadSprintRows() {
-    // Preferred: your coach-history.js exposes this
-    if (window.ScrummerCoachHistory && typeof window.ScrummerCoachHistory.getRows === "function") {
-      const rows = window.ScrummerCoachHistory.getRows();
-      return Array.isArray(rows) ? rows : [];
-    }
-
-    // fallback keys (safe)
-    const candidates = [
-      "scrummer_coach_history_v1",
-      "scrummer_coach_history_rows_v1",
-      "scrummer_sprint_history_v1",
-      "scrummer_history_table_v1"
-    ];
-
-    for (const k of candidates) {
-      const raw = localStorage.getItem(k);
-      const arr = safeParse(raw, null);
-      if (Array.isArray(arr) && arr.length) return arr;
-    }
-    return [];
-  }
-
-  function normalize(rows) {
-    return (rows || []).map((r, idx) => {
-      const n = (v) => {
-        const x = Number(v);
-        return Number.isFinite(x) ? x : 0;
-      };
-
-      const sprint = r.sprint || r.sprintLabel || r.label || r.name || `Sprint ${idx + 1}`;
-
-      return {
-        sprintLabel: String(sprint),
-        forecastCap: n(r.forecastCap ?? r.forecast ?? r.capacityForecast),
-        actualCap:   n(r.actualCap ?? r.actual ?? r.capacityActual),
-        committed:   n(r.committed ?? r.committedSP),
-        completed:   n(r.completed ?? r.completedSP ?? r.velocity ?? r.done),
-        // your coach-history.js uses addedMid/removedMid/sickLeave:
-        added:       n(r.addedMid ?? r.added ?? r.spAdded ?? r.scopeAdded),
-        removed:     n(r.removedMid ?? r.removed ?? r.spRemoved ?? r.scopeRemoved),
-        sick:        n(r.sickLeave ?? r.sick ?? r.sickDays),
-      };
-    });
-  }
-
-  function clear(ctx, w, h) {
-    ctx.clearRect(0, 0, w, h);
-  }
-
+  // Ensure canvas renders sharp and correct width/height
   function setupCanvas(canvas) {
     const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = canvas.clientWidth;
+    const ratio = dpr();
+
+    const cssW = canvas.clientWidth; // real rendered width
     const cssH = Number(canvas.getAttribute("height")) || 140;
 
-    canvas.width = Math.floor(cssW * dpr);
-    canvas.height = Math.floor(cssH * dpr);
+    canvas.width = Math.floor(cssW * ratio);
+    canvas.height = Math.floor(cssH * ratio);
 
-    // reset transforms (important on re-render)
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // reset transform every time (important on re-render)
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
     return { ctx, W: cssW, H: cssH };
+  }
+
+  function clear(ctx, W, H) {
+    ctx.clearRect(0, 0, W, H);
   }
 
   function text(ctx, x, y, str, align = "left") {
@@ -204,7 +106,7 @@
 
   function drawAxes(ctx, W, H, pad) {
     ctx.strokeStyle = COLORS.axis;
-    ctx.globalAlpha = 0.9;
+    ctx.globalAlpha = 0.95;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(pad, pad);
@@ -251,7 +153,146 @@
     ctx.globalAlpha = 1;
   }
 
+  // -----------------------------
+  // Snapshot charts (window.Scrummer.history)
+  // -----------------------------
+  function getHistorySafe() {
+    return window.Scrummer?.history?.getHistory?.() || [];
+  }
+
+  function drawSnapshotLine(canvasId, values, color) {
+    const canvas = $(canvasId);
+    if (!canvas) return;
+
+    // If hidden tab, width can be 0 — skip (will render later)
+    if (canvas.clientWidth < 40) return;
+
+    const { ctx, W, H } = setupCanvas(canvas);
+    const pad = 20;
+
+    clear(ctx, W, H);
+
+    if (!values.length) {
+      text(ctx, 10, 20, "No data yet");
+      return;
+    }
+
+    drawAxes(ctx, W, H, pad);
+
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values, 0);
+    const range = (max - min) || 1;
+
+    const stepX = (W - pad * 2) / (values.length - 1 || 1);
+
+    // Line
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    values.forEach((v, i) => {
+      const x = pad + i * stepX;
+      const y = H - pad - ((v - min) / range) * (H - pad * 2);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Dots
+    ctx.fillStyle = color;
+    values.forEach((v, i) => {
+      const x = pad + i * stepX;
+      const y = H - pad - ((v - min) / range) * (H - pad * 2);
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function renderSnapshotCharts() {
+    const history = lastN(getHistorySafe(), 10);
+
+    const velocity = history.map(h => Number(h.avgVelocity || 0));
+    const risk = history.map(h => Number(h.riskScore || 0));
+    const predictability = history.map(h => {
+      const cap = Number(h.capacitySP || 0);
+      const com = Number(h.committedSP || 0);
+      return cap > 0 ? (com / cap) : 0;
+    });
+
+    drawSnapshotLine("chart_velocity", velocity, COLORS.green);
+    drawSnapshotLine("chart_risk", risk, COLORS.red);
+    drawSnapshotLine("chart_predictability", predictability, COLORS.indigo);
+  }
+
+  function autoRefreshHook() {
+    const originalSave = window.Scrummer?.history?.saveSnapshot;
+    if (!originalSave || !window.Scrummer?.history) return;
+
+    // Don’t double-wrap if called again
+    if (window.Scrummer.history._coachAddonsWrapped) return;
+    window.Scrummer.history._coachAddonsWrapped = true;
+
+    window.Scrummer.history.saveSnapshot = function (...args) {
+      const result = originalSave.apply(this, args);
+      setTimeout(requestRender, 80);
+      return result;
+    };
+  }
+
+  // -----------------------------
+  // History table charts (ScrummerCoachHistory / localStorage)
+  // -----------------------------
+  function loadSprintRows() {
+    // Preferred: coach-history.js exposes this
+    if (window.ScrummerCoachHistory && typeof window.ScrummerCoachHistory.getRows === "function") {
+      const rows = window.ScrummerCoachHistory.getRows();
+      return Array.isArray(rows) ? rows : [];
+    }
+
+    // fallback keys (safe)
+    const candidates = [
+      "scrummer_coach_history_v1",
+      "scrummer_coach_history_rows_v1",
+      "scrummer_sprint_history_v1",
+      "scrummer_history_table_v1"
+    ];
+
+    for (const k of candidates) {
+      const raw = localStorage.getItem(k);
+      const arr = safeParse(raw, null);
+      if (Array.isArray(arr) && arr.length) return arr;
+    }
+    return [];
+  }
+
+  function normalize(rows) {
+    return (rows || []).map((r, idx) => {
+      const n = (v) => {
+        const x = Number(v);
+        return Number.isFinite(x) ? x : 0;
+      };
+
+      const sprint = r.sprint || r.sprintLabel || r.label || r.name || `Sprint ${idx + 1}`;
+
+      return {
+        sprintLabel: String(sprint),
+        forecastCap: n(r.forecastCap ?? r.forecast ?? r.capacityForecast),
+        actualCap:   n(r.actualCap ?? r.actual ?? r.capacityActual),
+        committed:   n(r.committed ?? r.committedSP),
+        completed:   n(r.completed ?? r.completedSP ?? r.velocity ?? r.done),
+
+        // coach-history.js uses addedMid/removedMid/sickLeave:
+        added:       n(r.addedMid ?? r.added ?? r.spAdded ?? r.scopeAdded),
+        removed:     n(r.removedMid ?? r.removed ?? r.spRemoved ?? r.scopeRemoved),
+        sick:        n(r.sickLeave ?? r.sick ?? r.sickDays),
+      };
+    });
+  }
+
   function renderVelocity(canvas, labels, completed) {
+    if (canvas.clientWidth < 40) return;
+
     const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
@@ -271,6 +312,8 @@
   }
 
   function renderPredict(canvas, labels, committed, completed) {
+    if (canvas.clientWidth < 40) return;
+
     const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
@@ -280,7 +323,6 @@
     const ptsC = scalePoints(committed, W, H, pad);
     const ptsD = scalePoints(completed, W, H, pad);
 
-    // Committed = indigo, Completed = green
     drawLine(ctx, ptsC, COLORS.indigo, 1);
     drawDots(ctx, ptsC, COLORS.indigo, 1);
 
@@ -300,6 +342,8 @@
   }
 
   function renderCapacity(canvas, labels, forecast, actual) {
+    if (canvas.clientWidth < 40) return;
+
     const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
@@ -309,7 +353,6 @@
     const ptsF = scalePoints(forecast, W, H, pad);
     const ptsA = scalePoints(actual, W, H, pad);
 
-    // Forecast = amber, Actual = cyan
     drawLine(ctx, ptsF, COLORS.amber, 1);
     drawDots(ctx, ptsF, COLORS.amber, 1);
 
@@ -325,6 +368,8 @@
   }
 
   function renderDisruption(canvas, labels, added, removed) {
+    if (canvas.clientWidth < 40) return;
+
     const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
@@ -342,7 +387,6 @@
       const ah = ((added[i] / max) * (H - pad * 2));
       const rh = ((removed[i] / max) * (H - pad * 2));
 
-      // Added = green, Removed = red
       ctx.globalAlpha = 0.85;
       ctx.fillStyle = COLORS.green;
       ctx.fillRect(ax, (H - pad) - ah, inner, ah);
@@ -361,6 +405,8 @@
   }
 
   function renderSick(canvas, labels, sick) {
+    if (canvas.clientWidth < 40) return;
+
     const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
@@ -383,7 +429,7 @@
     const rows = normalize(loadSprintRows());
     if (!rows.length) return;
 
-    const labels   = rows.map(r => r.sprintLabel);
+    const labels    = rows.map(r => r.sprintLabel);
     const completed = rows.map(r => r.completed);
     const committed = rows.map(r => r.committed);
     const forecast  = rows.map(r => r.forecastCap);
@@ -405,97 +451,80 @@
     if (c5) renderSick(c5, labels, sick);
   }
 
-  function wireHistoryChartRefresh() {
-    renderAllHistoryCharts();
+  // -----------------------------
+  // Mobile-safe rendering scheduler
+  // -----------------------------
+  function requestRender() {
+    clearTimeout(requestRender._t);
+    requestRender._t = setTimeout(() => {
+      // Only render when at least one canvas has a real width
+      const anyCanvas =
+        $("hist_velocityChart") ||
+        $("chart_velocity");
 
+      if (!anyCanvas) return;
+
+      const w = anyCanvas.clientWidth;
+      if (!w || w < 40) {
+        // Still hidden/not laid out → retry
+        requestRender();
+        return;
+      }
+
+      renderAllHistoryCharts();
+      renderSnapshotCharts();
+    }, 120);
+  }
+
+  function wireRenderTriggers() {
     // Buttons in coach.html
     ["hist_demoBtn", "hist_saveBtn", "hist_resetBtn", "hist_autofillBtn"].forEach(id => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("click", () => setTimeout(renderAllHistoryCharts, 80));
+      el.addEventListener("click", () => requestRender());
     });
 
-    // Your coach-history.js emits this:
-    window.addEventListener("scrummer:historyChanged", () => {
-      setTimeout(renderAllHistoryCharts, 60);
+    // coach-history.js emits this event
+    window.addEventListener("scrummer:historyChanged", () => requestRender());
+
+    // Tabs: re-render after switching
+    document.querySelectorAll(".tabBtn").forEach(btn => {
+      btn.addEventListener("click", () => setTimeout(requestRender, 140));
     });
 
-    // Resize
+    // Hash navigation (coach.html#health)
+    window.addEventListener("hashchange", () => setTimeout(requestRender, 140));
+
+    // Resize / orientation changes
     window.addEventListener("resize", () => {
-      clearTimeout(wireHistoryChartRefresh._t);
-      wireHistoryChartRefresh._t = setTimeout(renderAllHistoryCharts, 150);
+      clearTimeout(wireRenderTriggers._r);
+      wireRenderTriggers._r = setTimeout(requestRender, 220);
     });
+
+    // Best: ResizeObserver for mobile layout changes
+    const wrap = document.querySelector(".chartGrid") || document.querySelector(".coachWrap") || document.body;
+    if ("ResizeObserver" in window && wrap) {
+      const ro = new ResizeObserver(() => {
+        clearTimeout(wireRenderTriggers._ro);
+        wireRenderTriggers._ro = setTimeout(requestRender, 180);
+      });
+      ro.observe(wrap);
+    }
   }
 
+  // -----------------------------
+  // Boot
+  // -----------------------------
   function init() {
-    // Snapshots
-    renderSnapshotCharts();
-    autoRefreshHook();
+    wireThemeColorRefresh();
+    wireRenderTriggers();
 
-    // History table charts
-    wireHistoryChartRefresh();
+    // First render (may be hidden, requestRender will retry)
+    requestRender();
+
+    // If snapshots exist:
+    autoRefreshHook();
   }
 
   document.addEventListener("DOMContentLoaded", init);
 })();
-
-// ✅ Re-render charts correctly when tabs open + on mobile resize
-function wireHistoryChartRefresh() {
-  const tryRender = () => {
-    // Only render when canvases have a real width (not 0 when hidden)
-    const anyCanvas =
-      document.getElementById("hist_velocityChart") ||
-      document.getElementById("chart_velocity");
-
-    if (!anyCanvas) return;
-
-    const w = anyCanvas.clientWidth;
-    if (!w || w < 40) {
-      // Tab still hidden or layout not ready; retry shortly
-      clearTimeout(tryRender._t);
-      tryRender._t = setTimeout(tryRender, 120);
-      return;
-    }
-
-    // Render both sets
-    renderAllHistoryCharts();
-    renderSnapshotCharts();
-  };
-
-  // Initial attempt (may be hidden → will retry)
-  tryRender();
-
-  // Buttons in coach.html (history table)
-  ["hist_demoBtn", "hist_saveBtn", "hist_resetBtn", "hist_autofillBtn"].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener("click", () => setTimeout(tryRender, 120));
-  });
-
-  // Your coach-history.js emits this
-  window.addEventListener("scrummer:historyChanged", () => setTimeout(tryRender, 120));
-
-  // ✅ IMPORTANT: when you click any tab, re-render after it becomes visible
-  document.querySelectorAll(".tabBtn").forEach(btn => {
-    btn.addEventListener("click", () => setTimeout(tryRender, 140));
-  });
-
-  // Hash navigation (coach.html#health)
-  window.addEventListener("hashchange", () => setTimeout(tryRender, 140));
-
-  // Mobile orientation/layout changes
-  window.addEventListener("resize", () => {
-    clearTimeout(tryRender._r);
-    tryRender._r = setTimeout(tryRender, 200);
-  });
-
-  // ✅ ResizeObserver: re-render if the chart container changes size (best for phone)
-  const wrap = document.querySelector(".chartGrid") || document.querySelector(".coachWrap") || document.body;
-  if ("ResizeObserver" in window && wrap) {
-    const ro = new ResizeObserver(() => {
-      clearTimeout(tryRender._ro);
-      tryRender._ro = setTimeout(tryRender, 180);
-    });
-    ro.observe(wrap);
-  }
-}
