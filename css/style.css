@@ -99,6 +99,11 @@ body{
   .sideNav{ position: sticky; top:0; z-index: 10; }
 }
 
+@media (max-width: 560px){
+  canvas.chartCanvas{ height: 180px; }
+}
+
+
 .sideNav{
   padding: 18px 16px;
   border-right: 1px solid var(--border);
