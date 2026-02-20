@@ -580,3 +580,59 @@ p{ margin: 0 0 12px; }
 #themeSelect:focus{
   outline: none;
 }
+
+/* =========================================================
+   FIX: Setup input fields must align in ONE row (even grid)
+   ========================================================= */
+
+/* 4 equal columns that won't jump */
+.fieldGrid.fieldGrid-even{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+/* each field block */
+.fieldGrid.fieldGrid-even > div{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* IMPORTANT:
+   inputs should fill the grid cell, not stay tiny and misaligned */
+.fieldGrid.fieldGrid-even .fun-input{
+  width: 100%;
+  max-width: none;
+}
+
+/* keep "3-digit" vibe without breaking alignment */
+.fun-input.numSm{
+  width: 100% !important;      /* fill column */
+  max-width: 140px;            /* still looks compact */
+}
+
+/* velocities row should look aligned too */
+.velocityRow{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.velocityRow .fun-input{
+  width: 100%;
+  max-width: 140px;
+}
+
+/* responsive breakpoints */
+@media (max-width: 980px){
+  .fieldGrid.fieldGrid-even{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fun-input.numSm{ max-width: 100%; }
+  .velocityRow{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px){
+  .fieldGrid.fieldGrid-even{ grid-template-columns: 1fr; }
+  .velocityRow{ grid-template-columns: 1fr; }
+}
