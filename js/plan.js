@@ -426,10 +426,10 @@
       confidence,
       html:
         `<div class="kvKey" style="margin-bottom:6px;">Capacity calculations</div>
-         <div><b>1) Ideal/person</b> = Sprint Days × Focus Factor = <b>${idealPerPerson.toFixed(2)}</b></div>
-         <div style="margin-top:6px;"><b>2) Total Ideal Days</b> = Team × Ideal/person = <b>${totalIdealDays.toFixed(2)}</b></div>
-         <div style="margin-top:6px;"><b>3) Total Actual Days</b> = Total Ideal − (Leaves × Weight) = <b>${totalActualDays.toFixed(2)}</b></div>
-         <div style="margin-top:6px;"><b>4) Forecast SP</b> = max(0, Actual) × SP per Team Day = <b>${forecastSP.toFixed(2)}</b></div>`
+         <div><b>1) Ideal Capacity per member (Days)</b> = Sprint Days × Focus Factor = <b>${idealPerPerson.toFixed(2)}</b></div>
+         <div style="margin-top:6px;"><b>2) Total Ideal Capacity (Days) </b> = Team Count ×  Ideal Capacity per member (Days) = <b>${totalIdealDays.toFixed(2)}</b></div>
+         <div style="margin-top:6px;"><b>3) Total Actual Capacity (Days)</b> = Total Ideal Capacity (Days) − (Leaves × Weight) = <b>${totalActualDays.toFixed(2)}</b></div>
+         <div style="margin-top:6px;"><b>4) Total Actual Capacity (Story Points)</b> = Total Actual Capacity (Days) × Story Points per member(Day) = <b>${forecastSP.toFixed(2)}</b></div>`
     };
   }
 
