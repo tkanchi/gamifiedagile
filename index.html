@@ -1,537 +1,386 @@
-/* =========================================================
-   SCRUMMER — style.css (FULL, UPDATED)
-   Works with your current index.html
-   Includes:
-   - Layout + Sidebar + Cards + Inputs
-   - Even 4-field grid
-   - Forecast animation + overcommit highlight
-   - Theme system: light + mint + neon + retro
-   - FIX: theme dropdown text color in dark modes
-   ========================================================= */
+<!DOCTYPE html>
+<html data-theme="light" lang="en">
+<head>
+<meta charset="utf-8" />
+<meta content="width=device-width,initial-scale=1" name="viewport" />
+<title>Scrummer — Plan</title>
 
-/* =======================
-   1) BASE TOKENS (LIGHT)
-   ======================= */
-:root{
-  --font-ui: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+<link href="css/style.css?v=7" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-  --bg-app: #f6f7fb;
-  --bg-panel: #ffffff;
-  --bg-soft: rgba(17,24,39,0.04);
+<style>
+.planWrap{ max-width: 980px; }
 
-  --text-main: #111827;
-  --text-muted: #6b7280;
-  --text-soft: #94a3b8;
-
-  --border: rgba(17,24,39,0.10);
-  --border-strong: rgba(17,24,39,0.14);
-
-  --shadow: 0 16px 40px rgba(17,24,39,0.10);
-  --shadow-soft: 0 10px 24px rgba(17,24,39,0.08);
-
-  --radius: 18px;
-
-  --accent: #6366f1;
-  --accent-2: #22c55e;
-  --danger: #ef4444;
-  --warn: #f59e0b;
-
-  --input-bg: #ffffff;
-  --input-border: rgba(17,24,39,0.12);
-  --input-focus: rgba(99,102,241,0.25);
+.splitHeader{
+display:flex;
+justify-content:space-between;
+align-items:flex-end;
+gap:12px;
+flex-wrap:wrap;
+margin-bottom: 10px;
 }
 
-/* =======================
-   2) RESET / BASE
-   ======================= */
-*{ box-sizing:border-box; }
-html, body{ height:100%; }
-
-body,
-button, input, textarea, select{
-  font-family: var(--font-ui) !important;
+.forecastCard{
+margin-top: 14px;
+border: 1px solid var(--border);
+border-radius: var(--radius);
+background:
+linear-gradient(180deg, color-mix(in oklab, var(--accent) 7%, transparent), transparent),
+var(--bg-panel);
+padding: 16px;
+box-shadow: var(--shadow-soft);
 }
 
-body{
-  margin:0;
-  font-weight: 400;
-  color: var(--text-main);
-  background: var(--bg-app);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.forecastTop{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:12px;
+flex-wrap:wrap;
 }
 
-a{ color: inherit; }
-p{ margin: 0 0 12px; }
-
-.sectionTitle{
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
-  margin: 0;
+.forecastNumber{
+font-size: 34px;
+font-weight: 850;
+letter-spacing: -0.6px;
+line-height: 1.1;
+display:flex;
+align-items:baseline;
+gap:8px;
+flex-wrap:wrap;
 }
-.sectionSub{
-  margin-top: 6px;
-  color: var(--text-muted);
-  font-weight: 450;
-}
-
-/* =======================
-   3) LAYOUT
-   ======================= */
-.appShell{
-  display:grid;
-  grid-template-columns: 280px 1fr;
-  min-height: 100vh;
-}
-@media (max-width: 980px){
-  .appShell{ grid-template-columns: 1fr; }
-  .sideNav{
-    position: sticky;
-    top:0;
-    z-index: 10;
-  }
+.forecastNumber .unit{
+font-size: 14px;
+font-weight: 650;
+color: var(--text-muted);
+letter-spacing: 0.1px;
 }
 
-.sideNav{
-  padding: 18px 16px;
-  border-right: 1px solid var(--border);
-  background: var(--bg-panel);
+.metaLine{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+align-items:center;
+margin-top: 10px;
+color: var(--text-muted);
+font-weight: 500;
 }
 
-.main{
-  padding: 22px 22px 40px;
+.deltaPill{
+padding: 6px 10px;
+border-radius: 999px;
+border: 1px solid var(--border);
+background: var(--bg-soft);
+font-weight: 750;
+font-size: 12px;
+white-space: nowrap;
 }
-
-.sectionCard{
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px;
-  box-shadow: var(--shadow-soft);
-}
-
-/* =======================
-   4) SIDEBAR BRAND / NAV
-   ======================= */
-.sideBrand{
-  display:flex;
-  gap: 12px;
-  align-items:center;
-  padding: 10px 10px 16px;
-}
-
-.brandMark{
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display:grid;
-  place-items:center;
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.brandName{
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-.brandTag{
-  color: var(--text-muted);
-  font-weight: 450;
-  font-size: 13px;
-  margin-top: 2px;
-}
-
-.nav{
-  display:flex;
-  flex-direction:column;
-  gap: 6px;
-  margin-top: 6px;
-}
-.navlink{
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid transparent;
-  text-decoration:none;
-  color: var(--text-main);
-  background: transparent;
-  font-weight: 650;
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
-}
-.navlink:hover{
-  transform: translateY(-1px);
-  background: var(--bg-soft);
-  border-color: var(--border);
-}
-.navlink.active{
-  background: color-mix(in oklab, var(--accent) 12%, transparent);
-  border-color: color-mix(in oklab, var(--accent) 24%, transparent);
-}
-
-/* =======================
-   5) XP WIDGET
-   ======================= */
-.xpWidget{
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-}
-.xpTop{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap: 10px;
-}
-.lvl{
-  font-weight: 650;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-.title{
-  font-weight: 700;
-  margin-top: 2px;
-}
-#moodBadge{
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.04);
-  font-weight: 650;
-  white-space: nowrap;
-}
-.xpBar{
-  height: 10px;
-  margin-top: 10px;
-  border-radius: 999px;
-  background: rgba(17,24,39,0.08);
-  overflow:hidden;
-}
-.xpFill{
-  height: 100%;
-  width: 0%;
-  border-radius: 999px;
-  background: linear-gradient(90deg,
-    color-mix(in oklab, var(--accent) 90%, white),
-    color-mix(in oklab, var(--accent-2) 90%, white));
-}
-.xpMeta{
-  margin-top: 8px;
-  display:flex;
-  justify-content:space-between;
-  color: var(--text-muted);
-  font-weight: 450;
-  font-size: 13px;
-}
-
-/* =======================
-   6) CARDS / TEXT
-   ======================= */
-.info-banner{
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--bg-panel);
-}
-
-.kvKey{
-  font-weight: 650;
-  color: var(--text-main);
-  margin-bottom: 6px;
-}
-
-.mutedText{
-  font-size: 13px;
-  font-weight: 450;
-  color: var(--text-muted);
-}
-
-/* =======================
-   7) BUTTONS
-   ======================= */
-.btnRow{
-  display:flex;
-  gap: 10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-.btnGhost{
-  border-radius: 14px;
-  padding: 10px 14px;
-  font-weight: 650;
-  cursor:pointer;
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-  color: var(--text-main);
-  transition: transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
-}
-.btnGhost:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.02);
-}
-
-.btnStage{
-  padding: 12px 18px;
-  border-radius: 14px;
-  font-weight: 650;
-  font-size: 14px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  transition: transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
-  user-select:none;
-}
-.btnStage:hover{ transform: translateY(-1px); }
-.btnStage-next{
-  background: color-mix(in oklab, var(--accent) 92%, white);
-  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
-  color:#fff;
-  box-shadow: 0 10px 24px color-mix(in oklab, var(--accent) 18%, transparent);
-}
-.btnStage-next:hover{ filter: brightness(1.05); }
-
-/* =======================
-   8) INPUTS
-   ======================= */
-.fun-input{
-  width: 100%;
-  padding: 12px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  color: var(--text-main);
-  font-weight: 450;
-  outline: none;
-  transition: box-shadow .12s ease, border-color .12s ease;
-}
-.fun-input:focus{
-  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
-  box-shadow: 0 0 0 4px var(--input-focus);
-}
-
-/* compact numeric fields */
-.numSm{
-  width: 110px;
-  max-width: 110px;
-}
-
-/* =======================
-   9) ✅ EVEN 4-FIELD GRID
-   (fixes uneven layout)
-   ======================= */
-.fieldGrid.fieldGrid-even{
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-.fieldGrid.fieldGrid-even > div{
-  display:flex;
-  flex-direction:column;
-  gap: 6px;
-}
-@media (max-width: 980px){
-  .fieldGrid.fieldGrid-even{ grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 520px){
-  .fieldGrid.fieldGrid-even{ grid-template-columns: 1fr; }
-  .numSm{ width: 100%; max-width: 100%; }
-}
-
-/* velocity row */
-.velocityRow{
-  display:flex;
-  gap: 14px;
-  flex-wrap:wrap;
-  align-items:flex-end;
-}
-.velItem{
-  display:flex;
-  flex-direction:column;
-  gap: 6px;
-}
-.velLabel{
-  font-size: 12px;
-  font-weight: 650;
-  color: var(--text-muted);
-}
-
-.toggleRow{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  color: var(--text-main);
-  font-weight: 600;
-}
-.toggleRow label{
-  cursor:pointer;
-  user-select:none;
-}
-
-/* =======================
-   10) BADGES + ANIMATIONS
-   ======================= */
-.badge{
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-  font-weight: 800;
-  font-size: 12px;
-  white-space: nowrap;
-}
-.badge-high{
-  border-color: rgba(34,197,94,.45);
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.12));
-}
-.badge-med{
-  border-color: rgba(245,158,11,.45);
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(245,158,11,.14));
-}
-.badge-low{
-  border-color: rgba(239,68,68,.45);
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.14));
-}
-
-/* forecast number animation */
-.num-bump{ animation: numBump .52s ease; }
-@keyframes numBump{
-  0%{ transform: translateY(0) scale(1); }
-  35%{ transform: translateY(-2px) scale(1.04); }
-  100%{ transform: translateY(0) scale(1); }
-}
-
-/* overcommit highlight */
-.overcommit{
-  border-color: rgba(239,68,68,.55) !important;
-  box-shadow: 0 14px 34px rgba(239,68,68,.12);
-}
-
-/* delta pills */
 .deltaPill.good{
-  border-color: rgba(34,197,94,.45) !important;
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10)) !important;
+border-color: rgba(34,197,94,.45);
+background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10));
 }
 .deltaPill.bad{
-  border-color: rgba(239,68,68,.55) !important;
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12)) !important;
+border-color: rgba(239,68,68,.55);
+background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
 }
 
-/* =======================
-   11) ✅ THEME DROPDOWN FIX
-   (dark mode select text)
-   ======================= */
-#themeSelect{
-  color: var(--text-main);
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
+.warnCard{
+border-left: 4px solid rgba(239,68,68,.55);
+display:none;
+margin-top: 12px;
 }
 
-/* Option list needs forced colors on dark themes */
-:root[data-theme="neon"] #themeSelect option{
-  color: #ffffff;
-  background: #1d1d34;
-}
-:root[data-theme="retro"] #themeSelect option{
-  color: #ffffff;
-  background: #241a40;
-}
-:root[data-theme="mint"] #themeSelect option{
-  color: #0f172a;
-  background: #ffffff;
+.formulaBlock{
+margin-top: 14px;
 }
 
-/* =======================
-   12) THEMES (4)
-   Use: <html data-theme="mint">
-   ======================= */
-:root[data-theme="light"]{}
-
-/* Mint Arcade (lighter gamified) */
-:root[data-theme="mint"]{
-  --bg-app:#f2fbf7;
-  --bg-panel:#ffffff;
-  --bg-soft:rgba(16,185,129,0.10);
-
-  --text-main:#0f172a;
-  --text-muted:#334155;
-  --text-soft:#64748b;
-
-  --border:rgba(16,185,129,0.22);
-  --border-strong:rgba(16,185,129,0.30);
-
-  --shadow:0 16px 40px rgba(15,23,42,0.08);
-  --shadow-soft:0 10px 24px rgba(15,23,42,0.06);
-
-  --accent:#10b981;    /* emerald */
-  --accent-2:#6366f1;  /* indigo */
-  --input-bg:#ffffff;
-  --input-border:rgba(16,185,129,0.24);
-  --input-focus:rgba(16,185,129,0.22);
+.helperRow{
+display:flex;
+gap:14px;
+flex-wrap:wrap;
+align-items:flex-start;
+margin-top: 10px;
 }
+.helperRow .info-banner{ flex: 1; min-width: 260px; }
+</style>
+</head>
 
-/* Neon Arena */
-:root[data-theme="neon"]{
-  --bg-app:#141425;
-  --bg-panel:#1d1d34;
-  --bg-soft:rgba(255,255,255,0.08);
+<body data-page="plan">
+<div class="appShell">
 
-  --text-main:rgba(255,255,255,0.92);
-  --text-muted:rgba(208,214,255,0.80);
-  --text-soft:rgba(208,214,255,0.58);
+<aside class="sideNav">
+<div class="sideBrand">
+<div class="brandMark"><span>S</span></div>
+<div>
+<div class="brandName">SCRUMMER</div>
+<div class="brandTag">Gamified Scrum OS</div>
+</div>
+</div>
 
-  --border:rgba(129,140,248,0.30);
-  --border-strong:rgba(129,140,248,0.36);
+<nav class="nav">
+<a class="navlink active" href="index.html">🚀 Plan</a>
+<a class="navlink" href="coach.html">🤖 Coach</a>
+<a class="navlink" href="Gamerules.html">🎮 Game Rules</a>
+<a class="navlink" href="accounts.html">🔐 Account</a>
+</nav>
 
-  --shadow:0 18px 44px rgba(0,0,0,0.45);
-  --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
+<div class="xpWidget">
+<div class="xpTop">
+<div>
+<div class="lvl" id="xpLevel">Level 1</div>
+<div class="title" id="xpTitle">Rookie</div>
+</div>
+<div id="moodBadge">🐆 Calm</div>
+</div>
+<div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+<div class="xpMeta">
+<span id="xpText">0 / 300 XP</span>
+<span id="streakText">🧊 streak reset</span>
+</div>
+</div>
 
-  --accent:#818cf8;
-  --input-bg:rgba(255,255,255,0.08);
-  --input-border:rgba(255,255,255,0.16);
-  --input-focus:rgba(129,140,248,0.28);
-}
+<div style="margin-top:14px;">
+<div class="mutedText" style="margin-bottom:6px;">🎮 Theme</div>
+<select class="fun-input" id="themeSelect">
+<option value="light">🌤️ Light</option>
+<option value="mint">🍃 Mint Arcade</option>
+<option value="neon">⚡ Neon Arena</option>
+<option value="retro">🎲 Retro Arcade</option>
+</select>
+</div>
+</aside>
 
-/* Retro Arcade */
-:root[data-theme="retro"]{
-  --bg-app:#1a1330;
-  --bg-panel:#241a40;
-  --bg-soft:rgba(255,255,255,0.08);
+<main class="main">
+<div class="planWrap">
 
-  --text-main:rgba(255,242,255,0.93);
-  --text-muted:rgba(255,186,236,0.80);
-  --text-soft:rgba(255,186,236,0.58);
+<section class="sectionCard">
+<div class="splitHeader">
+<div>
+<h1 class="sectionTitle">Enter Sprint History</h1>
+<p class="sectionSub">Enter once. Forecast updates immediately when you hit <b>Save</b>.</p>
+</div>
+</div>
 
-  --border:rgba(244,114,182,0.30);
-  --border-strong:rgba(244,114,182,0.36);
+<div class="info-banner">
+<strong>Tip:</strong> Sprint length = <b>working days only</b> (exclude weekends + holidays). Leave days are already handled separately.
+</div>
 
-  --shadow:0 18px 44px rgba(0,0,0,0.45);
-  --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
+<div style="margin-top:12px;">
+<div class="fieldGrid fieldGrid-even">
+<div>
+<div class="kvKey" style="margin-bottom:6px;">Sprint length (working days only)</div>
+<input class="fun-input numSm" id="setup_sprintDays" type="number" min="0" max="999" step="1" inputmode="numeric" />
+</div>
 
-  --accent:#f472b6;
-  --input-bg:rgba(255,255,255,0.08);
-  --input-border:rgba(255,255,255,0.16);
-  --input-focus:rgba(244,114,182,0.26);
-}
+<div>
+<div class="kvKey" style="margin-bottom:6px;">Team members</div>
+<input class="fun-input numSm" id="setup_teamMembers" type="number" min="0" max="999" step="1" inputmode="numeric" />
+</div>
 
-/* Mood badge variants (used by xp.js) */
-#moodBadge.mood-calm{
-  border-color: rgba(34,197,94,.35);
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10));
-}
-#moodBadge.mood-alert{
-  border-color: rgba(245,158,11,.45);
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(245,158,11,.12));
-}
-#moodBadge.mood-sprinting{
-  border-color: rgba(239,68,68,.50);
-  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
-}
+<div>
+<div class="kvKey" style="margin-bottom:6px;">Leave days (total person-days)</div>
+<input class="fun-input numSm" id="setup_leaveDays" type="number" min="0" max="999" step="1" inputmode="numeric" />
+</div>
+
+<div>
+<div class="kvKey" style="margin-bottom:6px;">Committed story points</div>
+<input class="fun-input numSm" id="setup_committedSP" type="number" min="0" max="999" step="1" inputmode="numeric" />
+</div>
+</div>
+
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">Last 3 sprint velocities (completed SP)</div>
+<div class="mutedText" style="margin-top:6px;">Used for Velocity forecast + volatility confidence.</div>
+
+<div class="velocityRow" style="margin-top:10px;">
+<div class="velItem">
+<div class="velLabel">Sprint N-1</div>
+<input class="fun-input numSm" id="setup_v1" type="number" min="0" max="999" step="1" inputmode="numeric" />
+</div>
+<div class="velItem">
+<div class="velLabel">Sprint N-2</div>
+<input class="fun-input numSm" id="setup_v2" type="number" min="0" max="999" step="1" inputmode="numeric" />
+</div>
+<div class="velItem">
+<div class="velLabel">Sprint N-3</div>
+<input class="fun-input numSm" id="setup_v3" type="number" min="0" max="999" step="1" inputmode="numeric" />
+</div>
+</div>
+</div>
+
+<!-- Presets -->
+<div style="margin-top:14px;">
+<div class="kvKey" style="margin-bottom:6px;">Quick presets</div>
+<div class="mutedText" style="margin-top:-2px;">Sets team + days + leaves + commitment + sample velocities (edit anytime).</div>
+<div class="btnRow" style="margin-top:10px;">
+<button class="btnGhost" id="setup_presetExcellent" type="button">🟢 Excellent</button>
+<button class="btnGhost" id="setup_presetNormal" type="button">🟡 Normal</button>
+<button class="btnGhost" id="setup_presetRisky" type="button">🔴 Risky</button>
+</div>
+</div>
+
+<!-- Save button under presets -->
+<div style="margin-top:14px;">
+<button class="btnStage btnStage-next" id="setup_saveBtn" type="button">Save</button>
+<div class="mutedText" id="setup_saveStatus" style="margin-top:8px;">Not saved yet.</div>
+</div>
+
+<div class="info-banner" id="setup_toast" style="display:none; margin-top:14px; border-left:4px solid color-mix(in oklab, var(--accent) 55%, transparent);">
+—
+</div>
+
+<!-- ================= FORECAST ================= -->
+<div class="forecastCard" id="forecastCard">
+<div class="forecastTop">
+<div>
+<div class="kvKey">Forecast</div>
+<div class="mutedText" id="forecast_setupSummary" style="margin-top:6px;">—</div>
+</div>
+
+<div>
+<span class="badge" id="confidenceBadge">Confidence: —</span>
+</div>
+</div>
+
+<div style="margin-top:14px; max-width:560px;">
+<div class="kvKey">Forecast Mode</div>
+<select class="fun-input" id="forecast_forecastMode">
+<option value="velocity">🔵 Velocity-Based (Avg of last 3)</option>
+<option selected value="capacity">🟢 Capacity-Based (Focus + Leaves Weight)</option>
+</select>
+</div>
+
+<!-- Overcommit explainer always visible -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">📘 What is Over-commit Ratio?</div>
+<div class="mutedText" style="margin-top:6px;">
+<b>Over-commit Ratio = Committed SP ÷ Forecast SP</b><br/>
+If ratio > 1 → you're committing more than forecast (risk). If < 1 → buffer.
+</div>
+</div>
+
+<!-- Velocity Mode -->
+<div class="info-banner" id="forecast_velocityBox" style="margin-top:14px; display:none;">
+<div class="kvKey">🔵 Velocity-Based</div>
+<div class="mutedText" style="margin-top:6px;">Formula: (N-1 + N-2 + N-3) / 3</div>
+
+<div class="toggleRow" style="margin-top:10px;">
+<input id="forecast_velOverride" type="checkbox" />
+<label for="forecast_velOverride">Override velocities (otherwise uses setup)</label>
+</div>
+
+<div class="velocityRow" style="margin-top:10px;">
+<div class="velItem">
+<div class="velLabel">Sprint N-1</div>
+<input class="fun-input numSm" id="forecast_velN1" type="number" min="0" max="999" step="1" inputmode="numeric" disabled />
+</div>
+<div class="velItem">
+<div class="velLabel">Sprint N-2</div>
+<input class="fun-input numSm" id="forecast_velN2" type="number" min="0" max="999" step="1" inputmode="numeric" disabled />
+</div>
+<div class="velItem">
+<div class="velLabel">Sprint N-3</div>
+<input class="fun-input numSm" id="forecast_velN3" type="number" min="0" max="999" step="1" inputmode="numeric" disabled />
+</div>
+</div>
+</div>
+
+<!-- Capacity Mode -->
+<div class="info-banner" id="forecast_capacityBox" style="margin-top:14px;">
+<div class="kvKey">🟢 Capacity-Based</div>
+<div class="mutedText" style="margin-top:6px;">
+Uses your sprint days + team + leaves to compute <b>Effective Team Days</b>, then multiplies by <b>SP per Team Day</b>.
+</div>
+
+<div class="fieldGrid fieldGrid-even" style="margin-top:10px;">
+<div>
+<div class="velLabel">Focus factor (0.1–1.0)</div>
+                  <input class="fun-input numSm" id="forecast_focusFactor" type="number" min="0.1" max="1" step="0.05" inputmode="decimal" />
+                  <input class="fun-input numSm" id="forecast_focusFactor" type="number" min="0.1" max="1" step="0.05" inputmode="decimal" value="0.60" />
+</div>
+
+<div>
+<div class="velLabel">Leaves weight (0.5–1.5)</div>
+                  <input class="fun-input numSm" id="forecast_leaveWeight" type="number" min="0.5" max="1.5" step="0.1" inputmode="decimal" />
+                  <input class="fun-input numSm" id="forecast_leaveWeight" type="number" min="0.5" max="1.0" step="0.1" inputmode="decimal" value="1.0" />
+</div>
+
+<div>
+<div class="velLabel">SP per Team Day</div>
+                  <input class="fun-input numSm" id="forecast_spPerDay" type="number" min="0" max="999" step="0.1" inputmode="decimal" />
+                  <input class="fun-input numSm" id="forecast_spPerDay" type="number" min="0" max="999" step="0.1" inputmode="decimal" value="1.0" />
+</div>
+</div>
+
+<!-- Reference formulas + live values -->
+<div class="formulaBlock" id="forecast_formulaReference">
+<div class="kvKey" style="margin-bottom:6px;">📘 Forecast Formulas (Reference)</div>
+
+<div><b>1) Ideal Capacity (Days per person)</b></div>
+<div>Ideal = Sprint Days × Focus Factor</div>
+
+<div style="margin-top:8px;"><b>2) Total Ideal Capacity (Days)</b></div>
+<div>Total Ideal Days = Team Count × Ideal</div>
+
+<div style="margin-top:8px;"><b>3) Total Actual Capacity (Days)</b></div>
+<div>Total Actual Days = Total Ideal Days − (Leaves × Weight)</div>
+
+<div style="margin-top:8px;"><b>4) Total Actual Capacity (SP)</b></div>
+<div>Forecast SP = max(0, Total Actual Days) × SP per Team Day</div>
+
+<div class="info-banner" style="margin-top:12px;">
+<div class="kvKey">📌 Current Values</div>
+<div class="mutedText" id="capacity_liveValues" style="margin-top:6px;">Save to see live values here.</div>
+</div>
+</div>
+</div>
+
+<div class="info-banner warnCard" id="forecast_warnBox">
+<div class="kvKey">⚠ Fix inputs</div>
+<div id="forecast_warnText" class="mutedText" style="margin-top:6px;"></div>
+</div>
+
+<div style="margin-top:14px;">
+<div class="kvKey">Result</div>
+
+<div class="forecastNumber">
+<span id="forecast_value" class="forecastValue">—</span>
+<span class="unit">SP</span>
+<span class="deltaPill" id="overcommitPill" style="display:none;">—</span>
+</div>
+
+<div class="metaLine">
+<span id="forecast_delta" class="deltaPill" style="display:none;">—</span>
+<span id="forecast_overcommit" class="deltaPill" style="display:none;">—</span>
+</div>
+
+<div class="helperRow">
+<div class="info-banner">
+<div class="kvKey">Details</div>
+<div class="mutedText" id="forecast_detailLine" style="margin-top:6px;">—</div>
+</div>
+
+<div class="info-banner" id="forecast_formulaVelocity" style="display:none;">
+<div class="kvKey">📘 Velocity Formula</div>
+<div class="mutedText" style="margin-top:6px;">(Sprint N-1 + Sprint N-2 + Sprint N-3) / 3</div>
+</div>
+</div>
+
+<div class="info-banner" id="forecast_formulaActual" style="margin-top:12px;">
+Save to see calculation details here.
+</div>
+</div>
+</div>
+<!-- /forecast -->
+</div>
+</section>
+
+</div>
+</main>
+</div>
+
+<script src="js/theme.js"></script>
+<script src="js/xp.js"></script>
+<script src="js/plan.js"></script>
+</body>
+</html>
