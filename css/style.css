@@ -965,7 +965,14 @@ body{
   font-size: 12px;
 }
 
-
+.deltaPill--wrap{
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+}
 /* =========================================================
    v12.1 HOTFIX: Over-commit ratio pill clipping
    (Ensures long text wraps inside the Gap tile)
