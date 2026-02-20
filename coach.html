@@ -15,11 +15,12 @@
     .tabBtn.active{background: rgba(99,102,241,0.95); color:#fff; border-color: rgba(99,102,241,0.55); box-shadow: 0 10px 24px rgba(99,102,241,0.18);}
     .tabPanel.hidden{display:none}
 
-    /* ✅ Make desktop feel like desktop (fix “too small”) */
+    /* ✅ Desktop should feel like desktop */
     .coachWrap{
-      max-width: 1100px;
+      max-width: 1280px;
       margin: 0 auto;
       width: 100%;
+      padding: 0 14px;
     }
 
     /* ===== Sprint History table (Coach) ===== */
@@ -81,12 +82,8 @@
       background: color-mix(in oklab, var(--bg-soft) 80%, rgba(17,24,39,0.02));
       border: 1px solid var(--border-soft);
     }
-
     @media (min-width: 980px){
-      .chartGrid{
-        grid-template-columns: 1fr 1fr;
-        align-items:stretch;
-      }
+      .chartGrid{ grid-template-columns: 1fr 1fr; align-items:stretch; }
       .chartGrid .span2{ grid-column: 1 / -1; }
     }
   </style>
@@ -208,13 +205,13 @@
               <strong>Tip:</strong> Health improves when risk trends down and commitment matches capacity.
             </div>
 
-            <!-- ✅ Sprint History table (6 sprints: N-6 → N-1) -->
+            <!-- ✅ Sprint History table -->
             <div class="info-banner historyWrap" style="margin-top:12px;">
               <div class="historyTop">
                 <div>
                   <div class="kvKey">Sprint History (Last 6 sprints)</div>
                   <div class="mutedText" style="margin-top:6px;">
-                    Use this for trends: velocity variation, predictability, rolling averages, disruption, team health, and capacity accuracy.
+                    Use this for trends: velocity, predictability, disruption, capacity accuracy, team health.
                   </div>
                 </div>
 
@@ -251,24 +248,21 @@
                       <th align="right">Sick leave (person-days)</th>
                     </tr>
                   </thead>
-                  <tbody id="hist_rows">
-                    <!-- Rows rendered by js/coach-history.js -->
-                  </tbody>
+                  <tbody id="hist_rows"></tbody>
                 </table>
               </div>
 
               <div class="mutedText" id="hist_status" style="margin-top:10px;">—</div>
             </div>
 
-            <!-- ✅ Charts (these IDs MUST match coach-addons.js) -->
+            <!-- ✅ Charts (IDs match updated coach-addons.js) -->
             <div class="info-banner" style="margin-top:14px;">
               <div class="kvKey">Coach Charts</div>
               <div class="mutedText" style="margin-top:6px;">
-                These auto-render when you click <b>Load Demo Data</b> or <b>Save</b> (or when snapshots are saved).
+                Charts auto-render when you click <b>Load Demo Data</b>, <b>Save</b>, <b>Reset</b>, or import CSV.
               </div>
 
               <div class="chartGrid">
-                <!-- Sprint History table charts -->
                 <div class="chartCard">
                   <div class="chartTitle">Velocity Trend (Completed SP)</div>
                   <canvas class="chartCanvas" id="hist_velocityChart" height="140"></canvas>
@@ -294,7 +288,7 @@
                   <canvas class="chartCanvas" id="hist_sickChart" height="140"></canvas>
                 </div>
 
-                <!-- Snapshot charts (optional but your coach-addons.js also supports these) -->
+                <!-- Optional snapshot charts (only show data after saving snapshots in Insights) -->
                 <div class="chartCard">
                   <div class="chartTitle">Snapshot Velocity (avgVelocity)</div>
                   <canvas class="chartCanvas" id="chart_velocity" height="140"></canvas>
@@ -496,20 +490,20 @@
           </div>
         </section>
 
-      </div><!-- /coachWrap -->
+      </div>
     </main>
   </div>
 
   <script src="js/theme.js"></script>
   <script src="js/xp.js"></script>
 
-  <!-- IMPORTANT: history table logic first -->
+  <!-- History table logic first -->
   <script src="js/coach-history.js"></script>
 
   <!-- Charts addon reads history + renders canvases -->
   <script src="js/coach-addons.js"></script>
 
-  <!-- Tabs (if you don't already have tab logic elsewhere, keep this tiny safe one) -->
+  <!-- Tabs -->
   <script>
     (() => {
       function initTabs(){
