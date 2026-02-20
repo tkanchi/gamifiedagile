@@ -636,3 +636,68 @@ p{ margin: 0 0 12px; }
   .fieldGrid.fieldGrid-even{ grid-template-columns: 1fr; }
   .velocityRow{ grid-template-columns: 1fr; }
 }
+
+/* =========================================================
+   PERFECT ALIGNMENT: Setup Fields (No Jump / No Wrap Shift)
+   ========================================================= */
+
+/* Label styling */
+.fieldGrid.fieldGrid-even .kvKey{
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.25;
+  min-height: 32px;        /* forces equal label height */
+  display: flex;
+  align-items: flex-end;   /* text aligns nicely */
+}
+
+/* Velocity labels */
+.velocityRow .velLabel{
+  font-weight: 600;
+  font-size: 12px;
+  min-height: 28px;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Field container consistency */
+.fieldGrid.fieldGrid-even > div,
+.velocityRow .velItem{
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Make all inputs same height */
+.fun-input{
+  height: 40px;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+  transition: all 0.18s ease;
+}
+
+/* Perfect vertical rhythm */
+.fieldGrid.fieldGrid-even{
+  align-items: start;
+}
+
+/* Prevent weird width shifts */
+.fieldGrid.fieldGrid-even .fun-input,
+.velocityRow .fun-input{
+  width: 100%;
+  max-width: 140px;
+}
+
+/* Ensure 4 inputs stay clean row */
+@media (min-width: 981px){
+  .fieldGrid.fieldGrid-even{
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Smooth hover (premium feel) */
+.fun-input:focus{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+}
