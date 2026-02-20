@@ -277,6 +277,7 @@ body{
   flex-wrap:wrap;
   align-items:center;
 }
+.btnRow-right{ justify-content:flex-end; }
 .btnGhost{
   border-radius: 14px;
   padding: 10px 14px;
@@ -311,6 +312,84 @@ body{
   box-shadow: 0 10px 24px color-mix(in oklab, var(--accent) 18%, transparent);
 }
 .btnStage-next:hover{ filter: brightness(1.05); }
+
+/* =======================
+   PLAN PAGE POLISH (v1.1)
+   Neatly organized + dashboard-quality layout
+   ======================= */
+.miniHeader{ margin: 2px 0 10px; }
+.miniTitle{ font-weight: 750; font-size: 14px; }
+.miniSub{ color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
+.coachNote{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.coachNoteIcon{ line-height: 1.5; }
+
+.rightPills{ display:flex; gap:10px; align-items:center; justify-content:flex-end; }
+
+.forecastGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+.forecastTile{
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  background: var(--bg-panel);
+}
+.tileLabel{ font-size: 12px; font-weight: 750; color: var(--text-muted); }
+.tileSub{ margin-top: 8px; font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+.bigNum{ font-size: 30px; font-weight: 850; letter-spacing: -0.4px; line-height: 1.1; }
+.unit{ font-size: 12px; font-weight: 650; color: var(--text-muted); margin-left: 6px; }
+
+.deltaRow{ display:flex; flex-direction:column; gap:10px; margin-top: 12px; }
+
+.calcWrap{ margin-top: 16px; }
+.calcHead{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+.calcDetails summary{
+  cursor:pointer;
+  user-select:none;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.calcBody{
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.bottomCTA{
+  margin-top: 24px;
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px){
+  .forecastGrid{ grid-template-columns: 1fr; }
+  .bottomCTA{ flex-direction: column; align-items: stretch; }
+  .bottomCTA .btnStage{ width: 100%; justify-content:center; }
+}
 
 /* Neon: button electric glow */
 :root[data-theme="neon"] .btnStage-next{
@@ -352,16 +431,26 @@ body{
 /* =======================
    RELIABLE UNDERLINE GLOW
    ======================= */
+/* ===========================
+   Plan page: remove long focus underline line
+   (keep only input box focus glow)
+   =========================== */
+body[data-page="plan"] .inputWrap::after{
+  display: none !important;
+}
+
 .inputWrap{
   position: relative;
-  width: 100%;
+  /* Keep the focus underline only under the input (not across the whole row) */
+  display: inline-block;
+  width: fit-content;
 }
 .inputWrap::after{
   content: "";
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 6px;
+  left: 8px;
+  right: 8px;
+  bottom: -2px;
   height: 2px;
   background: linear-gradient(90deg,
     color-mix(in oklab, var(--accent) 88%, white),
@@ -373,7 +462,7 @@ body{
   border-radius: 2px;
   pointer-events: none;
   opacity: 0.92;
-  filter: drop-shadow(0 0 8px color-mix(in oklab, var(--accent) 35%, transparent));
+  filter: none;
 }
 .inputWrap:focus-within::after{ transform: scaleX(1); }
 
@@ -385,7 +474,8 @@ body{
     drop-shadow(0 0 18px color-mix(in oklab, var(--accent) 35%, transparent));
 }
 :root[data-theme="neon"] .inputWrap:focus-within::after{
-  animation: neonPulse 880ms ease-in-out infinite;
+  /* Keep calm: no flicker animation on focus underline */
+  animation: none;
 }
 @keyframes neonPulse{
   0%,100%{ filter: drop-shadow(0 0 10px color-mix(in oklab, var(--accent) 55%, transparent)); }
@@ -395,6 +485,46 @@ body{
   box-shadow:
     0 0 0 4px color-mix(in oklab, var(--accent) 26%, transparent),
     0 0 22px color-mix(in oklab, var(--accent) 24%, transparent);
+}
+
+/* ===========================
+   Combined Inputs Card + Inset Divider (FIXED)
+   - Uses tokens so it shows in light/mint/neon/retro
+   - Divider is inset and never touches outer border
+   =========================== */
+.inputComboCard{
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+.inputComboCard .inputSection{
+  padding: 16px 18px;
+}
+.insetDivider{
+  height: 1px;
+  background: var(--border);
+  margin: 10px 18px; /* inset so it doesn't touch outer border */
+}
+
+/* Make the combined box clearer in darker themes */
+:root[data-theme="neon"] .inputComboCard,
+:root[data-theme="retro"] .inputComboCard{
+  background: color-mix(in oklab, var(--bg-panel) 92%, black);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+}
+:root[data-theme="neon"] .insetDivider,
+:root[data-theme="retro"] .insetDivider{
+  background: var(--border-strong);
+}
+
+/* Links styled as buttons should never show underline */
+.btnStage,
+.btnStage:link,
+.btnStage:visited{
+  text-decoration: none;
 }
 
 /* 🎲 Retro: pixel focus */
@@ -735,4 +865,20 @@ body{
 #moodBadge.mood-sprinting{
   border-color: rgba(239,68,68,.50);
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
+}
+
+/* ===========================
+   Input stacks (v1.2)
+   =========================== */
+.fieldStack{
+  grid-template-columns: 1fr !important;
+  row-gap: 16px !important;
+}
+.velStack{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+.velStack .velItem{
+  width: 100%;
 }
