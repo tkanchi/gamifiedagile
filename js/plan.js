@@ -1,13 +1,14 @@
-// js/plan.js — Scrummer Plan (Stable v4.5)
-// Focus: FIX FUNCTIONALITY + never crash if HTML IDs are missing
-// Adds: Avg Velocity tile wiring (avgVelocityMirror) + XP sparkle on Save + Presets + Forecast update + Formulas + Neon spark-on-update
+// js/plan.js — Scrummer Plan (Stable v4.6)
+// Fixes:
+//  - Avg Velocity tile wiring (avgVelocityMirror)
+//  - Committed SP tile wiring (committedMirror)
+//  - Safe rendering even if some IDs are missing
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
-
   const qs = (id) => document.getElementById(id);
 
-  // --- IDs we expect in index.html (if any are missing, old builds crash)
+  // If IDs are missing in HTML, do NOT crash — only warn.
   const REQUIRED_IDS = [
     "setup_sprintDays","setup_teamMembers","setup_leaveDays","setup_committedSP",
     "setup_v1","setup_v2","setup_v3",
@@ -19,12 +20,13 @@
     "forecast_velOverride","forecast_velN1","forecast_velN2","forecast_velN3",
     "forecast_focusFactor","forecast_leaveWeight","forecast_spPerDay",
     "forecast_warnBox","forecast_warnText",
-    "forecast_value","forecast_detailLine","forecast_formulaActual",
-    "capacity_liveValues",
+    "forecast_value","forecast_detailLine",
+    "forecast_formulaActual","capacity_liveValues",
     "forecast_delta","forecast_overcommit","overcommitPill",
 
-    // NEW: Avg Velocity tile
-    "avgVelocityMirror"
+    // Tiles
+    "committedMirror",
+    "avgVelocityMirror",
   ];
 
   function logMissingIds(){
@@ -32,17 +34,17 @@
     if(missing.length){
       console.warn("[Scrummer Plan] Missing IDs in index.html:", missing);
     }
-    return missing;
   }
 
-  // clamp 0..999 (3-digit)
   function safeParse(str, fallback) { try { return JSON.parse(str); } catch { return fallback; } }
   function num(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
+
   function clampInt3(n){
     if(!Number.isFinite(n)) return null;
     const x = Math.round(n);
     return Math.max(0, Math.min(999, x));
   }
+
   function clampInputInt3(el){
     if(!el) return;
     const raw = String(el.value ?? "").trim();
@@ -91,6 +93,7 @@
     t.textContent = msg || "";
     b.style.display = "block";
   }
+
   function hideWarn(){
     const b = qs("forecast_warnBox");
     if(b) b.style.display = "none";
@@ -100,13 +103,11 @@
     const el = qs("forecast_value");
     if(!el) return;
 
-    // number bump
     el.classList.remove("num-bump");
     void el.offsetWidth;
     el.classList.add("num-bump");
     setTimeout(()=>el.classList.remove("num-bump"), 520);
 
-    // ⚡ Neon spark ONLY if theme is neon
     const theme = document.documentElement.getAttribute("data-theme") || "light";
     if(theme !== "neon") return;
 
@@ -160,7 +161,14 @@
     if(el) el.innerHTML = html || "—";
   }
 
-  // ✅ NEW: Avg Velocity tile writer
+  // ✅ Committed SP tile wiring
+  function setCommittedMirror(v){
+    const el = qs("committedMirror");
+    if(!el) return;
+    el.textContent = (v == null || Number.isNaN(v)) ? "—" : String(Math.round(v));
+  }
+
+  // ✅ Avg Velocity tile wiring
   function setAvgVelocityMirror(v){
     const el = qs("avgVelocityMirror");
     if(!el) return;
@@ -273,7 +281,7 @@
 
   function applyVelocityDefaultsFromSetup(setup){
     const override = !!qs("forecast_velOverride")?.checked;
-    if(override) return; // don't overwrite while typing
+    if(override) return;
 
     const n1=qs("forecast_velN1"), n2=qs("forecast_velN2"), n3=qs("forecast_velN3");
     if(n1) n1.value = setup.v1 ?? "";
@@ -328,10 +336,12 @@
       forecastSP: avg,
       confidence,
       html:
-        `<div class="kvKey" style="margin-bottom:6px;">📘 Velocity Forecast</div>
-         <div><b>Formula:</b> (Sprint N-1 + Sprint N-2 + Sprint N-3) / 3</div>
-         <div style="margin-top:8px;">Avg = (${a} + ${b} + ${c}) / 3 = <b>${avg.toFixed(1)}</b></div>
-         <div class="mutedText" style="margin-top:8px;">Volatility ≈ ${(volatility*100).toFixed(0)}% (lower is better)</div>`
+        `<div class="kvKey" style="margin-bottom:6px;">Velocity calculations</div>
+         <div><b>Formula</b></div>
+         <div class="mutedText">(Sprint N-1 + Sprint N-2 + Sprint N-3) / 3</div>
+         <div style="margin-top:10px;"><b>Substitute values</b></div>
+         <div>(${a} + ${b} + ${c}) / 3 = <b>${avg.toFixed(1)}</b></div>
+         <div class="mutedText" style="margin-top:10px;">Volatility ≈ ${(volatility*100).toFixed(0)}% (lower is better)</div>`
     };
   }
 
@@ -383,7 +393,7 @@
       forecastSP,
       confidence,
       html:
-        `<div class="kvKey" style="margin-bottom:6px;">📘 Capacity Forecast</div>
+        `<div class="kvKey" style="margin-bottom:6px;">Capacity calculations</div>
          <div><b>1) Ideal/person</b> = Sprint Days × Focus Factor = <b>${idealPerPerson.toFixed(2)}</b></div>
          <div style="margin-top:6px;"><b>2) Total Ideal Days</b> = Team × Ideal/person = <b>${totalIdealDays.toFixed(2)}</b></div>
          <div style="margin-top:6px;"><b>3) Total Actual Days</b> = Total Ideal − (Leaves × Weight) = <b>${totalActualDays.toFixed(2)}</b></div>
@@ -396,7 +406,9 @@
     syncModeUI(mode);
     refreshSetupSummary(setup, mode);
 
-    // ✅ NEW: compute avg velocity tile from setup values
+    // ✅ Always update tiles (even if forecast can't be computed yet)
+    setCommittedMirror(setup?.committedSP);
+
     if(setup && setup.v1 != null && setup.v2 != null && setup.v3 != null){
       setAvgVelocityMirror((setup.v1 + setup.v2 + setup.v3) / 3);
     } else {
@@ -411,7 +423,7 @@
       setForecastValue(null);
       setConfidenceBadge(50);
       setDetails("—");
-      setActualFormula("Fill missing fields to see formulas here.");
+      setActualFormula("Fill missing fields to see calculations here.");
       setOvercommitUI(setup.committedSP, null);
       return;
     }
@@ -483,22 +495,23 @@
     qs("forecast_forecastMode")?.addEventListener("change",()=>renderForecast(readSetupFromUI()));
     qs("forecast_velOverride")?.addEventListener("change",()=>renderForecast(readSetupFromUI()));
 
-    // live updates
+    // live updates (setup fields)
     ["setup_sprintDays","setup_teamMembers","setup_leaveDays","setup_committedSP","setup_v1","setup_v2","setup_v3"]
       .forEach(id=>qs(id)?.addEventListener("input",()=>renderForecast(readSetupFromUI())));
 
+    // live updates (capacity knobs)
     ["forecast_focusFactor","forecast_leaveWeight","forecast_spPerDay"]
       .forEach(id=>qs(id)?.addEventListener("input",()=>renderForecast(readSetupFromUI())));
 
+    // live updates (velocity override)
     ["forecast_velN1","forecast_velN2","forecast_velN3"]
       .forEach(id=>qs(id)?.addEventListener("input",()=>renderForecast(readSetupFromUI())));
   }
 
   document.addEventListener("DOMContentLoaded",()=>{
-    // 1) Log missing IDs (this is the #1 reason things "break")
     logMissingIds();
 
-    // 2) Set sensible defaults if blank
+    // Set defaults if blank
     const ff = qs("forecast_focusFactor");
     const lw = qs("forecast_leaveWeight");
     const sp = qs("forecast_spPerDay");
@@ -506,7 +519,6 @@
     if(lw && !lw.value) lw.value="1.0";
     if(sp && !sp.value) sp.value="1.0";
 
-    // 3) Load saved setup
     const saved = loadSetup();
     if(saved){
       writeSetupToUI(saved);
@@ -516,7 +528,6 @@
       setSaveStatus("Not saved yet.");
     }
 
-    // 4) Wire handlers + render
     attachHandlers();
     renderForecast(readSetupFromUI());
   });
