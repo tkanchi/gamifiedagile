@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-theme="light" lang="en">
+<html data-theme="neon" lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
@@ -9,16 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
 <style>
-/* ---------- STEP FLOW (Replaces TabBar) ---------- */
-
-.planStepper {
+/* ---------- STEP FLOW (Replaces old TabBar) ---------- */
+.planStepper{
   display:flex;
   align-items:center;
   gap:16px;
   margin:10px 0 20px;
 }
-
-.step {
+.step{
   display:flex;
   align-items:center;
   gap:10px;
@@ -26,48 +24,38 @@
   opacity:.6;
   transition:all .2s ease;
 }
-
-.step.active {
-  opacity:1;
-}
-
-.stepDot {
-  width:30px;
-  height:30px;
-  border-radius:50%;
+.step.active{ opacity:1; }
+.stepDot{
+  width:30px;height:30px;border-radius:50%;
   background:var(--bg-soft);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:700;
   border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;
 }
-
-.step.active .stepDot {
-  background:rgba(99,102,241,0.95);
+.step.active .stepDot{
+  background: color-mix(in oklab, var(--accent) 92%, white);
   color:#fff;
-  border-color:rgba(99,102,241,0.55);
-  box-shadow:0 6px 18px rgba(99,102,241,.25);
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--accent) 30%, transparent);
+}
+.stepLabel{ font-weight:650; }
+.stepConnector{
+  flex:1;height:2px;background:var(--border);opacity:.45;
+}
+.tabPanel.hidden{ display:none; }
+
+/* Slight premium tint for forecast panel */
+#panel-forecast .sectionCard{
+  background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 6%, transparent), transparent);
 }
 
-.stepLabel {
-  font-weight:600;
-}
-
-.stepConnector {
-  flex:1;
-  height:2px;
-  background:var(--border);
-  opacity:.4;
-}
-
-.tabPanel.hidden {
-  display:none;
-}
-
-/* Slight premium tint for forecast */
-#panel-forecast .sectionCard {
-  background:linear-gradient(180deg, rgba(99,102,241,0.05), transparent);
+/* Forecast header row */
+.resultsHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
 }
 </style>
 </head>
@@ -90,68 +78,290 @@
     <a class="navlink" href="Gamerules.html">🎮 Game Rules</a>
     <a class="navlink" href="accounts.html">🔐 Account</a>
   </nav>
+
+  <div class="xpWidget">
+    <div class="xpTop">
+      <div>
+        <div class="lvl" id="xpLevel">Level 1</div>
+        <div class="title" id="xpTitle">Rookie</div>
+      </div>
+      <div id="moodBadge">🐆 Calm</div>
+    </div>
+    <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+    <div class="xpMeta">
+      <span id="xpText">0 / 300 XP</span>
+      <span id="streakText">🧊 streak reset</span>
+    </div>
+  </div>
+
+  <!-- ✅ NEW: Theme dropdown -->
+  <div style="margin-top:14px;">
+    <div class="mutedText" style="margin-bottom:6px;">🎮 Theme</div>
+    <select class="fun-input" id="themeSelect">
+      <option value="neon">⚡ Neon Arena</option>
+      <option value="cyber">🧠 Cyber Mint</option>
+      <option value="retro">🎲 Retro Arcade</option>
+    </select>
+  </div>
 </aside>
 
 <main class="main">
 
-  <!-- STEP FLOW -->
+  <!-- ✅ NEW: Stepper -->
   <div class="planStepper">
-    <div class="step active" data-tab="setup">
+    <div class="step active" data-tab="setup" role="button" tabindex="0">
       <div class="stepDot">1</div>
       <div class="stepLabel">Configure</div>
     </div>
 
     <div class="stepConnector"></div>
 
-    <div class="step" data-tab="forecast">
+    <div class="step" data-tab="forecast" role="button" tabindex="0">
       <div class="stepDot">2</div>
       <div class="stepLabel">Forecast</div>
     </div>
   </div>
 
   <!-- ================= SETUP ================= -->
-
   <section class="tabPanel" id="panel-setup">
     <div class="sectionCard">
       <h1 class="sectionTitle">Launchpad</h1>
-      <p class="sectionSub">
-        Configure sprint inputs. Forecast is generated from these values.
-      </p>
+      <p class="sectionSub">Enter sprint basics. This powers Insights → Health → Actions.</p>
 
-      <!-- KEEP ALL YOUR EXISTING SETUP FORM CONTENT HERE -->
-      <!-- (I did not remove any of your input logic) -->
+      <div class="info-banner">
+        <strong>Tip:</strong> Accurate setup = better signals + fewer surprises.
+      </div>
 
-      <div class="stageFooter">
-        <div class="left">
-          <span class="mutedText">Step 1 of 2</span>
+      <div style="margin-top:10px; max-width:720px;">
+        <div class="kvKey" style="margin-bottom:6px;">Sprint length (working days)</div>
+        <input class="fun-input" id="setup_sprintDays" min="1" placeholder="10" type="number"/>
+
+        <div class="kvKey" style="margin:12px 0 6px;">Team members</div>
+        <input class="fun-input" id="setup_teamMembers" min="1" placeholder="7" type="number"/>
+
+        <div class="kvKey" style="margin:12px 0 6px;">Leave days (total person-days)</div>
+        <input class="fun-input" id="setup_leaveDays" min="0" placeholder="0" type="number"/>
+
+        <div class="kvKey" style="margin:12px 0 6px;">Committed story points</div>
+        <input class="fun-input" id="setup_committedSP" min="0" placeholder="40" type="number"/>
+
+        <div class="info-banner" style="margin-top:14px;">
+          <div class="kvKey">Last 3 sprint velocities (completed SP)</div>
+          <div class="mutedText" style="margin-top:6px;">Used for average + volatility.</div>
+          <div style="display:grid; gap:10px; margin-top:12px;">
+            <input class="fun-input" id="setup_v1" min="0" placeholder="N-1 velocity (e.g., 36)" type="number"/>
+            <input class="fun-input" id="setup_v2" min="0" placeholder="N-2 velocity (e.g., 41)" type="number"/>
+            <input class="fun-input" id="setup_v3" min="0" placeholder="N-3 velocity (e.g., 38)" type="number"/>
+          </div>
         </div>
-        <div class="right">
-          <button class="btnStage btnStage-next" id="goToForecastBtn" type="button">
-            Generate Forecast →
-          </button>
+
+        <div style="margin-top:14px;">
+          <div class="kvKey" style="margin-bottom:6px;">Quick presets</div>
+          <div class="btnRow" style="margin-top:8px;">
+            <button class="btnGhost" id="setup_presetExcellent" type="button">🟢 Excellent</button>
+            <button class="btnGhost" id="setup_presetNormal" type="button">🟡 Normal</button>
+            <button class="btnGhost" id="setup_presetRisky" type="button">🔴 Risky</button>
+          </div>
+        </div>
+
+        <div class="info-banner" id="setup_toast" style="display:none; margin-top:14px; border-left:4px solid color-mix(in oklab, var(--accent) 55%, transparent);">
+          —
+        </div>
+
+        <div class="stageIndicator">Flow: Setup → Forecast → Coach</div>
+
+        <!-- ✅ UPDATED FOOTER: goes to Forecast -->
+        <div class="stageFooter">
+          <div class="left">
+            <span class="mutedText">Step 1 of 2</span>
+          </div>
+          <div class="right">
+            <button class="btnStage btnStage-action" id="setup_saveBtn" type="button">Save Setup</button>
+            <button class="btnStage btnStage-next" id="goToForecastBtn" type="button">Generate Forecast →</button>
+          </div>
+        </div>
+
+        <div class="info-banner" style="margin-top:16px;">
+          <div class="kvKey">Save status</div>
+          <div class="mutedText" id="setup_saveStatus" style="margin-top:6px;">Not saved yet.</div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ================= FORECAST ================= -->
-
   <section class="tabPanel hidden" id="panel-forecast">
     <div class="sectionCard">
 
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <!-- ✅ NEW: Forecast header with back button -->
+      <div class="resultsHeader">
         <div>
           <h1 class="sectionTitle">Sprint Projection</h1>
           <p class="sectionSub">Based on your configured inputs.</p>
         </div>
-
-        <button class="btnGhost" id="backToSetupBtn">
-          ← Adjust Setup
-        </button>
+        <button class="btnGhost" id="backToSetupBtn" type="button">← Adjust Setup</button>
       </div>
 
-      <!-- KEEP ALL YOUR EXISTING FORECAST CONTENT HERE -->
-      <!-- (No logic removed, just reorganized visually) -->
+      <div class="info-banner">
+        <strong>Goal:</strong> Get a clean, explainable forecast in Story Points.
+      </div>
+
+      <!-- MODE SELECT -->
+      <div style="margin-top:16px;">
+        <div class="kvKey">Forecast Mode</div>
+        <select class="fun-input" id="forecast_forecastMode">
+          <option value="velocity">🔵 Velocity-Based (Avg of last 3)</option>
+          <option selected value="capacity">🟢 Capacity-Based (Focus + Leaves Weight)</option>
+        </select>
+      </div>
+
+      <!-- VELOCITY MODE -->
+      <div class="info-banner" id="forecast_velocityBox" style="margin-top:14px; display:none;">
+        <div class="kvKey">🔵 Velocity-Based Forecast</div>
+        <div style="color:var(--text-muted); font-weight:450; margin-top:6px;">
+          Average Velocity = (Sprint N + Sprint N-1 + Sprint N-2) / 3
+        </div>
+        <div style="display:grid; gap:10px; margin-top:12px;">
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Sprint N</div>
+            <input class="fun-input" id="forecast_velN" min="0" placeholder="e.g., 40" step="1" type="number"/>
+          </div>
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Sprint N-1</div>
+            <input class="fun-input" id="forecast_velN1" min="0" placeholder="e.g., 38" step="1" type="number"/>
+          </div>
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Sprint N-2</div>
+            <input class="fun-input" id="forecast_velN2" min="0" placeholder="e.g., 42" step="1" type="number"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAPACITY MODE -->
+      <div class="info-banner" id="forecast_capacityBox" style="margin-top:14px;">
+        <div class="kvKey">🟢 Capacity-Based Forecast (Your Exact Logic)</div>
+        <div style="color:var(--text-muted); font-weight:450; margin-top:6px; line-height:1.6;">
+          Ideal (Days/person) = Sprint Days × Focus Factor<br/>
+          Total Ideal Days = Team Members × Ideal (Days/person)<br/>
+          Total Actual Days = Total Ideal Days − (Leaves × Weight)<br/>
+          Forecast SP = Total Actual Days × SP/day
+        </div>
+
+        <div style="display:grid; gap:10px; margin-top:12px;">
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Total No. of Days in Sprint</div>
+            <input class="fun-input" id="forecast_sprintDays" min="0" placeholder="e.g., 10" step="0.5" type="number"/>
+          </div>
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Focus Factor (0 - 1)</div>
+            <input class="fun-input" id="forecast_focusFactor" max="1" min="0" step="0.01" type="number" value="0.60"/>
+          </div>
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Total Team Count</div>
+            <input class="fun-input" id="forecast_teamCount" min="0" placeholder="e.g., 14" step="1" type="number"/>
+            <div id="forecast_teamCountHint" style="display:none; color:var(--text-muted); font-weight:450; margin-top:6px;">
+              Team Count is auto-calculated from Roles below.
+            </div>
+          </div>
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Story Points per Day (per member)</div>
+            <input class="fun-input" id="forecast_spPerDay" min="0" step="0.1" type="number" value="4"/>
+          </div>
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Total No. of Leaves (single field)</div>
+            <input class="fun-input" id="forecast_leaves" min="0" placeholder="e.g., 10" step="0.5" type="number"/>
+            <div id="forecast_leavesHint" style="display:none; color:var(--text-muted); font-weight:450; margin-top:6px;">
+              Leaves are auto-calculated from Roles below.
+            </div>
+          </div>
+          <div>
+            <div class="kvKey" style="margin-bottom:6px;">Unavailability Weight (0 - 1)</div>
+            <input class="fun-input" id="forecast_weight" max="1" min="0" step="0.01" type="number" value="0.50"/>
+            <div style="color:var(--text-muted); font-weight:450; margin-top:6px;">
+              1 = 100% loss, 0.5 = 50% loss, 0.6 = 60% loss
+            </div>
+          </div>
+        </div>
+
+        <div class="rolesHeader">
+          <div class="kvKey">Roles (optional)</div>
+          <button class="btnGhost" id="forecast_addRoleBtn" type="button">+ Add Role</button>
+        </div>
+        <div class="rolesMeta">
+          <span class="miniTag" id="forecast_rolesCountTag">Roles: 0</span>
+          <span class="miniTag" id="forecast_rolesMembersTag">Members: 0</span>
+          <span class="miniTag" id="forecast_rolesLeavesTag">Leaves: 0</span>
+        </div>
+        <div style="color:var(--text-muted); font-weight:450; margin-top:8px; line-height:1.6;">
+          If roles exist, Team Count + Leaves are auto-filled from roles, and you get per-role capacity output.
+        </div>
+
+        <div class="rolesContainer" id="forecast_rolesContainer"></div>
+      </div>
+
+      <div class="btnRow" style="margin-top:12px;">
+        <button class="btnPrimary" id="forecast_calcBtn" type="button">Calculate 📦</button>
+        <button class="btnGhost" id="forecast_resetBtn" type="button">Reset</button>
+      </div>
+
+      <div style="margin-top:18px;">
+        <div class="kvKey">Results</div>
+
+        <div class="info-banner" id="forecast_warnBox" style="display:none; margin-bottom:12px;">
+          <div class="kvKey">⚠ Check Inputs</div>
+          <div id="forecast_warnText" style="color:var(--text-muted); font-weight:450; margin-top:6px;"></div>
+        </div>
+
+        <div class="info-banner" id="forecast_resultsBox">
+          <div class="kvKey" id="forecast_resultTitle">—</div>
+          <div id="forecast_resultMain" style="margin-top:8px;">—</div>
+
+          <div class="summaryGrid" id="forecast_summaryGrid" style="display:none;">
+            <div class="summaryCard">
+              <div class="summaryTitle">
+                <span>Team Summary</span>
+                <span class="miniTag">Totals</span>
+              </div>
+              <div id="forecast_teamSummary"></div>
+            </div>
+            <div class="summaryCard">
+              <div class="summaryTitle">
+                <span>Role Summary</span>
+                <span class="miniTag">Breakdown</span>
+              </div>
+              <div id="forecast_roleSummary"></div>
+            </div>
+          </div>
+
+          <hr style="margin:12px 0; opacity:.2;"/>
+
+          <div class="info-banner" id="forecast_formulaReference" style="margin-bottom:12px;">
+            <div class="kvKey" style="margin-bottom:6px;">📘 Forecast Formulas (Reference)</div>
+            <div><b>1) Ideal Capacity (Days per person)</b></div>
+            <div>Ideal = Sprint Days × Focus Factor</div>
+            <div style="margin-top:8px;"><b>2) Total Ideal Capacity (Days)</b></div>
+            <div>Total Ideal Days = Team Count × Ideal</div>
+            <div style="margin-top:8px;"><b>3) Total Actual Capacity (Days)</b></div>
+            <div>Total Actual Days = Total Ideal Days − (Leaves × Weight)</div>
+            <div style="margin-top:8px;"><b>4) Total Actual Capacity (SP)</b></div>
+            <div>Forecast SP = max(0, Total Actual Days) × SP/day</div>
+          </div>
+
+          <div class="info-banner" id="forecast_formulaActual">
+            Enter values and click Calculate to see step-by-step calculation.
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional: move forward -->
+      <div class="stageFooter" style="margin-top:18px;">
+        <div class="left">
+          <span class="mutedText">Step 2 of 2</span>
+        </div>
+        <div class="right">
+          <a class="btnStage btnStage-next" href="coach.html#insights">Go to Coach →</a>
+        </div>
+      </div>
 
     </div>
   </section>
@@ -162,6 +372,5 @@
 <script src="js/theme.js"></script>
 <script src="js/xp.js"></script>
 <script src="js/plan.js"></script>
-
 </body>
 </html>
