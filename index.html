@@ -67,14 +67,6 @@ color: var(--text-muted);
 font-weight: 500;
 }
 
-.deltaPill{
-padding: 6px 10px;
-border-radius: 999px;
-border: 1px solid var(--border);
-background: var(--bg-soft);
-overflow-wrap: anywhere;
-font-weight: 750;
-font-size: 12px;
 
 /* Allow long pill text (e.g., Over-commit ratio) to wrap instead of clipping */
 white-space: normal;
@@ -340,17 +332,15 @@ margin-top: 10px;
 <div class="tileSub">From your Sprint N input above.</div>
 </div>
 
-<div class="forecastTile">
+<div class="overcommitBar">
 <div class="tileLabel">Gap</div>
 <div class="deltaRow">
-<span id="forecast_delta" class="deltaPill" style="display:none;">—</span>
-<span id="forecast_overcommit" class="deltaPill deltaPill--wrap" style="display:none;">—</span></div>
+<span id="forecast_delta" class="overcommitWidePill" style="display:none;">—</span>
+<span id="forecast_overcommit" class="overcommitWidePill" style="display:none;">—</span></div>
 <div class="tileSub">Shows buffer vs overcommit.</div>
 </div>
 
 </div>
-
-
 
 <!-- Forecast settings (kept, but visually secondary) -->
 <div class="calcWrap">
