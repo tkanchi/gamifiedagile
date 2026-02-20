@@ -431,14 +431,6 @@ body{
 /* =======================
    RELIABLE UNDERLINE GLOW
    ======================= */
-/* ===========================
-   Plan page: remove long focus underline line
-   (keep only input box focus glow)
-   =========================== */
-body[data-page="plan"] .inputWrap::after{
-  display: none !important;
-}
-
 .inputWrap{
   position: relative;
   /* Keep the focus underline only under the input (not across the whole row) */
@@ -487,39 +479,52 @@ body[data-page="plan"] .inputWrap::after{
     0 0 22px color-mix(in oklab, var(--accent) 24%, transparent);
 }
 
+
 /* ===========================
-   Combined Inputs Card + Inset Divider (FIXED)
-   - Uses tokens so it shows in light/mint/neon/retro
-   - Divider is inset and never touches outer border
+   Two-column combined inputs with vertical divider
    =========================== */
-.inputComboCard{
+
+.inputComboCard.twoCol{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: 18px;
-  overflow: hidden;
   box-shadow: var(--shadow-soft);
-}
-.inputComboCard .inputSection{
-  padding: 16px 18px;
-}
-.insetDivider{
-  height: 1px;
-  background: var(--border);
-  margin: 10px 18px; /* inset so it doesn't touch outer border */
+  overflow: hidden;
 }
 
-/* Make the combined box clearer in darker themes */
-:root[data-theme="neon"] .inputComboCard,
-:root[data-theme="retro"] .inputComboCard{
-  background: color-mix(in oklab, var(--bg-panel) 92%, black);
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow);
+.inputComboCard.twoCol .inputSection{
+  padding: 18px 20px;
 }
-:root[data-theme="neon"] .insetDivider,
-:root[data-theme="retro"] .insetDivider{
+
+/* Vertical divider (inset top & bottom) */
+.verticalDivider{
+  width: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+/* Stronger divider for dark themes */
+:root[data-theme="neon"] .verticalDivider,
+:root[data-theme="retro"] .verticalDivider{
   background: var(--border-strong);
 }
 
+/* Mobile fallback */
+@media (max-width: 900px){
+  .inputComboCard.twoCol{
+    grid-template-columns: 1fr;
+  }
+
+  .verticalDivider{
+    width: auto;
+    height: 1px;
+    margin: 0 20px;
+  }
+}
 /* Links styled as buttons should never show underline */
 .btnStage,
 .btnStage:link,
