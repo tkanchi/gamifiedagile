@@ -90,30 +90,29 @@
 
 })();
 
+
 // ------------------------------------------------------------
-// Scrummer Coach Add-ons — Charts (safe)
-// Draws simple line/bar charts from Sprint History table data.
-// Requires: coach-history.js to store/load history rows.
-// If canvases are missing → does nothing.
+// Scrummer Coach Add-ons — History Table Charts (safe)
+// - Works with coach-history.js (window.ScrummerCoachHistory.getRows())
+// - Supports addedMid/removedMid column names
+// - Re-renders on scrummer:historyChanged and resize
 // ------------------------------------------------------------
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  // --- Try multiple possible storage keys safely ---
   function safeParse(str, fallback) { try { return JSON.parse(str); } catch { return fallback; } }
 
-  // If your coach-history.js already exposes a global API, we’ll use it.
   function loadSprintRows() {
-    // 1) If coach-history.js exposes a getter (best case)
-    if (window.Scrummer && window.Scrummer.coachHistory && typeof window.Scrummer.coachHistory.getRows === "function") {
-      const rows = window.Scrummer.coachHistory.getRows();
+    // ✅ Your real API
+    if (window.ScrummerCoachHistory && typeof window.ScrummerCoachHistory.getRows === "function") {
+      const rows = window.ScrummerCoachHistory.getRows();
       return Array.isArray(rows) ? rows : [];
     }
 
-    // 2) Otherwise, try common localStorage keys (non-breaking)
+    // fallback: localStorage
     const candidates = [
+      "scrummer_coach_history_v1",          // ✅ your KEY
       "scrummer_coach_history_rows_v1",
-      "scrummer_coach_history_v1",
       "scrummer_sprint_history_v1",
       "scrummer_history_table_v1"
     ];
@@ -127,9 +126,6 @@
     return [];
   }
 
-  // Convert whatever we get into normalized rows.
-  // Expected table columns:
-  // sprintLabel, forecastCap, actualCap, committed, completed, added, removed, sick
   function normalize(rows) {
     return (rows || []).map((r, idx) => {
       const n = (v) => {
@@ -137,7 +133,6 @@
         return Number.isFinite(x) ? x : 0;
       };
 
-      // tolerate different property names
       const sprint =
         r.sprint || r.sprintLabel || r.label || r.name ||
         `Sprint ${idx + 1}`;
@@ -148,17 +143,18 @@
         actualCap:   n(r.actualCap ?? r.actual ?? r.capacityActual),
         committed:   n(r.committed ?? r.committedSP),
         completed:   n(r.completed ?? r.completedSP ?? r.velocity ?? r.done),
-        added:       n(r.added ?? r.spAdded ?? r.scopeAdded),
-        removed:     n(r.removed ?? r.spRemoved ?? r.scopeRemoved),
+
+        // ✅ IMPORTANT: map your columns
+        added:       n(r.added ?? r.addedMid ?? r.spAdded ?? r.scopeAdded),
+        removed:     n(r.removed ?? r.removedMid ?? r.spRemoved ?? r.scopeRemoved),
+
         sick:        n(r.sick ?? r.sickLeave ?? r.sickDays),
       };
     });
   }
 
-  // --- Canvas helpers ---
-  function clear(ctx, w, h) {
-    ctx.clearRect(0, 0, w, h);
-  }
+  // --- canvas helpers ---
+  function clear(ctx, w, h) { ctx.clearRect(0, 0, w, h); }
 
   function drawAxes(ctx, w, h, pad) {
     ctx.globalAlpha = 0.7;
@@ -181,7 +177,6 @@
   }
 
   function drawDots(ctx, points) {
-    ctx.lineWidth = 1;
     points.forEach(p => {
       ctx.beginPath();
       ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
@@ -218,15 +213,23 @@
     });
   }
 
-  // --- Chart renderers ---
-  function renderVelocity(canvas, labels, completed) {
+  function setupCanvas(canvas) {
     const ctx = canvas.getContext("2d");
-    const w = canvas.width = canvas.clientWidth * devicePixelRatio;
-    const h = canvas.height = canvas.getAttribute("height") * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
+    const DPR = window.devicePixelRatio || 1;
 
-    const W = canvas.clientWidth;
-    const H = Number(canvas.getAttribute("height"));
+    const cssW = canvas.clientWidth || canvas.offsetWidth || 600;
+    const cssH = Number(canvas.getAttribute("height") || 140);
+
+    canvas.width = Math.floor(cssW * DPR);
+    canvas.height = Math.floor(cssH * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    return { ctx, W: cssW, H: cssH };
+  }
+
+  // --- renderers ---
+  function renderVelocity(canvas, labels, completed) {
+    const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
     clear(ctx, W, H);
@@ -236,24 +239,18 @@
     drawLine(ctx, pts);
     drawDots(ctx, pts);
 
-    // labels
     ctx.globalAlpha = 0.8;
     labels.forEach((l, i) => {
       const x = pad + (labels.length > 1 ? (W - pad*2) / (labels.length - 1) * i : 0);
       text(ctx, x, H - 10, l, "center");
     });
     ctx.globalAlpha = 1;
+
     text(ctx, pad, 16, "Completed SP (Velocity)");
   }
 
   function renderPredict(canvas, labels, committed, completed) {
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width = canvas.clientWidth * devicePixelRatio;
-    const h = canvas.height = canvas.getAttribute("height") * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-
-    const W = canvas.clientWidth;
-    const H = Number(canvas.getAttribute("height"));
+    const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
     clear(ctx, W, H);
@@ -262,15 +259,14 @@
     const ptsA = scalePoints(committed, W, H, pad);
     const ptsB = scalePoints(completed, W, H, pad);
 
-    // committed line
     ctx.globalAlpha = 1;
     drawLine(ctx, ptsA);
     drawDots(ctx, ptsA);
 
-    // completed line (slightly transparent so both visible)
     ctx.globalAlpha = 0.6;
     drawLine(ctx, ptsB);
     drawDots(ctx, ptsB);
+
     ctx.globalAlpha = 1;
 
     labels.forEach((l, i) => {
@@ -279,20 +275,12 @@
     });
 
     text(ctx, pad, 16, "Committed vs Completed");
-    // rolling predictability %
     const pcts = committed.map((c, i) => c > 0 ? Math.round((completed[i] / c) * 100) : 0);
-    const last = pcts[pcts.length - 1] || 0;
-    text(ctx, W - pad, 16, `Latest: ${last}%`, "right");
+    text(ctx, W - pad, 16, `Latest: ${pcts[pcts.length - 1] || 0}%`, "right");
   }
 
   function renderCapacity(canvas, labels, forecast, actual) {
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width = canvas.clientWidth * devicePixelRatio;
-    const h = canvas.height = canvas.getAttribute("height") * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-
-    const W = canvas.clientWidth;
-    const H = Number(canvas.getAttribute("height"));
+    const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
     clear(ctx, W, H);
@@ -301,6 +289,7 @@
     const ptsF = scalePoints(forecast, W, H, pad);
     const ptsA = scalePoints(actual, W, H, pad);
 
+    ctx.globalAlpha = 1;
     drawLine(ctx, ptsF);
     drawDots(ctx, ptsF);
 
@@ -318,13 +307,7 @@
   }
 
   function renderDisruption(canvas, labels, added, removed) {
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width = canvas.clientWidth * devicePixelRatio;
-    const h = canvas.height = canvas.getAttribute("height") * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-
-    const W = canvas.clientWidth;
-    const H = Number(canvas.getAttribute("height"));
+    const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
     clear(ctx, W, H);
@@ -358,13 +341,7 @@
   }
 
   function renderSick(canvas, labels, sick) {
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width = canvas.clientWidth * devicePixelRatio;
-    const h = canvas.height = canvas.getAttribute("height") * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-
-    const W = canvas.clientWidth;
-    const H = Number(canvas.getAttribute("height"));
+    const { ctx, W, H } = setupCanvas(canvas);
     const pad = 28;
 
     clear(ctx, W, H);
@@ -386,19 +363,14 @@
     const rows = normalize(loadSprintRows());
     if (!rows.length) return;
 
-    // We want N-6 → N-1 ordering on x-axis
-    const labels = rows.map(r => r.sprintLabel);
-
+    const labels    = rows.map(r => r.sprintLabel);
     const completed = rows.map(r => r.completed);
     const committed = rows.map(r => r.committed);
-
-    const forecast = rows.map(r => r.forecastCap);
-    const actual   = rows.map(r => r.actualCap);
-
-    const added = rows.map(r => r.added);
-    const removed = rows.map(r => r.removed);
-
-    const sick = rows.map(r => r.sick);
+    const forecast  = rows.map(r => r.forecastCap);
+    const actual    = rows.map(r => r.actualCap);
+    const added     = rows.map(r => r.added);
+    const removed   = rows.map(r => r.removed);
+    const sick      = rows.map(r => r.sick);
 
     const c1 = $("hist_velocityChart");
     const c2 = $("hist_predictChart");
@@ -406,7 +378,6 @@
     const c4 = $("hist_disruptionChart");
     const c5 = $("hist_sickChart");
 
-    // Only draw charts that exist
     if (c1) renderVelocity(c1, labels, completed);
     if (c2) renderPredict(c2, labels, committed, completed);
     if (c3) renderCapacity(c3, labels, forecast, actual);
@@ -414,21 +385,19 @@
     if (c5) renderSick(c5, labels, sick);
   }
 
-  // Re-render on:
-  // - page load
-  // - after demo data load/save (buttons in your coach.html)
-  // - window resize
   function wire() {
     renderAllCharts();
 
-    // Common buttons from your Coach history block
+    // ✅ Best: react to the event fired by coach-history.js (Save/Reset/CSV etc.)
+    window.addEventListener("scrummer:historyChanged", () => {
+      setTimeout(renderAllCharts, 50);
+    });
+
+    // still support button clicks (safe)
     ["hist_demoBtn", "hist_saveBtn", "hist_resetBtn", "hist_autofillBtn"].forEach(id => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("click", () => {
-        // Give coach-history.js a moment to update storage/DOM
-        setTimeout(renderAllCharts, 50);
-      });
+      el.addEventListener("click", () => setTimeout(renderAllCharts, 50));
     });
 
     window.addEventListener("resize", () => {
