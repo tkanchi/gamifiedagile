@@ -551,3 +551,30 @@ strong,b{ font-weight: 650; }
   --input-border:rgba(255,255,255,0.16);
   --input-focus:rgba(244,114,182,0.26);
 }
+/* =========================================================
+   XP BUMP + MOOD STYLES (required for xp.js)
+   ========================================================= */
+
+/* XP bump animation */
+.xp-bump{
+  animation: xpBump .45s ease;
+}
+@keyframes xpBump{
+  0%{ transform: translateY(0) scale(1); }
+  40%{ transform: translateY(-2px) scale(1.01); }
+  100%{ transform: translateY(0) scale(1); }
+}
+
+/* Mood badge states */
+#moodBadge.mood-calm{
+  border-color: color-mix(in oklab, var(--accent) 25%, rgba(34,197,94,.35));
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10));
+}
+#moodBadge.mood-alert{
+  border-color: rgba(245,158,11,.45);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(245,158,11,.12));
+}
+#moodBadge.mood-sprinting{
+  border-color: rgba(239,68,68,.50);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
+}
