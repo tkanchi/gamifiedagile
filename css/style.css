@@ -892,3 +892,14 @@ body{
 @media (max-width: 1100px){
   .forecastGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Keep over-commit ratio pill from overflowing */
+#forecast_overcommit{
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  padding: 8px 10px;
+}
