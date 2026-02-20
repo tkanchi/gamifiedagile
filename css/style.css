@@ -354,7 +354,7 @@ body{
 .bigNum{ font-size: 30px; font-weight: 850; letter-spacing: -0.4px; line-height: 1.1; }
 .unit{ font-size: 12px; font-weight: 650; color: var(--text-muted); margin-left: 6px; }
 
-.deltaRow{ display:flex; flex-direction:column; gap:10px; margin-top: 12px; }
+//.deltaRow{ display:flex; flex-direction:column; gap:10px; margin-top: 12px; }
 
 .calcWrap{ margin-top: 16px; }
 .calcHead{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
@@ -941,18 +941,22 @@ body{
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: left;
 }
 
 /* Allow pills to shrink and wrap inside tiles */
 .forecastTile{ min-width: 0; }
 
 /* Override earlier nowrap in .deltaPill so long text doesn't clip */
-.deltaPill{
+.deltaPill { 
+  padding:6px 10px; 
+  border-radius:999px; 
+  font-size:12px; 
+  font-weight:600; 
+  white-space: normal;        /* allow wrapping */
+  word-break: break-word;     /* prevent clipping */
+  overflow-wrap: anywhere;    /* force wrap if needed */
   max-width: 100%;
-  white-space: normal;      /* overrides nowrap */
-  overflow-wrap: anywhere;  /* breaks long strings safely */
-  line-height: 1.15;
 }
 
 /* Optional: keep overcommit pill slightly more compact */
