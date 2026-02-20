@@ -1212,3 +1212,27 @@ body{
     display: block !important;
   }
 }
+
+
+
+/* ===== Desktop-only enforcement (does NOT affect mobile) ===== */
+@media (min-width: 1024px){
+  .appShell{
+    display: grid !important;
+    grid-template-columns: 280px 1fr !important;
+    min-height: 100vh !important;
+  }
+
+  .sideNav{
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    overflow: auto !important;
+  }
+
+  .main{
+    height: 100vh !important;
+    overflow: auto !important;
+    min-width: 0 !important;
+  }
+}
