@@ -345,27 +345,7 @@
     render();
     wire();
 
-    // Tabs (only health + copilot)
-    const btns = Array.from(document.querySelectorAll(".tabBtn"));
-    const panels = {
-      health: $("panel-health"),
-      copilot: $("panel-copilot"),
-    };
-    function setActive(name){
-      btns.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
-      Object.entries(panels).forEach(([k, el]) => {
-        if (!el) return;
-        el.classList.toggle("hidden", k !== name);
-      });
-      if (history.replaceState) history.replaceState(null, "", "#" + name);
-    }
-    btns.forEach(b => b.addEventListener("click", () => setActive(b.dataset.tab)));
-
-    const hash = (location.hash || "").replace("#","");
-    const initial = (hash && panels[hash]) ? hash : "health";
-    setActive(initial);
-
-    // expose
+    // ✅ Expose API for charts module
     window.ScrummerCoachHistory = { getRows, KEY, emitChanged };
   });
 })();
