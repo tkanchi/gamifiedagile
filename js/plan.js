@@ -1,8 +1,10 @@
-// js/plan.js — Scrummer Plan (Stable v4.6.1)
+// js/plan.js — Scrummer Plan (Stable v4.6.2)
 // Fixes:
 //  - Avg Velocity tile wiring (avgVelocityMirror)
 //  - Committed SP tile wiring (committedMirror)
 //  - Prevent capacity calculations from leaking into velocity mode
+//  - FIX: Expected Sprint Capacity label mismatch in Velocity mode (auto label switch)
+//  - FIX: Over-commit ratio pill overflow (shorter text + wrapping + tooltip)
 //  - Safe rendering even if some IDs are missing
 
 (function () {
@@ -176,6 +178,16 @@
     el.textContent = (v == null || Number.isNaN(v)) ? "—" : String(Math.round(v));
   }
 
+  // ✅ FIX #1: Keep the label honest based on forecast mode
+  function syncPrimaryForecastTileLabel(mode){
+    // first tile label in Forecast Summary
+    const el = document.querySelector(".forecastGrid .forecastTile .tileLabel");
+    if(!el) return;
+    el.textContent = (mode === "velocity")
+      ? "Expected Sprint Forecast (Velocity)"
+      : "Expected Sprint Capacity";
+  }
+
   function setOvercommitUI(committed, forecast){
     const deltaEl = qs("forecast_delta");
     const ratioEl = qs("forecast_overcommit");
@@ -190,6 +202,13 @@
       if(card) card.classList.remove("overcommit");
       return;
     }
+
+    // ✅ FIX #2: make pill wrap-safe even without CSS changes
+    ratioEl.style.whiteSpace = "normal";
+    ratioEl.style.overflowWrap = "anywhere";
+    ratioEl.style.wordBreak = "break-word";
+    ratioEl.style.maxWidth = "100%";
+    ratioEl.style.lineHeight = "1.2";
 
     const ratio = committed / forecast;
     const delta = committed - forecast;
@@ -209,7 +228,10 @@
       deltaEl.classList.add("good");
     }
 
-    ratioEl.textContent = `Over-commit Ratio: ${committed} ÷ ${Math.round(forecast)} = ${ratio.toFixed(2)}×`;
+    // Short text in pill, full detail in tooltip
+    const roundedForecast = Math.round(forecast);
+    ratioEl.textContent = `Over-commit: ${ratio.toFixed(2)}×`;
+    ratioEl.title = `Over-commit Ratio: ${committed} ÷ ${roundedForecast} = ${ratio.toFixed(2)}×`;
 
     const over = ratio > 1;
     pill.textContent = over ? "⚠ Over-commit" : "✅ OK";
@@ -271,6 +293,9 @@
         capVals.innerHTML = ""; // clear stale capacity calculations (prevents "leak")
       }
     }
+
+    // ✅ keep tile label aligned with mode
+    syncPrimaryForecastTileLabel(mode);
   }
 
   function refreshSetupSummary(setup, mode){
