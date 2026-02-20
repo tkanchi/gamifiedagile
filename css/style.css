@@ -1,11 +1,17 @@
 /* =========================================================
-   SCRUMMER — style.css (UPDATED)
-   Fixes included:
-   1) Even 4-field layout in setup grid
-   2) Mint theme works with data-theme="mint"
-   3) Forecast animation + overcommit highlight remains
+   SCRUMMER — style.css (FULL, UPDATED)
+   Works with your current index.html
+   Includes:
+   - Layout + Sidebar + Cards + Inputs
+   - Even 4-field grid
+   - Forecast animation + overcommit highlight
+   - Theme system: light + mint + neon + retro
+   - FIX: theme dropdown text color in dark modes
    ========================================================= */
 
+/* =======================
+   1) BASE TOKENS (LIGHT)
+   ======================= */
 :root{
   --font-ui: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 
@@ -35,7 +41,9 @@
   --input-focus: rgba(99,102,241,0.25);
 }
 
-/* Base reset */
+/* =======================
+   2) RESET / BASE
+   ======================= */
 *{ box-sizing:border-box; }
 html, body{ height:100%; }
 
@@ -69,7 +77,9 @@ p{ margin: 0 0 12px; }
   font-weight: 450;
 }
 
-/* Layout shell */
+/* =======================
+   3) LAYOUT
+   ======================= */
 .appShell{
   display:grid;
   grid-template-columns: 280px 1fr;
@@ -77,7 +87,11 @@ p{ margin: 0 0 12px; }
 }
 @media (max-width: 980px){
   .appShell{ grid-template-columns: 1fr; }
-  .sideNav{ position: sticky; top:0; z-index: 10; }
+  .sideNav{
+    position: sticky;
+    top:0;
+    z-index: 10;
+  }
 }
 
 .sideNav{
@@ -85,7 +99,10 @@ p{ margin: 0 0 12px; }
   border-right: 1px solid var(--border);
   background: var(--bg-panel);
 }
-.main{ padding: 22px 22px 40px; }
+
+.main{
+  padding: 22px 22px 40px;
+}
 
 .sectionCard{
   background: var(--bg-panel);
@@ -95,13 +112,16 @@ p{ margin: 0 0 12px; }
   box-shadow: var(--shadow-soft);
 }
 
-/* Brand / Sidebar */
+/* =======================
+   4) SIDEBAR BRAND / NAV
+   ======================= */
 .sideBrand{
   display:flex;
   gap: 12px;
   align-items:center;
   padding: 10px 10px 16px;
 }
+
 .brandMark{
   width: 44px;
   height: 44px;
@@ -113,6 +133,7 @@ p{ margin: 0 0 12px; }
   font-size: 18px;
   font-weight: 800;
 }
+
 .brandName{
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -124,7 +145,6 @@ p{ margin: 0 0 12px; }
   margin-top: 2px;
 }
 
-/* Nav */
 .nav{
   display:flex;
   flex-direction:column;
@@ -151,7 +171,9 @@ p{ margin: 0 0 12px; }
   border-color: color-mix(in oklab, var(--accent) 24%, transparent);
 }
 
-/* XP Widget */
+/* =======================
+   5) XP WIDGET
+   ======================= */
 .xpWidget{
   margin-top: 12px;
   padding: 12px;
@@ -165,8 +187,15 @@ p{ margin: 0 0 12px; }
   align-items:flex-start;
   gap: 10px;
 }
-.lvl{ font-weight: 650; font-size: 13px; color: var(--text-muted); }
-.title{ font-weight: 700; margin-top: 2px; }
+.lvl{
+  font-weight: 650;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.title{
+  font-weight: 700;
+  margin-top: 2px;
+}
 #moodBadge{
   padding: 6px 10px;
   border-radius: 999px;
@@ -199,31 +228,38 @@ p{ margin: 0 0 12px; }
   font-size: 13px;
 }
 
-/* Cards / banners */
+/* =======================
+   6) CARDS / TEXT
+   ======================= */
 .info-banner{
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--bg-panel);
 }
+
 .kvKey{
   font-weight: 650;
   color: var(--text-main);
   margin-bottom: 6px;
 }
+
 .mutedText{
   font-size: 13px;
   font-weight: 450;
   color: var(--text-muted);
 }
 
-/* Buttons */
+/* =======================
+   7) BUTTONS
+   ======================= */
 .btnRow{
   display:flex;
   gap: 10px;
   flex-wrap:wrap;
   align-items:center;
 }
+
 .btnGhost{
   border-radius: 14px;
   padding: 10px 14px;
@@ -231,9 +267,13 @@ p{ margin: 0 0 12px; }
   cursor:pointer;
   border: 1px solid var(--border);
   background: var(--bg-soft);
-  transition: transform .12s ease, filter .12s ease;
+  color: var(--text-main);
+  transition: transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
 }
-.btnGhost:hover{ transform: translateY(-1px); }
+.btnGhost:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
 
 .btnStage{
   padding: 12px 18px;
@@ -258,7 +298,9 @@ p{ margin: 0 0 12px; }
 }
 .btnStage-next:hover{ filter: brightness(1.05); }
 
-/* Inputs */
+/* =======================
+   8) INPUTS
+   ======================= */
 .fun-input{
   width: 100%;
   padding: 12px 12px;
@@ -275,12 +317,16 @@ p{ margin: 0 0 12px; }
   box-shadow: 0 0 0 4px var(--input-focus);
 }
 
-/* Compact numeric fields */
-.numSm{ width: 110px; max-width: 110px; }
+/* compact numeric fields */
+.numSm{
+  width: 110px;
+  max-width: 110px;
+}
 
-/* =========================================================
-   ✅ FIX: EVEN LAYOUT FOR 4 SETUP FIELDS
-   ========================================================= */
+/* =======================
+   9) ✅ EVEN 4-FIELD GRID
+   (fixes uneven layout)
+   ======================= */
 .fieldGrid.fieldGrid-even{
   display:grid;
   grid-template-columns: repeat(4, 1fr);
@@ -300,14 +346,18 @@ p{ margin: 0 0 12px; }
   .numSm{ width: 100%; max-width: 100%; }
 }
 
-/* Velocity row */
+/* velocity row */
 .velocityRow{
   display:flex;
   gap: 14px;
   flex-wrap:wrap;
   align-items:flex-end;
 }
-.velItem{ display:flex; flex-direction:column; gap: 6px; }
+.velItem{
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+}
 .velLabel{
   font-size: 12px;
   font-weight: 650;
@@ -321,9 +371,14 @@ p{ margin: 0 0 12px; }
   color: var(--text-main);
   font-weight: 600;
 }
-.toggleRow label{ cursor:pointer; user-select:none; }
+.toggleRow label{
+  cursor:pointer;
+  user-select:none;
+}
 
-/* Badges */
+/* =======================
+   10) BADGES + ANIMATIONS
+   ======================= */
 .badge{
   padding: 8px 10px;
   border-radius: 999px;
@@ -346,7 +401,7 @@ p{ margin: 0 0 12px; }
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.14));
 }
 
-/* Forecast number animation */
+/* forecast number animation */
 .num-bump{ animation: numBump .52s ease; }
 @keyframes numBump{
   0%{ transform: translateY(0) scale(1); }
@@ -354,11 +409,13 @@ p{ margin: 0 0 12px; }
   100%{ transform: translateY(0) scale(1); }
 }
 
-/* Overcommit highlight */
+/* overcommit highlight */
 .overcommit{
   border-color: rgba(239,68,68,.55) !important;
   box-shadow: 0 14px 34px rgba(239,68,68,.12);
 }
+
+/* delta pills */
 .deltaPill.good{
   border-color: rgba(34,197,94,.45) !important;
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10)) !important;
@@ -368,14 +425,37 @@ p{ margin: 0 0 12px; }
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12)) !important;
 }
 
-/* =========================================================
-   THEMES (4)
-   ========================================================= */
+/* =======================
+   11) ✅ THEME DROPDOWN FIX
+   (dark mode select text)
+   ======================= */
+#themeSelect{
+  color: var(--text-main);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+}
 
-/* Light */
+/* Option list needs forced colors on dark themes */
+:root[data-theme="neon"] #themeSelect option{
+  color: #ffffff;
+  background: #1d1d34;
+}
+:root[data-theme="retro"] #themeSelect option{
+  color: #ffffff;
+  background: #241a40;
+}
+:root[data-theme="mint"] #themeSelect option{
+  color: #0f172a;
+  background: #ffffff;
+}
+
+/* =======================
+   12) THEMES (4)
+   Use: <html data-theme="mint">
+   ======================= */
 :root[data-theme="light"]{}
 
-/* ✅ Mint Arcade (lighter + playful) */
+/* Mint Arcade (lighter gamified) */
 :root[data-theme="mint"]{
   --bg-app:#f2fbf7;
   --bg-panel:#ffffff;
@@ -391,15 +471,14 @@ p{ margin: 0 0 12px; }
   --shadow:0 16px 40px rgba(15,23,42,0.08);
   --shadow-soft:0 10px 24px rgba(15,23,42,0.06);
 
-  --accent:#10b981;
-  --accent-2:#6366f1;
-
+  --accent:#10b981;    /* emerald */
+  --accent-2:#6366f1;  /* indigo */
   --input-bg:#ffffff;
   --input-border:rgba(16,185,129,0.24);
   --input-focus:rgba(16,185,129,0.22);
 }
 
-/* Neon */
+/* Neon Arena */
 :root[data-theme="neon"]{
   --bg-app:#141425;
   --bg-panel:#1d1d34;
@@ -421,7 +500,7 @@ p{ margin: 0 0 12px; }
   --input-focus:rgba(129,140,248,0.28);
 }
 
-/* Retro */
+/* Retro Arcade */
 :root[data-theme="retro"]{
   --bg-app:#1a1330;
   --bg-panel:#241a40;
@@ -443,14 +522,7 @@ p{ margin: 0 0 12px; }
   --input-focus:rgba(244,114,182,0.26);
 }
 
-/* XP bump + mood states (needed by xp.js) */
-.xp-bump{ animation: xpBump .45s ease; }
-@keyframes xpBump{
-  0%{ transform: translateY(0) scale(1); }
-  40%{ transform: translateY(-2px) scale(1.01); }
-  100%{ transform: translateY(0) scale(1); }
-}
-
+/* Mood badge variants (used by xp.js) */
 #moodBadge.mood-calm{
   border-color: rgba(34,197,94,.35);
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10));
@@ -462,44 +534,4 @@ p{ margin: 0 0 12px; }
 #moodBadge.mood-sprinting{
   border-color: rgba(239,68,68,.50);
   background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
-}
-
-
-/* =========================================================
-   FIX: Theme Dropdown Text Color in Dark Modes
-   ========================================================= */
-
-/* Make select follow theme colors */
-.fun-input,
-select.fun-input {
-  color: var(--text-main);
-  background: var(--input-bg);
-  border-color: var(--input-border);
-}
-
-/* Specifically target theme dropdown */
-#themeSelect {
-  color: var(--text-main);
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-}
-
-/* Fix dropdown options in dark themes */
-:root[data-theme="neon"] #themeSelect,
-:root[data-theme="retro"] #themeSelect {
-  color: var(--text-main);
-  background: var(--input-bg);
-}
-
-/* Force option colors for dark modes */
-:root[data-theme="neon"] #themeSelect option,
-:root[data-theme="retro"] #themeSelect option {
-  color: #ffffff;
-  background: #1d1d34;
-}
-
-/* Optional: better contrast for mint (light theme variant) */
-:root[data-theme="mint"] #themeSelect option {
-  color: #0f172a;
-  background: #ffffff;
 }
