@@ -4,6 +4,7 @@
 //  - Committed SP tile wiring (committedMirror)
 //  - Prevent capacity calculations from leaking into velocity mode
 //  - Over-commit Ratio + Gap ALWAYS anchored to Capacity baseline (even in Velocity mode)
+//  - Safe reset function (resetSetupToBlank) + wiring to setup_resetBtn
 //  - Safe rendering even if some IDs are missing
 
 (function () {
@@ -12,43 +13,23 @@
 
   // If IDs are missing in HTML, do NOT crash — only warn.
   const REQUIRED_IDS = [
-    "setup_sprintDays",
-    "setup_teamMembers",
-    "setup_leaveDays",
-    "setup_committedSP",
-    "setup_v1",
-    "setup_v2",
-    "setup_v3",
-    "setup_presetExcellent",
-    "setup_presetNormal",
-    "setup_presetRisky",
-    "setup_saveBtn",
-    "setup_saveStatus",
-    "setup_toast",
-    "forecastCard",
-    "forecast_setupSummary",
-    "confidenceBadge",
-    "forecast_forecastMode",
-    "forecast_velocityBox",
-    "forecast_capacityBox",
-    "forecast_velOverride",
-    "forecast_velN1",
-    "forecast_velN2",
-    "forecast_velN3",
-    "forecast_focusFactor",
-    "forecast_leaveWeight",
-    "forecast_spPerDay",
-    "forecast_warnBox",
-    "forecast_warnText",
-    "capacityForecastMirror",
-    "forecast_detailLine",
-    "forecast_formulaActual",
-    "capacity_liveValues",
-    "forecast_delta",
-    "forecast_overcommit",
-    "overcommitPill",
+    "setup_sprintDays","setup_teamMembers","setup_leaveDays","setup_committedSP",
+    "setup_v1","setup_v2","setup_v3",
+    "setup_presetExcellent","setup_presetNormal","setup_presetRisky",
+    "setup_saveBtn","setup_saveStatus","setup_toast",
+
+    "forecastCard","forecast_setupSummary","confidenceBadge","forecast_forecastMode",
+    "forecast_velocityBox","forecast_capacityBox","forecast_formulaVelocity",
+    "forecast_velOverride","forecast_velN1","forecast_velN2","forecast_velN3",
+    "forecast_focusFactor","forecast_leaveWeight","forecast_spPerDay",
+    "forecast_warnBox","forecast_warnText",
+    "forecast_value","forecast_detailLine",
+    "forecast_formulaActual","capacity_liveValues",
+    "forecast_delta","forecast_overcommit","overcommitPill",
+
+    // Tiles
     "committedMirror",
-    "avgVelocityMirror"
+    "avgVelocityMirror",
   ];
 
   function logMissingIds(){
@@ -121,14 +102,11 @@
     if(b) b.style.display = "none";
   }
 
-  function getForecastNumberEl(){
-    return qs("capacityForecastMirror") || qs("forecast_value");
-  }
-
   function bumpForecastNumber(){
-    const el = getForecastNumberEl();
+    const el = qs("forecast_value");
     if(!el) return;
-el.classList.remove("num-bump");
+
+    el.classList.remove("num-bump");
     void el.offsetWidth;
     el.classList.add("num-bump");
     setTimeout(()=>el.classList.remove("num-bump"), 520);
@@ -146,9 +124,10 @@ el.classList.remove("num-bump");
   }
 
   function setForecastValue(v){
-    const el = getForecastNumberEl();
+    const el = qs("forecast_value");
     if(!el) return;
-const prev = el.getAttribute("data-prev");
+
+    const prev = el.getAttribute("data-prev");
     const next = (v == null) ? "—" : String(Math.round(v));
 
     el.textContent = next;
@@ -276,6 +255,49 @@ const prev = el.getAttribute("data-prev");
       if(!raw) return null;
       return safeParse(raw, null);
     }catch{ return null; }
+  }
+
+  // ✅ Reset (safe, stable)
+  function resetSetupToBlank(){
+
+    // Clear primary setup inputs
+    const ids = [
+      "setup_sprintDays",
+      "setup_teamMembers",
+      "setup_leaveDays",
+      "setup_committedSP",
+      "setup_v1",
+      "setup_v2",
+      "setup_v3"
+    ];
+
+    ids.forEach(id => {
+      const el = qs(id);
+      if(el) el.value = "";
+    });
+
+    // Clear velocity override inputs too (if present)
+    ["forecast_velN1","forecast_velN2","forecast_velN3"].forEach(id=>{
+      const el = qs(id);
+      if(el) el.value = "";
+    });
+
+    // Reset override toggle
+    const ov = qs("forecast_velOverride");
+    if(ov) ov.checked = false;
+
+    // Clear saved storage
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+
+    // Reset UI messages
+    hideWarn();
+    setSaveStatus("Reset ✔ (not saved)");
+    hideToast();
+    showToast("Reset done. Enter new sprint details.");
+
+    // Re-render with blank setup
+    const freshSetup = readSetupFromUI();
+    renderForecast(freshSetup);
   }
 
   // ✅ IMPORTANT: also toggles the capacity breakdown area in the shared calculations block
@@ -488,19 +510,16 @@ const prev = el.getAttribute("data-prev");
       return;
     }
 
-    const displayForecast = (capacityBaseline != null) ? capacityBaseline : result.forecastSP;
-    setForecastValue(displayForecast);
+    setForecastValue(result.forecastSP);
     setConfidenceBadge(result.confidence);
     setActualFormula(result.html);
 
     if(setup.committedSP != null){
-      const compareForecast = (capacityBaseline != null) ? capacityBaseline : result.forecastSP;
-      setDetails(`Committed ${setup.committedSP} SP vs Forecast ~${Math.round(compareForecast)} SP.`);
+      setDetails(`Committed ${setup.committedSP} SP vs Forecast ~${Math.round(result.forecastSP)} SP.`);
       // ✅ Gap/Over-commit ALWAYS vs capacity baseline (even in Velocity mode)
-      setOvercommitUI(setup.committedSP, capacityBaseline ?? compareForecast);
+      setOvercommitUI(setup.committedSP, capacityBaseline);
     } else {
-      const compareForecast = (capacityBaseline != null) ? capacityBaseline : result.forecastSP;
-      setDetails(`Forecast ~${Math.round(compareForecast)} SP. (Add committed SP to compare.)`);
+      setDetails(`Forecast ~${Math.round(result.forecastSP)} SP. (Add committed SP to compare.)`);
       setOvercommitUI(null, null);
     }
   }
@@ -553,6 +572,11 @@ const prev = el.getAttribute("data-prev");
       setSaveStatus("Saved ✔");
       showToast("Saved. Forecast updated below.");
       renderForecast(setup);
+    });
+
+    // reset (safe: only runs if button exists)
+    qs("setup_resetBtn")?.addEventListener("click",()=>{
+      resetSetupToBlank();
     });
 
     // mode / override toggles
