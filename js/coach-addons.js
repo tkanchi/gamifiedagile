@@ -205,7 +205,7 @@
   }
 
   // ---------- Renderers ----------
-  function renderVelocity(rows) {
+    function renderVelocity(rows) {
     const id = "hist_velocityChart";
     const canvas = $(id);
     if (!canvas) return;
@@ -217,19 +217,32 @@
     const data = rows.map(r => r.completed);
 
     const ctx = canvas.getContext("2d");
+
     const cfg = {
       type: "line",
-      data: { labels, datasets: [] },
-      options: baseOptions(),
-      plugins: [{
-        // lazy gradient fill once chart has layout
-        id: "gradientFillVelocity",
-        beforeDatasetsDraw(chart) {
-          const { ctx, chartArea } = chart;
-          if (!chartArea) return;
-          chart.data.datasets[0] = lineDataset("Completed SP", data, t.green, ctx, chartArea);
-        }
-      }]
+      data: {
+        labels,
+        datasets: [{
+          label: "Completed SP",
+          data,
+          borderColor: t.green,
+          // Scriptable so we can build a real gradient once chartArea exists
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return hexToRgba(t.green, 0.14);
+            return makeGradient(ctx, chartArea, t.green, 0.22, 0.02);
+          },
+          tension: 0.38,
+          fill: true,
+          borderWidth: 3,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBorderWidth: 0,
+          pointBackgroundColor: t.green,
+        }]
+      },
+      options: baseOptions()
     };
 
     const chart = new Chart(ctx, cfg);
