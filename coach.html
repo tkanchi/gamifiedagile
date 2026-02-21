@@ -5,28 +5,24 @@
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <title>Scrummer — Coach</title>
 
-  <link href="css/style.css?v=3" rel="stylesheet"/>
+  <!-- Bump cache after CSS refresh -->
+  <link href="css/style.css?v=13" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <style>
+    /* Tabs (Health / Copilot) */
     .tabBar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
     .tabBtn{border-radius:14px;padding:10px 14px;font-weight:650;cursor:pointer;border:1px solid var(--border);background:var(--bg-soft);color:var(--text-main);transition:transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;}
     .tabBtn:hover{transform:translateY(-1px)}
     .tabBtn.active{background: rgba(99,102,241,0.95); color:#fff; border-color: rgba(99,102,241,0.55); box-shadow: 0 10px 24px rgba(99,102,241,0.18);}
     .tabPanel.hidden{display:none}
 
-    /* ✅ Make desktop feel like desktop (fix “too small”) */
-    .coachWrap{
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
-    }
+    /* Desktop width */
+    .coachWrap{max-width:1100px;margin:0 auto;width:100%;}
 
     /* ===== Sprint History table (Coach) ===== */
     .historyWrap{ margin-top: 12px; }
-    .historyTop{
-      display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap;
-    }
+    .historyTop{display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap;}
     .historyActions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .historyTable{
       width:100%;
@@ -54,101 +50,6 @@
     .historyTable td:first-child, .historyTable th:first-child{ padding-left: 12px; }
     .historyTable td:last-child, .historyTable th:last-child{ padding-right: 12px; }
     .fileInput{ display:none; }
-
-    /* ==========================================================
-       ✅ Charts — premium / classy layout (ONLY coach.html change)
-       ========================================================== */
-    .chartGrid{
-      display:grid;
-      gap:14px;
-      margin-top:12px;
-    }
-
-    .chartCard{
-      border: 1px solid var(--border);
-      background: color-mix(in oklab, var(--bg-soft) 92%, rgba(99,102,241,0.03));
-      border-radius: 16px;
-      padding: 12px;
-      overflow:hidden;
-      box-shadow: 0 10px 24px rgba(17,24,39,0.06);
-    }
-
-    .chartHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-      margin-bottom:10px;
-    }
-
-    .chartTitle{
-      font-weight:850;
-      font-size:13px;
-      color: var(--text-main);
-      letter-spacing:.2px;
-      margin:0;
-    }
-
-    .chartSub{
-      font-size:12px;
-      color: var(--text-muted);
-      margin-top:4px;
-      line-height:1.4;
-    }
-
-    .chartLegend{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
-    .legendPill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--border-soft);
-      background: color-mix(in oklab, var(--bg-soft) 82%, rgba(17,24,39,0.02));
-      color: var(--text-muted);
-      font-weight:750;
-      font-size:11px;
-      white-space:nowrap;
-    }
-
-    .legendDot{
-      width:10px;
-      height:10px;
-      border-radius:99px;
-      background: var(--dot, #6366f1);
-      box-shadow: 0 0 0 3px color-mix(in oklab, var(--dot, #6366f1) 18%, transparent);
-      flex:0 0 auto;
-    }
-
-    canvas.chartCanvas{
-      width:100%;
-      display:block;
-      border-radius: 14px;
-      background: color-mix(in oklab, var(--bg-soft) 86%, rgba(17,24,39,0.015));
-      border: 1px solid var(--border-soft);
-    }
-
-    @media (min-width: 980px){
-      .chartGrid{
-        grid-template-columns: 1fr 1fr;
-        align-items:stretch;
-      }
-      .chartGrid .span2{ grid-column: 1 / -1; }
-    }
-
-    /* ✅ Phone: one column, more breathing space, bigger chart height */
-    @media (max-width: 560px){
-      .chartCard{ padding: 12px; }
-      .chartHeader{ gap:8px; }
-      .chartLegend{ justify-content:flex-start; }
-      canvas.chartCanvas{ height: 190px; }
-    }
   </style>
 </head>
 
@@ -204,7 +105,8 @@
 
         <!-- ================= HEALTH ================= -->
         <section class="tabPanel" id="panel-health">
-          <div class="sectionCard">
+          <!-- ✅ HERO EMPHASIS: add heroCard here (top summary container) -->
+          <div class="sectionCard heroCard">
             <h1 class="sectionTitle">Sprint Health Dashboard</h1>
             <p class="sectionSub">Trends + stability signals (no blame). Powered by your last 6 sprints.</p>
 
@@ -341,7 +243,7 @@
                   <canvas class="chartCanvas" id="hist_sickChart" height="160"></canvas>
                 </div>
 
-                <!-- Optional Snapshot charts (only if you already store snapshots elsewhere) -->
+                <!-- Optional Snapshot charts (keep only if coach-addons.js uses them) -->
                 <div class="chartCard">
                   <div class="chartHeader">
                     <div>
@@ -482,14 +384,11 @@
   <script src="js/xp.js"></script>
 
   <!-- IMPORTANT: history table logic first (also controls tabs health/copilot) -->
+  <script src="js/coach-history.js"></script>
 
-<script src="js/coach-history.js"></script>
-
-  <!-- ✅ Premium charts -->
+  <!-- Charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
   <script src="js/coach-addons.js"></script>
-
 
 </body>
 </html>
