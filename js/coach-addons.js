@@ -10,6 +10,7 @@
  * - Charts blank when canvas is hidden / 0 height at render time
  * - Sick leave scale (0..1) by using smart y max
  * - Premium look (grid/ticks/tooltip/legend), Stitch-like
+ * - Typography hierarchy (legend/title/ticks/tooltip)
  */
 
 (() => {
@@ -144,11 +145,28 @@
   }
 
   function theme() {
-    // NOTE: your CSS may use different var names; we provide safe fallbacks.
-    const textMain = cssVar("--text-main", "rgba(255,255,255,0.92)");
-    const textDim = cssVar("--text-dim", "rgba(255,255,255,0.62)");
-    const borderSoft = cssVar("--border-soft", "rgba(255,255,255,0.10)");
-    const grid = cssVar("--grid-soft", "rgba(255,255,255,0.08)");
+    // Prefer your existing vars first (works for light + dark),
+    // then fall back to sensible defaults.
+    const textMain =
+      cssVar("--text-main", "") ||
+      cssVar("--text-strong", "") ||
+      cssVar("--text", "") ||
+      "rgba(15,23,42,0.92)";
+
+    const textDim =
+      cssVar("--text-muted", "") ||
+      cssVar("--text-dim", "") ||
+      "rgba(100,116,139,0.92)";
+
+    const borderSoft =
+      cssVar("--border-soft", "") ||
+      cssVar("--border", "") ||
+      "rgba(148,163,184,0.35)";
+
+    // Softer grid for premium feel
+    const grid =
+      cssVar("--grid-soft", "") ||
+      "rgba(148,163,184,0.18)";
 
     return {
       textMain,
@@ -165,16 +183,14 @@
   function niceMax(values, minMax = 4) {
     const max = Math.max(0, ...values.map(v => Number.isFinite(v) ? v : 0));
     const base = Math.max(minMax, max);
-    // round up to a nice step
     const pow = Math.pow(10, Math.floor(Math.log10(base || 1)));
     const n = Math.ceil(base / pow) * pow;
-    // if too aggressive (e.g. 12 -> 20), soften a bit
     if (n >= base * 1.8) return Math.ceil(base / (pow / 2)) * (pow / 2);
     return n;
   }
 
   /* =============================
-     Chart.js Defaults (Premium)
+     Chart.js Defaults (Premium + Hierarchy)
   ============================== */
 
   function applyChartDefaults() {
@@ -185,7 +201,7 @@
     // Global
     window.Chart.defaults.responsive = true;
     window.Chart.defaults.maintainAspectRatio = false;
-    window.Chart.defaults.animation = { duration: 450 };
+    window.Chart.defaults.animation = { duration: 520, easing: "easeOutQuart" };
 
     // Font
     window.Chart.defaults.font = {
@@ -195,13 +211,12 @@
     };
 
     // Interaction
-    window.Chart.defaults.interaction = {
-      mode: "index",
-      intersect: false,
-    };
+    window.Chart.defaults.interaction = { mode: "index", intersect: false };
 
     // Plugins
     window.Chart.defaults.plugins = window.Chart.defaults.plugins || {};
+
+    // Legend (stronger hierarchy)
     window.Chart.defaults.plugins.legend = {
       display: true,
       position: "top",
@@ -213,22 +228,26 @@
         boxWidth: 10,
         boxHeight: 10,
         padding: 14,
+        font: { size: 12, weight: "700" },
       },
     };
 
+    // Tooltip (clear title/body hierarchy)
     window.Chart.defaults.plugins.tooltip = {
       enabled: true,
-      backgroundColor: "rgba(10,12,18,0.92)",
-      borderColor: t.borderSoft,
+      backgroundColor: "rgba(15,23,42,0.92)",
+      borderColor: withAlpha(t.borderSoft, 0.6),
       borderWidth: 1,
-      titleColor: "rgba(255,255,255,0.92)",
-      bodyColor: "rgba(255,255,255,0.88)",
+      titleColor: "rgba(255,255,255,0.96)",
+      bodyColor: "rgba(255,255,255,0.86)",
+      titleFont: { size: 13, weight: "800" },
+      bodyFont: { size: 12, weight: "600" },
       padding: 12,
       cornerRadius: 12,
       displayColors: true,
     };
 
-    // Scales defaults (v3/v4)
+    // Scales defaults
     window.Chart.defaults.scales = window.Chart.defaults.scales || {};
     for (const s of ["linear", "category"]) {
       window.Chart.defaults.scales[s] = window.Chart.defaults.scales[s] || {};
@@ -240,47 +259,15 @@
       window.Chart.defaults.scales[s].ticks = {
         color: t.textDim,
         padding: 8,
+        font: { size: 11, weight: "650" }, // hierarchy: slightly smaller but strong weight
       };
     }
 
-    // Elements (line points)
+    // Elements
     window.Chart.defaults.elements = window.Chart.defaults.elements || {};
-    window.Chart.defaults.elements.point = {
-      radius: 3,
-      hoverRadius: 4,
-      hitRadius: 12,
-    };
-    window.Chart.defaults.elements.line = {
-      borderWidth: 2,
-    };
-  }
-
-  function baseOptions(overrides = {}) {
-    const t = theme();
-
-    // per-chart options that keep things consistent
-    const opt = {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          ticks: { color: t.textDim },
-          grid: { color: t.grid, drawBorder: false }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { color: t.textDim },
-          grid: { color: t.grid, drawBorder: false }
-        }
-      },
-      plugins: {
-        legend: {
-          labels: { color: t.textDim }
-        }
-      }
-    };
-
-    return deepMerge(opt, overrides);
+    window.Chart.defaults.elements.point = { radius: 2.6, hoverRadius: 4.6, hitRadius: 12 };
+    window.Chart.defaults.elements.line = { borderWidth: 2.4 };
+    window.Chart.defaults.elements.bar = { borderWidth: 0, borderRadius: 10 };
   }
 
   function deepMerge(a, b) {
@@ -294,6 +281,32 @@
       }
     }
     return out;
+  }
+
+  function baseOptions(overrides = {}) {
+    const t = theme();
+
+    // per-chart options that keep things consistent
+    const opt = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: t.textDim } }
+      },
+      scales: {
+        x: {
+          ticks: { color: t.textDim, font: { size: 11, weight: "650" }, maxRotation: 0 },
+          grid: { color: t.grid, drawBorder: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: t.textDim, font: { size: 11, weight: "650" } },
+          grid: { color: t.grid, drawBorder: false }
+        }
+      }
+    };
+
+    return deepMerge(opt, overrides);
   }
 
   /* =============================
@@ -312,19 +325,13 @@
 
   function canvasReady(canvas) {
     if (!canvas) return false;
-    // If parent has no height, Chart.js will compute 0 and appear blank.
     const rect = canvas.getBoundingClientRect();
     return rect.width > 40 && rect.height > 40;
   }
 
   function waitForCanvasSize(canvas, cb) {
-    // Try immediately
-    if (canvasReady(canvas)) {
-      cb();
-      return;
-    }
+    if (canvasReady(canvas)) { cb(); return; }
 
-    // Observe parent/container resizing (best fix for hidden tabs / accordions)
     const host = canvas.parentElement || canvas;
     const ro = new ResizeObserver(() => {
       if (canvasReady(canvas)) {
@@ -335,7 +342,6 @@
 
     try { ro.observe(host); } catch {}
 
-    // Safety: also retry a few times
     let tries = 0;
     const tick = () => {
       tries++;
@@ -346,7 +352,6 @@
       }
       if (tries < 20) requestAnimationFrame(tick);
       else {
-        // last resort: still try to render (better than nothing)
         try { ro.disconnect(); } catch {}
         cb();
       }
@@ -383,13 +388,16 @@
             backgroundColor: withAlpha(t.green, 0.16),
             tension: 0.35,
             fill: true,
+
+            // hierarchy: primary series slightly stronger
+            borderWidth: 3,
+            pointRadius: 3,
+            pointHoverRadius: 5,
             pointBackgroundColor: t.green
           }]
         },
         options: baseOptions({
-          scales: {
-            y: { suggestedMax: yMax }
-          }
+          scales: { y: { suggestedMax: yMax } }
         })
       });
 
@@ -424,6 +432,9 @@
               backgroundColor: withAlpha(t.indigo, 0.10),
               tension: 0.35,
               fill: false,
+              borderWidth: 2.4,
+              pointRadius: 2.6,
+              pointHoverRadius: 5,
               pointBackgroundColor: t.indigo
             },
             {
@@ -433,14 +444,16 @@
               backgroundColor: withAlpha(t.green, 0.10),
               tension: 0.35,
               fill: false,
+              // hierarchy: completed slightly stronger
+              borderWidth: 3,
+              pointRadius: 2.9,
+              pointHoverRadius: 5,
               pointBackgroundColor: t.green
             }
           ]
         },
         options: baseOptions({
-          scales: {
-            y: { suggestedMax: yMax }
-          }
+          scales: { y: { suggestedMax: yMax } }
         })
       });
 
@@ -475,6 +488,9 @@
               backgroundColor: withAlpha(t.amber, 0.10),
               tension: 0.35,
               fill: false,
+              borderWidth: 2.4,
+              pointRadius: 2.6,
+              pointHoverRadius: 5,
               pointBackgroundColor: t.amber
             },
             {
@@ -484,14 +500,15 @@
               backgroundColor: withAlpha(t.green, 0.10),
               tension: 0.35,
               fill: false,
+              borderWidth: 3,
+              pointRadius: 2.9,
+              pointHoverRadius: 5,
               pointBackgroundColor: t.green
             }
           ]
         },
         options: baseOptions({
-          scales: {
-            y: { suggestedMax: yMax }
-          }
+          scales: { y: { suggestedMax: yMax } }
         })
       });
 
@@ -522,25 +539,19 @@
             {
               label: "Added",
               data: added,
-              backgroundColor: withAlpha(t.green, 0.75),
-              borderColor: withAlpha(t.green, 0.95),
-              borderWidth: 1,
-              borderRadius: 10
+              backgroundColor: withAlpha(t.green, 0.78),
+              borderRadius: 12
             },
             {
               label: "Removed",
               data: removed,
-              backgroundColor: withAlpha(t.red, 0.70),
-              borderColor: withAlpha(t.red, 0.95),
-              borderWidth: 1,
-              borderRadius: 10
+              backgroundColor: withAlpha(t.red, 0.74),
+              borderRadius: 12
             }
           ]
         },
         options: baseOptions({
-          scales: {
-            y: { suggestedMax: yMax }
-          }
+          scales: { y: { suggestedMax: yMax } }
         })
       });
 
@@ -560,7 +571,6 @@
       destroyChart(id);
 
       const sick = rows.map(r => Number(r.sick || 0));
-      // ✅ this avoids 0..1 scale issues
       const yMax = niceMax(sick, 2);
 
       const chart = new Chart(canvas, {
@@ -574,6 +584,9 @@
             backgroundColor: withAlpha(t.red, 0.10),
             tension: 0.35,
             fill: false,
+            borderWidth: 2.6,
+            pointRadius: 2.6,
+            pointHoverRadius: 5,
             pointBackgroundColor: t.red
           }]
         },
@@ -581,10 +594,7 @@
           scales: {
             y: {
               suggestedMax: yMax,
-              ticks: {
-                // keep days feeling like days
-                precision: 0
-              }
+              ticks: { precision: 0 }
             }
           }
         })
@@ -596,7 +606,6 @@
 
   function renderAll() {
     if (!window.Chart) return;
-
     applyChartDefaults();
 
     const rows = loadRows();
@@ -609,7 +618,7 @@
     renderSick(rows);
   }
 
-  // Re-render on theme change / resize (helps when switching tabs / resizing)
+  // Re-render on theme change / resize
   let rerenderTimer = null;
   function scheduleRerender() {
     clearTimeout(rerenderTimer);
@@ -619,8 +628,6 @@
   document.addEventListener("DOMContentLoaded", renderAll);
   window.addEventListener("resize", scheduleRerender);
 
-  // If your app toggles theme by changing data-theme/class on <html>,
-  // this catches it and redraws to match the new CSS vars.
   const mo = new MutationObserver((muts) => {
     for (const m of muts) {
       if (m.type === "attributes") {
