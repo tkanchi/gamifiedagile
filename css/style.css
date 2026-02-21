@@ -1304,7 +1304,7 @@ body{
   width:100%;
   display:block;
   border-radius: 14px;
-  background: color-mix(in oklab, var(--bg-soft) 86%, rgba(17,24,39,0.015));
+  background: #ffffff;
   border: 1px solid var(--border-soft);
 }
 
@@ -1331,5 +1331,18 @@ body{
     height: 220px !important;
     max-height: 220px !important;
    background: #ffffff;
+  }
+}
+
+/* =========================================================
+   v13 FINAL: Chart stability + premium background
+   ========================================================= */
+.chartCard{ position: relative; }
+
+@media (min-width: 561px){
+  canvas.chartCanvas{
+    height: 220px !important;
+    max-height: 220px !important;
+    background: #ffffff;
   }
 }
