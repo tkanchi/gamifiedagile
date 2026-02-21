@@ -5,22 +5,35 @@
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <title>Scrummer — Coach</title>
 
-  <!-- Bump cache after CSS refresh -->
-  <link href="css/style.css?v=13" rel="stylesheet"/>
+  <!-- ✅ Bump cache after CSS refresh -->
+  <link href="css/style.css?v=14" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <style>
+    /* ✅ Keep only page-specific CSS here (everything else is in style.css) */
+
     /* Tabs (Health / Copilot) */
     .tabBar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
-    .tabBtn{border-radius:14px;padding:10px 14px;font-weight:650;cursor:pointer;border:1px solid var(--border);background:var(--bg-soft);color:var(--text-main);transition:transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;}
+    .tabBtn{
+      border-radius:14px;padding:10px 14px;font-weight:650;cursor:pointer;
+      border:1px solid var(--border);
+      background:var(--bg-soft);
+      color:var(--text-main);
+      transition:transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
+    }
     .tabBtn:hover{transform:translateY(-1px)}
-    .tabBtn.active{background: rgba(99,102,241,0.95); color:#fff; border-color: rgba(99,102,241,0.55); box-shadow: 0 10px 24px rgba(99,102,241,0.18);}
+    .tabBtn.active{
+      background: rgba(99,102,241,0.95);
+      color:#fff;
+      border-color: rgba(99,102,241,0.55);
+      box-shadow: 0 10px 24px rgba(99,102,241,0.18);
+    }
     .tabPanel.hidden{display:none}
 
     /* Desktop width */
     .coachWrap{max-width:1100px;margin:0 auto;width:100%;}
 
-    /* ===== Sprint History table (Coach) ===== */
+    /* Sprint History table (Coach) */
     .historyWrap{ margin-top: 12px; }
     .historyTop{display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap;}
     .historyActions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
@@ -50,36 +63,6 @@
     .historyTable td:first-child, .historyTable th:first-child{ padding-left: 12px; }
     .historyTable td:last-child, .historyTable th:last-child{ padding-right: 12px; }
     .fileInput{ display:none; }
-
-    /* Coach Insights layout helpers */
-    .insightsStack{display:grid; gap:12px; margin-top:12px;}
-    .insightHeader{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
-    .insightTitle{font-size:15px; font-weight:700; margin:0; color:var(--text-strong);}
-    .insightText{font-size:13.5px; color:var(--text-muted); line-height:1.5; margin:6px 0 10px;}
-    .insightAction{font-size:13px; font-weight:600; color:var(--accent);}
-
-    /* Insight card severity styling */
-    .insightCard{position:relative; padding:18px; border-radius:16px; border:1px solid var(--border-soft); background:#fff; transition:transform .15s ease, box-shadow .15s ease;}
-    .insightCard:hover{transform:translateY(-2px); box-shadow:0 14px 32px rgba(15,23,42,0.08);}
-    .insightCard::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:16px 0 0 16px;}
-    .insight-risk::before{background:#f43f5e;}
-    .insight-watch::before{background:#f59e0b;}
-    .insight-info::before{background:#10b981;}
-    .insightTag{font-size:11px; font-weight:800; letter-spacing:.4px; padding:5px 8px; border-radius:999px;}
-    .insight-risk .insightTag{background:rgba(244,63,94,.12); color:#be123c;}
-    .insight-watch .insightTag{background:rgba(245,158,11,.14); color:#b45309;}
-    .insight-info .insightTag{background:rgba(16,185,129,.14); color:#047857;}
-
-    /* ===== Stitch2-style ribbon bars ===== */
-    .ribbonGrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px;}
-    @media (max-width: 920px){ .ribbonGrid{grid-template-columns:1fr;} }
-    .ribbonItem{border:1px solid var(--border-soft); border-radius:14px; padding:10px; background:rgba(255,255,255,0.03);}
-    .ribbonTop{display:flex; justify-content:space-between; gap:10px; font-size:12px; font-weight:800; color:var(--text-muted);}
-    .ribbonBar{height:10px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid var(--border-soft); margin-top:8px; overflow:hidden;}
-    .ribbonFill{height:100%; width:0%; border-radius:999px; transition:width .35s ease;}
-    .ribbonGood{background:linear-gradient(90deg, rgba(34,197,94,0.65), rgba(34,197,94,0.95));}
-    .ribbonBad{background:linear-gradient(90deg, rgba(239,68,68,0.55), rgba(239,68,68,0.95));}
-    .ribbonWarn{background:linear-gradient(90deg, rgba(245,158,11,0.55), rgba(245,158,11,0.95));}
   </style>
 </head>
 
@@ -134,7 +117,6 @@
 
         <!-- ================= HEALTH ================= -->
         <section class="tabPanel" id="panel-health">
-
           <div class="sectionCard heroCard">
             <h1 class="sectionTitle">Sprint Health Dashboard</h1>
             <p class="sectionSub">Trends + stability signals (no blame). Powered by your last 6 sprints.</p>
@@ -215,7 +197,11 @@
                       <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
                     </div>
                   </div>
-                  <canvas class="chartCanvas" id="hist_velocityChart" height="160"></canvas>
+
+                  <!-- ✅ Wrapper prevents stretching + matches Stitch2 -->
+                  <div class="chartCanvasWrap">
+                    <canvas class="chartCanvas" id="hist_velocityChart"></canvas>
+                  </div>
 
                   <div class="ribbonGrid">
                     <div class="ribbonItem">
@@ -241,7 +227,10 @@
                       <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
                     </div>
                   </div>
-                  <canvas class="chartCanvas" id="hist_predictChart" height="160"></canvas>
+
+                  <div class="chartCanvasWrap">
+                    <canvas class="chartCanvas" id="hist_predictChart"></canvas>
+                  </div>
 
                   <div class="ribbonGrid">
                     <div class="ribbonItem">
@@ -267,7 +256,10 @@
                       <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
                     </div>
                   </div>
-                  <canvas class="chartCanvas" id="hist_capacityChart" height="160"></canvas>
+
+                  <div class="chartCanvasWrap">
+                    <canvas class="chartCanvas" id="hist_capacityChart"></canvas>
+                  </div>
 
                   <div class="ribbonGrid">
                     <div class="ribbonItem">
@@ -293,7 +285,10 @@
                       <span class="legendPill" style="--dot:#ef4444;"><span class="legendDot"></span>Removed</span>
                     </div>
                   </div>
-                  <canvas class="chartCanvas" id="hist_disruptionChart" height="160"></canvas>
+
+                  <div class="chartCanvasWrap">
+                    <canvas class="chartCanvas" id="hist_disruptionChart"></canvas>
+                  </div>
 
                   <div class="ribbonGrid">
                     <div class="ribbonItem">
@@ -318,7 +313,10 @@
                       <span class="legendPill" style="--dot:#ef4444;"><span class="legendDot"></span>Sick leave</span>
                     </div>
                   </div>
-                  <canvas class="chartCanvas" id="hist_sickChart" height="160"></canvas>
+
+                  <div class="chartCanvasWrap">
+                    <canvas class="chartCanvas" id="hist_sickChart"></canvas>
+                  </div>
                 </div>
 
               </div><!-- /chartGrid -->
