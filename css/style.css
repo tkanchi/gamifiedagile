@@ -1330,5 +1330,6 @@ body{
   canvas.chartCanvas{
     height: 220px !important;
     max-height: 220px !important;
+   background: #ffffff;
   }
 }
