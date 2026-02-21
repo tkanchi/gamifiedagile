@@ -1319,3 +1319,12 @@ body{
   .chartCard{ padding: 12px; }
   canvas.chartCanvas{ height: 190px; }
 }
+
+/* ===== Lock chart height (prevents stretch on scroll) ===== */
+.chartCard{
+  height: 300px;
+}
+
+canvas.chartCanvas{
+  height: 100% !important;
+}
