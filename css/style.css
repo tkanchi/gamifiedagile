@@ -1346,3 +1346,11 @@ body{
     background: #ffffff;
   }
 }
+
+/* =========================================================
+   v13.1: Force premium chart canvas background (override coach.html inline styles)
+   ========================================================= */
+canvas.chartCanvas,
+.chartCard canvas.chartCanvas{
+  background: #ffffff !important;
+}
