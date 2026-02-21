@@ -1,16 +1,10 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v3 Mobile-Proof
+ * Scrummer — Coach Addons (Clean / No Snapshots) — v3.1 (Chart.js-safe)
  * --------------------------------------------------------------
  * Uses last 6 sprints from:
  * localStorage["scrummer_sprint_history_v1"]
- * Falls back to window.ScrummerCoachHistory.getRows()
  *
- * Fixes:
- * ✅ Charts blank on mobile (0-height canvas issue) by forcing wrapper height
- * ✅ Reflow-safe rendering (resize + rerender)
- * ✅ Only horizontal grid lines
- * ✅ Fewer Y-axis labels (maxTicksLimit)
- * ✅ Sick leave y max (no 0..1 squish)
+ * Falls back to window.ScrummerCoachHistory.getRows()
  */
 
 (() => {
@@ -51,21 +45,27 @@
 
   function rowsFromModel(model) {
     return lastNSprints(model, 6).map((s, i) => ({
-      sprint: s.id || `S${i + 1}`,
+      sprint: s.id || `Sprint ${i + 1}`,
       capacity: calcCapacitySP(s),
       committed: Number(s?.committedSP || 0),
       completed: Number(s?.completedSP || 0),
+
+      // Scope
       added: Number(s?.unplannedSP ?? s?.addedSP ?? s?.addedMid ?? 0),
       removed: Number(s?.removedMid ?? s?.removedSP ?? s?.scopeRemoved ?? 0),
+
+      // Health
       sick: Number(s?.sickLeaveDays ?? s?.sickLeave ?? 0),
     }));
   }
 
+  // Normalize any row shapes (from history.js) into a consistent shape
   function normalizeFallbackRows(rawRows) {
     const rows = Array.isArray(rawRows) ? rawRows : [];
     return rows.map((r, i) => ({
       sprint: String(r?.sprint ?? r?.name ?? r?.label ?? `Sprint ${i + 1}`),
 
+      // Capacity variants (use forecast capacity as "capacity" for the chart)
       capacity: Number(
         r?.forecastCap ??
         r?.capacity ??
@@ -76,11 +76,13 @@
         0
       ),
 
+      // Commitment / delivery variants
       committed: Number(r?.committedSP ?? r?.committed ?? r?.commit ?? r?.commitSP ?? 0),
       completed: Number(r?.completedSP ?? r?.completed ?? r?.done ?? r?.doneSP ?? 0),
 
+      // Scope variants
       added: Number(
-        r?.addedMid ??
+        r?.addedMid ??        // ✅ matches "SP Added (mid)"
         r?.addedSP ??
         r?.unplannedSP ??
         r?.added ??
@@ -88,14 +90,17 @@
         r?.scopeAddedSP ??
         0
       ),
+
       removed: Number(
-        r?.removedMid ??
+        r?.removedMid ??      // ✅ matches "SP Removed (mid)"
         r?.removedSP ??
         r?.removed ??
         r?.scopeRemoved ??
         r?.scopeRemovedSP ??
         0
       ),
+
+      // Sick leave variants
       sick: Number(r?.sickLeaveDays ?? r?.sickLeave ?? r?.sick ?? 0),
     }));
   }
@@ -115,250 +120,56 @@
   ============================== */
 
   function cssVar(name, fallback) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-  }
-
-  function withAlpha(hexOrRgb, alpha) {
-    const v = String(hexOrRgb || "").trim();
-    if (/^#([0-9a-f]{6})$/i.test(v)) {
-      const hex = v.substring(1);
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      return `rgba(${r},${g},${b},${alpha})`;
-    }
-    return v;
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim() || fallback;
   }
 
   function theme() {
-    const textMain =
-      cssVar("--text-main", "") ||
-      cssVar("--text-strong", "") ||
-      "rgba(15,23,42,0.92)";
-
-    const textDim =
-      cssVar("--text-muted", "") ||
-      "rgba(100,116,139,0.92)";
-
-    const borderSoft =
-      cssVar("--border-soft", "") ||
-      cssVar("--border", "") ||
-      "rgba(148,163,184,0.35)";
-
-    const grid = cssVar("--grid-soft", "") || "rgba(148,163,184,0.14)";
-
     return {
-      textMain,
-      textDim,
-      borderSoft,
-      grid,
-      indigo: cssVar("--accent", "#6366f1"),
-      green: cssVar("--accent-2", "#22c55e"),
-      red: "#ef4444",
-      amber: "#f59e0b",
+      text: cssVar("--text-muted", "#6b7280"),
+      border: cssVar("--border-soft", "rgba(0,0,0,0.1)"),
+      indigo: cssVar("--indigo", "#6366f1"),
+      green: cssVar("--green", "#22c55e"),
+      red: cssVar("--red", "#ef4444"),
+      amber: cssVar("--amber", "#f59e0b"),
     };
   }
 
-  function niceMax(values, minMax = 4) {
-    const max = Math.max(0, ...values.map(v => Number.isFinite(v) ? v : 0));
-    const base = Math.max(minMax, max);
-    const pow = Math.pow(10, Math.floor(Math.log10(base || 1)));
-    const n = Math.ceil(base / pow) * pow;
-    if (n >= base * 1.8) return Math.ceil(base / (pow / 2)) * (pow / 2);
-    return n;
-  }
-
-  /* =============================
-     Chart.js Defaults
-  ============================== */
-
-  function applyChartDefaults() {
-    if (!window.Chart?.defaults) return;
-
+  function baseOptions() {
     const t = theme();
-
-    Chart.defaults.responsive = true;
-    Chart.defaults.maintainAspectRatio = false;
-    Chart.defaults.animation = { duration: 520, easing: "easeOutQuart" };
-    Chart.defaults.interaction = { mode: "index", intersect: false };
-
-    Chart.defaults.font = {
-      family: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial",
-      size: 12,
-      weight: "500",
-    };
-
-    Chart.defaults.plugins = Chart.defaults.plugins || {};
-
-    // We use our own legend pills in HTML, so keep Chart legend off (cleaner)
-    Chart.defaults.plugins.legend = { display: false };
-
-    Chart.defaults.plugins.tooltip = {
-      enabled: true,
-      backgroundColor: "rgba(15,23,42,0.92)",
-      borderColor: withAlpha(t.borderSoft, 0.6),
-      borderWidth: 1,
-      titleColor: "rgba(255,255,255,0.96)",
-      bodyColor: "rgba(255,255,255,0.86)",
-      titleFont: { size: 13, weight: "800" },
-      bodyFont: { size: 12, weight: "650" },
-      padding: 12,
-      cornerRadius: 12,
-      displayColors: true,
-    };
-
-    Chart.defaults.elements = Chart.defaults.elements || {};
-    Chart.defaults.elements.point = { radius: 2.6, hoverRadius: 4.6, hitRadius: 12 };
-    Chart.defaults.elements.line = { borderWidth: 2.4 };
-    Chart.defaults.elements.bar = { borderWidth: 0, borderRadius: 10 };
-  }
-
-  function deepMerge(a, b) {
-    if (!b) return a;
-    const out = Array.isArray(a) ? a.slice() : { ...a };
-    for (const [k, v] of Object.entries(b)) {
-      if (v && typeof v === "object" && !Array.isArray(v)) {
-        out[k] = deepMerge(out[k] && typeof out[k] === "object" ? out[k] : {}, v);
-      } else {
-        out[k] = v;
-      }
-    }
-    return out;
-  }
-
-  /* =============================
-     Base Options
-     - Only horizontal grid lines
-     - Fewer Y ticks
-  ============================== */
-
-  function baseOptions(overrides = {}) {
-    const t = theme();
-
-    const opt = {
+    return {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
+      interaction: { mode: "index", intersect: false },
       scales: {
         x: {
-          grid: { display: false, drawBorder: false }, // ✅ remove vertical lines
-          ticks: { color: t.textDim, font: { size: 11, weight: "650" }, maxRotation: 0 }
+          ticks: { color: t.text },
+          grid: { color: t.border }
         },
         y: {
           beginAtZero: true,
-          grid: { display: true, color: t.grid, drawBorder: false }, // ✅ only horizontal
-          ticks: {
-            color: t.textDim,
-            font: { size: 11, weight: "650" },
-            maxTicksLimit: 5,        // ✅ fewer labels
-            precision: 0             // ✅ no decimals
-          }
+          ticks: { color: t.text },
+          grid: { color: t.border }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: t.text }
+        },
+        tooltip: {
+          enabled: true
         }
       }
     };
-
-    return deepMerge(opt, overrides);
   }
-
-  /* =============================
-     Mobile-Proof Canvas Sizing
-  ============================== */
 
   const charts = new Map();
-
   function destroyChart(id) {
-    const c = charts.get(id);
-    if (c) {
-      try { c.destroy(); } catch {}
+    if (charts.has(id)) {
+      charts.get(id).destroy();
       charts.delete(id);
     }
-  }
-
-  function forceCanvasHeight(canvas) {
-    if (!canvas) return;
-
-    // Preferred wrapper is .chartCanvasWrap
-    const wrap =
-      canvas.closest(".chartCanvasWrap") ||
-      canvas.parentElement;
-
-    if (wrap) {
-      const r = wrap.getBoundingClientRect();
-      if (r.height < 120) {
-        // ✅ force a real height if CSS got overridden / collapsed
-        wrap.style.height = "260px";
-      }
-    }
-
-    // Ensure canvas has an actual drawing height too (helps some mobile browsers)
-    // Use wrapper height if available, else fallback.
-    const h = (wrap?.getBoundingClientRect().height || 260);
-    if (!canvas.getAttribute("height")) {
-      canvas.setAttribute("height", String(Math.round(h)));
-    }
-  }
-
-  function canvasReady(canvas) {
-    if (!canvas) return false;
-    const wrap = canvas.closest(".chartCanvasWrap") || canvas.parentElement || canvas;
-    const rect = wrap.getBoundingClientRect();
-    return rect.width > 80 && rect.height > 120;
-  }
-
-  function waitForCanvasSize(canvas, cb) {
-    forceCanvasHeight(canvas);
-
-    if (canvasReady(canvas)) { cb(); return; }
-
-    const host = canvas.closest(".chartCanvasWrap") || canvas.parentElement || canvas;
-
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      forceCanvasHeight(canvas);
-      cb();
-    };
-
-    // ResizeObserver
-    let ro;
-    try {
-      ro = new ResizeObserver(() => {
-        if (canvasReady(canvas)) {
-          try { ro.disconnect(); } catch {}
-          finish();
-        }
-      });
-      ro.observe(host);
-    } catch {}
-
-    // RAF fallback
-    let tries = 0;
-    const tick = () => {
-      tries++;
-      forceCanvasHeight(canvas);
-      if (canvasReady(canvas)) {
-        try { ro?.disconnect(); } catch {}
-        finish();
-        return;
-      }
-      if (tries < 30) requestAnimationFrame(tick);
-      else {
-        try { ro?.disconnect(); } catch {}
-        finish();
-      }
-    };
-    requestAnimationFrame(tick);
-  }
-
-  function postResize(chart) {
-    // mobile browsers often need a tiny delay after first draw
-    setTimeout(() => {
-      try { chart.resize(); } catch {}
-      try { chart.update(); } catch {}
-    }, 60);
   }
 
   /* =============================
@@ -371,38 +182,29 @@
     if (!canvas) return;
 
     destroyChart(id);
-    waitForCanvasSize(canvas, () => {
-      destroyChart(id);
-      const t = theme();
 
-      const completed = rows.map(r => Number(r.completed || 0));
-      const yMax = niceMax(completed, 8);
+    const t = theme();
 
-      const chart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels: rows.map(r => r.sprint),
-          datasets: [{
-            label: "Completed SP",
-            data: completed,
-            borderColor: t.green,
-            backgroundColor: withAlpha(t.green, 0.14),
-            tension: 0.35,
-            fill: true,
-            borderWidth: 3,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: t.green
-          }]
-        },
-        options: baseOptions({
-          scales: { y: { suggestedMax: yMax } }
-        })
-      });
-
-      charts.set(id, chart);
-      postResize(chart);
+    const chart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: rows.map(r => r.sprint),
+        datasets: [{
+          label: "Completed SP",
+          data: rows.map(r => r.completed),
+          borderColor: t.green,
+          backgroundColor: "rgba(34,197,94,0.15)",
+          tension: 0.35,
+          fill: true,
+          borderWidth: 3,
+          pointRadius: 2.5,
+          pointHoverRadius: 5
+        }]
+      },
+      options: baseOptions()
     });
+
+    charts.set(id, chart);
   }
 
   function renderPredictability(rows) {
@@ -411,141 +213,104 @@
     if (!canvas) return;
 
     destroyChart(id);
-    waitForCanvasSize(canvas, () => {
-      destroyChart(id);
-      const t = theme();
+    const t = theme();
 
-      const committed = rows.map(r => Number(r.committed || 0));
-      const completed = rows.map(r => Number(r.completed || 0));
-      const yMax = niceMax([...committed, ...completed], 8);
-
-      const chart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels: rows.map(r => r.sprint),
-          datasets: [
-            {
-              label: "Committed",
-              data: committed,
-              borderColor: t.indigo,
-              backgroundColor: withAlpha(t.indigo, 0.08),
-              tension: 0.35,
-              fill: false,
-              borderWidth: 2.4,
-              pointRadius: 2.6,
-              pointHoverRadius: 5,
-              pointBackgroundColor: t.indigo
-            },
-            {
-              label: "Completed",
-              data: completed,
-              borderColor: t.green,
-              backgroundColor: withAlpha(t.green, 0.08),
-              tension: 0.35,
-              fill: false,
-              borderWidth: 3,
-              pointRadius: 2.9,
-              pointHoverRadius: 5,
-              pointBackgroundColor: t.green
-            }
-          ]
-        },
-        options: baseOptions({
-          scales: { y: { suggestedMax: yMax } }
-        })
-      });
-
-      charts.set(id, chart);
-      postResize(chart);
+    const chart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: rows.map(r => r.sprint),
+        datasets: [
+          {
+            label: "Committed",
+            data: rows.map(r => r.committed),
+            borderColor: t.indigo,
+            tension: 0.35,
+            borderWidth: 2.5,
+            pointRadius: 2.2,
+            pointHoverRadius: 5
+          },
+          {
+            label: "Completed",
+            data: rows.map(r => r.completed),
+            borderColor: t.green,
+            tension: 0.35,
+            borderWidth: 2.5,
+            pointRadius: 2.2,
+            pointHoverRadius: 5
+          }
+        ]
+      },
+      options: baseOptions()
     });
+
+    charts.set(id, chart);
   }
 
+  /* Capacity vs Completed */
   function renderCapacity(rows) {
     const id = "hist_capacityChart";
     const canvas = $(id);
     if (!canvas) return;
 
     destroyChart(id);
-    waitForCanvasSize(canvas, () => {
-      destroyChart(id);
-      const t = theme();
+    const t = theme();
 
-      const cap = rows.map(r => Number(r.capacity || 0));
-      const completed = rows.map(r => Number(r.completed || 0));
-      const yMax = niceMax([...cap, ...completed], 10);
-
-      const chart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels: rows.map(r => r.sprint),
-          datasets: [
-            {
-              label: "Capacity",
-              data: cap,
-              borderColor: t.amber,
-              backgroundColor: withAlpha(t.amber, 0.08),
-              tension: 0.35,
-              fill: false,
-              borderWidth: 2.4,
-              pointRadius: 2.6,
-              pointHoverRadius: 5,
-              pointBackgroundColor: t.amber
-            },
-            {
-              label: "Completed",
-              data: completed,
-              borderColor: t.green,
-              backgroundColor: withAlpha(t.green, 0.08),
-              tension: 0.35,
-              fill: false,
-              borderWidth: 3,
-              pointRadius: 2.9,
-              pointHoverRadius: 5,
-              pointBackgroundColor: t.green
-            }
-          ]
-        },
-        options: baseOptions({
-          scales: { y: { suggestedMax: yMax } }
-        })
-      });
-
-      charts.set(id, chart);
-      postResize(chart);
+    const chart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: rows.map(r => r.sprint),
+        datasets: [
+          {
+            label: "Capacity",
+            data: rows.map(r => r.capacity),
+            borderColor: t.amber,
+            tension: 0.35,
+            borderWidth: 2.5,
+            pointRadius: 2.2,
+            pointHoverRadius: 5
+          },
+          {
+            label: "Completed",
+            data: rows.map(r => r.completed),
+            borderColor: t.green,
+            tension: 0.35,
+            borderWidth: 2.5,
+            pointRadius: 2.2,
+            pointHoverRadius: 5
+          }
+        ]
+      },
+      options: baseOptions()
     });
+
+    charts.set(id, chart);
   }
 
+  /* Scope Disruption: Added vs Removed */
   function renderDisruption(rows) {
     const id = "hist_disruptionChart";
     const canvas = $(id);
     if (!canvas) return;
 
     destroyChart(id);
-    waitForCanvasSize(canvas, () => {
-      destroyChart(id);
-      const t = theme();
+    const t = theme();
 
-      const added = rows.map(r => Number(r.added || 0));
-      const removed = rows.map(r => Number(r.removed || 0));
-      const yMax = niceMax([...added, ...removed], 4);
+    const added = rows.map(r => Number(r.added || 0));
+    const removed = rows.map(r => Number(r.removed || 0));
 
-      const chart = new Chart(canvas, {
-        type: "bar",
-        data: {
-          labels: rows.map(r => r.sprint),
-          datasets: [
-            { label: "Added", data: added, backgroundColor: withAlpha(t.green, 0.75), borderRadius: 12 },
-            { label: "Removed", data: removed, backgroundColor: withAlpha(t.red, 0.72), borderRadius: 12 }
-          ]
-        },
-        options: baseOptions({
-          scales: { y: { suggestedMax: yMax } }
-        })
-      });
-
-      charts.set(id, chart);
-      postResize(chart);
+    const chart = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: rows.map(r => r.sprint),
+        datasets: [
+          { label: "Added", data: added, backgroundColor: t.green },
+          { label: "Removed", data: removed, backgroundColor: t.red }
+        ]
+      },
+      options: baseOptions()
     });
+
+    charts.set(id, chart);
   }
 
   function renderSick(rows) {
@@ -554,44 +319,30 @@
     if (!canvas) return;
 
     destroyChart(id);
-    waitForCanvasSize(canvas, () => {
-      destroyChart(id);
-      const t = theme();
+    const t = theme();
 
-      const sick = rows.map(r => Number(r.sick || 0));
-      const yMax = niceMax(sick, 2);
-
-      const chart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels: rows.map(r => r.sprint),
-          datasets: [{
-            label: "Sick Leave (days)",
-            data: sick,
-            borderColor: t.red,
-            backgroundColor: withAlpha(t.red, 0.08),
-            tension: 0.35,
-            fill: false,
-            borderWidth: 2.6,
-            pointRadius: 2.6,
-            pointHoverRadius: 5,
-            pointBackgroundColor: t.red
-          }]
-        },
-        options: baseOptions({
-          scales: { y: { suggestedMax: yMax, ticks: { maxTicksLimit: 4, precision: 0 } } }
-        })
-      });
-
-      charts.set(id, chart);
-      postResize(chart);
+    const chart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: rows.map(r => r.sprint),
+        datasets: [{
+          label: "Sick Leave",
+          data: rows.map(r => r.sick),
+          borderColor: t.red,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 2.2,
+          pointHoverRadius: 5
+        }]
+      },
+      options: baseOptions()
     });
+
+    charts.set(id, chart);
   }
 
   function renderAll() {
     if (!window.Chart) return;
-    applyChartDefaults();
-
     const rows = loadRows();
     if (!rows.length) return;
 
@@ -603,21 +354,17 @@
   }
 
   /* =============================
-     Rerender Triggers
+     ✅ Chart.js-safe boot (FIX)
+     Wait until Chart exists before rendering
   ============================== */
-
-  let rerenderTimer = null;
-  function scheduleRerender() {
-    clearTimeout(rerenderTimer);
-    rerenderTimer = setTimeout(() => renderAll(), 140);
-  }
-
-  document.addEventListener("DOMContentLoaded", renderAll);
-  window.addEventListener("resize", scheduleRerender);
-
-  // Theme change / data-theme updates
-  const mo = new MutationObserver(() => scheduleRerender());
-  try {
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
-  } catch {}
+  document.addEventListener("DOMContentLoaded", () => {
+    let tries = 0;
+    const tick = () => {
+      tries++;
+      if (window.Chart) return renderAll();
+      if (tries < 60) return setTimeout(tick, 100); // wait up to ~6s
+      console.warn("[Scrummer] Chart.js not found. Charts will stay empty.");
+    };
+    tick();
+  });
 })();
