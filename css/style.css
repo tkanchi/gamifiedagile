@@ -30,8 +30,8 @@
   --shadow-soft: 0 10px 24px rgba(17,24,39,0.08);
 
   /* Radius + spacing */
-  --radius: 18px;
-  --radius-m: 16px;
+  --radius: 14px;
+  --radius-m: 12px;
 
   /* Accents */
   --accent: #6366f1;
@@ -60,7 +60,7 @@
   --card-bg: var(--bg-panel);
   --card-border: var(--border-soft);
   --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  --radius-card: 16px;
+  --radius-card: 12px;
   --pad-card: 18px;
 
   /* Hero */
@@ -286,7 +286,7 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
    HERO
    ======================= */
 .heroCard{
-  border-radius: 18px;
+  border-radius: 14px;
   background: linear-gradient(180deg, rgba(99,102,241,0.10), rgba(255,255,255,0.92));
   border: 1px solid var(--hero-border);
   box-shadow: var(--hero-glow);
@@ -454,7 +454,7 @@ textarea.fun-input{
 }
 
 .chartCard{
-  border-radius: 18px;
+  border-radius: 14px;
   border: 1px solid var(--border-soft);
   background: var(--bg-panel);
   box-shadow: 0 10px 24px rgba(17,24,39,0.08);
@@ -827,6 +827,7 @@ button,
   padding:10px 8px;
   border-bottom:1px solid rgba(15,23,42,0.05);
   white-space: nowrap;
+text-align: center;
 }
 
 .historyTable thead th{
@@ -848,5 +849,36 @@ button,
   width: 104px !important;
   min-width: 104px !important;
   max-width: 104px !important;
-  text-align: right;
+  text-align: center
+}
+
+
+/* ========================
+   COACH PAGE — remove big rounded container around Sprint Health Dashboard
+   Match coach_stitch1.html (flat section, cards inside)
+   ======================== */
+body[data-page="coach"] .sectionCard.heroCard{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+body[data-page="coach"] .sectionCard.heroCard > .info-banner{
+  /* keep banners/cards as-is; just ensure spacing from top */
+  margin-top: 12px;
+}
+
+/* Reduce over-rounded feel across coach */
+body[data-page="coach"] .chartCard,
+body[data-page="coach"] .historyWrap,
+body[data-page="coach"] .info-banner{
+  border-radius: 12px;
+}
+
+
+/* Buttons — Slack-minimal (less rounding) */
+button, .btnGhost, .btnPrimary, .tabBtn, .themeToggle{
+  border-radius: 8px !important;
 }
