@@ -50,6 +50,25 @@
     .historyTable td:first-child, .historyTable th:first-child{ padding-left: 12px; }
     .historyTable td:last-child, .historyTable th:last-child{ padding-right: 12px; }
     .fileInput{ display:none; }
+
+    /* Coach Insights layout helpers (minimal, matches new style.css) */
+    .insightsStack{display:grid; gap:12px; margin-top:12px;}
+    .insightHeader{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+    .insightTitle{font-size:15px; font-weight:700; margin:0; color:var(--text-strong);}
+    .insightText{font-size:13.5px; color:var(--text-muted); line-height:1.5; margin:6px 0 10px;}
+    .insightAction{font-size:13px; font-weight:600; color:var(--accent);}
+
+    /* Insight card severity styling (works even if CSS file changes) */
+    .insightCard{position:relative; padding:18px; border-radius:16px; border:1px solid var(--border-soft); background:#fff; transition:transform .15s ease, box-shadow .15s ease;}
+    .insightCard:hover{transform:translateY(-2px); box-shadow:0 14px 32px rgba(15,23,42,0.08);}
+    .insightCard::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:16px 0 0 16px;}
+    .insight-risk::before{background:#f43f5e;}
+    .insight-watch::before{background:#f59e0b;}
+    .insight-info::before{background:#10b981;}
+    .insightTag{font-size:11px; font-weight:800; letter-spacing:.4px; padding:5px 8px; border-radius:999px;}
+    .insight-risk .insightTag{background:rgba(244,63,94,.12); color:#be123c;}
+    .insight-watch .insightTag{background:rgba(245,158,11,.14); color:#b45309;}
+    .insight-info .insightTag{background:rgba(16,185,129,.14); color:#047857;}
   </style>
 </head>
 
@@ -281,6 +300,46 @@
                     </div>
                   </div>
                   <canvas class="chartCanvas" id="chart_predictability" height="160"></canvas>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ✅ Coach Insights (severity styling) -->
+            <div class="info-banner" style="margin-top:14px;">
+              <div class="kvKey" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <span>Coach Insights</span>
+                <span class="mutedText" style="margin:0;">Auto-generated from the last 6 sprints</span>
+              </div>
+
+              <div class="insightsStack" id="coach_insightsStack">
+                <!-- You can later render these from JS. These are safe defaults. -->
+
+                <div class="insightCard insight-risk">
+                  <div class="insightHeader">
+                    <span class="insightTag">RISK</span>
+                    <h3 class="insightTitle">Overcommit risk detected</h3>
+                  </div>
+                  <p class="insightText">Committed work is trending above actual capacity. This increases spillover and quality risk.</p>
+                  <div class="insightAction">Action: Reduce 5–8 SP or add buffer before sprint start.</div>
+                </div>
+
+                <div class="insightCard insight-watch">
+                  <div class="insightHeader">
+                    <span class="insightTag">WATCH</span>
+                    <h3 class="insightTitle">Velocity variance increasing</h3>
+                  </div>
+                  <p class="insightText">Completed SP fluctuates sprint-to-sprint. Forecast confidence is lower when variance is high.</p>
+                  <div class="insightAction">Action: Track carryover % and limit mid-sprint scope changes.</div>
+                </div>
+
+                <div class="insightCard insight-info">
+                  <div class="insightHeader">
+                    <span class="insightTag">INFO</span>
+                    <h3 class="insightTitle">Predictability improving</h3>
+                  </div>
+                  <p class="insightText">Committed vs completed gap is narrowing across recent sprints.</p>
+                  <div class="insightAction">Keep it up: Maintain the same buffer and refinement cadence.</div>
                 </div>
 
               </div>
