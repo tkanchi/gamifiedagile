@@ -1127,3 +1127,97 @@ canvas.chartCanvas,
   35%{ transform: translateY(-2px) scale(1.04); }
   100%{ transform: translateY(0) scale(1); }
 }
+
+/* ================================
+   INSIGHT CARD SEVERITY SYSTEM
+==================================*/
+
+.insightCard{
+  position: relative;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: #ffffff;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.insightCard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(15,23,42,0.08);
+}
+
+/* Left accent border */
+.insightCard::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:4px;
+  border-radius: 16px 0 0 16px;
+}
+
+/* Severity colors */
+.insight-risk::before{
+  background: #f43f5e;
+}
+.insight-watch::before{
+  background: #f59e0b;
+}
+.insight-info::before{
+  background: #10b981;
+}
+
+/* Tag styling */
+.insightTag{
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  margin-right: 8px;
+}
+
+/* Tag color variants */
+.insight-risk .insightTag{
+  background: rgba(244,63,94,.12);
+  color: #be123c;
+}
+.insight-watch .insightTag{
+  background: rgba(245,158,11,.14);
+  color: #b45309;
+}
+.insight-info .insightTag{
+  background: rgba(16,185,129,.14);
+  color: #047857;
+}
+
+/* Header */
+.insightHeader{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+.insightTitle{
+  font-size: 15px;
+  font-weight: 700;
+  margin:0;
+  color: var(--text-strong);
+}
+
+/* Body text */
+.insightText{
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 6px 0 10px;
+}
+
+/* Suggested action */
+.insightAction{
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
