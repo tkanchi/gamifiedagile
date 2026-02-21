@@ -49,9 +49,59 @@
       capacity: calcCapacitySP(s),
       committed: Number(s?.committedSP || 0),
       completed: Number(s?.completedSP || 0),
-      added: Number(s?.unplannedSP || 0),
-      removed: Number(s?.removedSP || 0),
-      sick: Number(s?.sickLeaveDays || 0),
+
+      // Scope
+      added: Number(s?.unplannedSP ?? s?.addedSP ?? s?.addedMid ?? 0),
+      removed: Number(s?.removedSP ?? s?.removedMid ?? s?.scopeRemoved ?? 0),
+
+      // Health
+      sick: Number(s?.sickLeaveDays ?? s?.sickLeave ?? 0),
+    }));
+  }
+
+  // Normalize any row shapes (from history.js) into a consistent shape
+  function normalizeFallbackRows(rawRows) {
+    const rows = Array.isArray(rawRows) ? rawRows : [];
+    return rows.map((r, i) => ({
+      sprint: String(r?.sprint ?? r?.name ?? r?.label ?? `S${i + 1}`),
+
+      // Capacity variants
+      capacity: Number(
+        r?.capacity ??
+        r?.forecastCap ??
+        r?.forecast ??
+        r?.forecastCapacity ??
+        r?.forecastCapacitySP ??
+        r?.forecastCapSP ??
+        0
+      ),
+
+      // Commitment / delivery variants
+      committed: Number(r?.committedSP ?? r?.committed ?? r?.commit ?? r?.commitSP ?? 0),
+      completed: Number(r?.completedSP ?? r?.completed ?? r?.done ?? r?.doneSP ?? 0),
+
+      // Scope variants
+      added: Number(
+        r?.unplannedSP ??
+        r?.addedSP ??
+        r?.addedMid ??
+        r?.added ??
+        r?.scopeAdded ??
+        r?.scopeAddedSP ??
+        0
+      ),
+
+      removed: Number(
+        r?.removedSP ??
+        r?.removedMid ??
+        r?.removed ??
+        r?.scopeRemoved ??
+        r?.scopeRemovedSP ??
+        0
+      ),
+
+      // Sick leave variants
+      sick: Number(r?.sickLeaveDays ?? r?.sickLeave ?? r?.sick ?? 0),
     }));
   }
 
@@ -60,7 +110,9 @@
     if (model.sprints?.length) return rowsFromModel(model);
 
     const api = window.ScrummerCoachHistory;
-    if (api?.getRows) return api.getRows();
+    if (api?.getRows) {
+      return normalizeFallbackRows(api.getRows());
+    }
 
     return [];
   }
@@ -183,7 +235,7 @@
     charts.set(id, chart);
   }
 
-  /* 🔥 FIXED CAPACITY CHART */
+  /* Capacity vs Completed */
   function renderCapacity(rows) {
     const id = "hist_capacityChart";
     const canvas = $(id);
@@ -217,7 +269,7 @@
     charts.set(id, chart);
   }
 
-  /* 🔥 FIXED DISRUPTION CHART */
+  /* ✅ Always show Removed (even if 0) */
   function renderDisruption(rows) {
     const id = "hist_disruptionChart";
     const canvas = $(id);
@@ -226,29 +278,17 @@
     destroyChart(id);
     const t = theme();
 
-    const added = rows.map(r => r.added);
-    const removed = rows.map(r => r.removed);
-    const showRemoved = removed.some(v => v > 0);
-
-    const datasets = [{
-      label: "Added",
-      data: added,
-      backgroundColor: t.green
-    }];
-
-    if (showRemoved) {
-      datasets.push({
-        label: "Removed",
-        data: removed,
-        backgroundColor: t.red
-      });
-    }
+    const added = rows.map(r => Number(r.added || 0));
+    const removed = rows.map(r => Number(r.removed || 0));
 
     const chart = new Chart(canvas, {
       type: "bar",
       data: {
         labels: rows.map(r => r.sprint),
-        datasets
+        datasets: [
+          { label: "Added", data: added, backgroundColor: t.green },
+          { label: "Removed", data: removed, backgroundColor: t.red }
+        ]
       },
       options: baseOptions()
     });
