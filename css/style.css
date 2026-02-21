@@ -1354,3 +1354,28 @@ canvas.chartCanvas,
 .chartCard canvas.chartCanvas{
   background: #ffffff !important;
 }
+
+/* =========================================================
+   v13.2: Coach chart cards — premium white (remove grey cell)
+   Note: coach.html has inline styles; we override with !important
+   ========================================================= */
+.chartCard{
+  background: #ffffff !important;
+  border-color: rgba(17,24,39,0.10) !important;
+  box-shadow: 0 10px 24px rgba(17,24,39,0.06) !important;
+}
+
+.chartCanvas{
+  background: #ffffff !important;
+  border-color: rgba(17,24,39,0.10) !important;
+}
+
+.legendPill{
+  background: rgba(17,24,39,0.03) !important;
+  border-color: rgba(17,24,39,0.10) !important;
+}
+
+/* Softer chart wrapper banners on Coach */
+.info-banner{
+  background: #ffffff !important;
+}
