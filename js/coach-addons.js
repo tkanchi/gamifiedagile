@@ -1,10 +1,15 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v3.1 (Chart.js-safe)
+ * Scrummer — Coach Addons (Clean / No Snapshots) — v3.2 (Reference Chart Look)
  * --------------------------------------------------------------
  * Uses last 6 sprints from:
  * localStorage["scrummer_sprint_history_v1"]
  *
  * Falls back to window.ScrummerCoachHistory.getRows()
+ *
+ * Updates:
+ * ✅ Velocity looks like reference (indigo curve + gradient + white points)
+ * ✅ Removes “boxed” plot feel (lighter grid, no harsh borders)
+ * ✅ Consistent premium styling across all charts
  */
 
 (() => {
@@ -59,13 +64,11 @@
     }));
   }
 
-  // Normalize any row shapes (from history.js) into a consistent shape
   function normalizeFallbackRows(rawRows) {
     const rows = Array.isArray(rawRows) ? rawRows : [];
     return rows.map((r, i) => ({
       sprint: String(r?.sprint ?? r?.name ?? r?.label ?? `Sprint ${i + 1}`),
 
-      // Capacity variants (use forecast capacity as "capacity" for the chart)
       capacity: Number(
         r?.forecastCap ??
         r?.capacity ??
@@ -76,13 +79,11 @@
         0
       ),
 
-      // Commitment / delivery variants
       committed: Number(r?.committedSP ?? r?.committed ?? r?.commit ?? r?.commitSP ?? 0),
       completed: Number(r?.completedSP ?? r?.completed ?? r?.done ?? r?.doneSP ?? 0),
 
-      // Scope variants
       added: Number(
-        r?.addedMid ??        // ✅ matches "SP Added (mid)"
+        r?.addedMid ??
         r?.addedSP ??
         r?.unplannedSP ??
         r?.added ??
@@ -92,7 +93,7 @@
       ),
 
       removed: Number(
-        r?.removedMid ??      // ✅ matches "SP Removed (mid)"
+        r?.removedMid ??
         r?.removedSP ??
         r?.removed ??
         r?.scopeRemoved ??
@@ -100,7 +101,6 @@
         0
       ),
 
-      // Sick leave variants
       sick: Number(r?.sickLeaveDays ?? r?.sickLeave ?? r?.sick ?? 0),
     }));
   }
@@ -128,39 +128,140 @@
   function theme() {
     return {
       text: cssVar("--text-muted", "#6b7280"),
-      border: cssVar("--border-soft", "rgba(0,0,0,0.1)"),
-      indigo: cssVar("--indigo", "#6366f1"),
+      textSoft: cssVar("--text-soft", "#94a3b8"),
+      border: cssVar("--border-soft", "rgba(0,0,0,0.08)"),
+
+      indigo: cssVar("--indigo", cssVar("--accent", "#6366f1")),
       green: cssVar("--green", "#22c55e"),
       red: cssVar("--red", "#ef4444"),
       amber: cssVar("--amber", "#f59e0b"),
     };
   }
 
-  function baseOptions() {
+  // Subtle grid like reference
+  function gridColor() {
+    // very soft cool gray
+    return "rgba(15, 23, 42, 0.06)";
+  }
+
+  function gradientFill(context, hexOrRgb, topAlpha = 0.36, bottomAlpha = 0.06) {
+    const chart = context.chart;
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return `rgba(99,102,241,${bottomAlpha})`;
+
+    // Convert hex → rgba quickly (supports #rgb/#rrggbb)
+    const toRgb = (c) => {
+      if (!c) return { r: 99, g: 102, b: 241 };
+      const s = String(c).trim();
+      if (s.startsWith("rgb")) {
+        const m = s.match(/(\d+)\D+(\d+)\D+(\d+)/);
+        if (m) return { r: +m[1], g: +m[2], b: +m[3] };
+      }
+      let h = s.replace("#", "");
+      if (h.length === 3) h = h.split("").map(ch => ch + ch).join("");
+      if (h.length !== 6) return { r: 99, g: 102, b: 241 };
+      return {
+        r: parseInt(h.slice(0, 2), 16),
+        g: parseInt(h.slice(2, 4), 16),
+        b: parseInt(h.slice(4, 6), 16)
+      };
+    };
+
+    const { r, g, b } = toRgb(hexOrRgb);
+    const g1 = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    g1.addColorStop(0, `rgba(${r},${g},${b},${topAlpha})`);
+    g1.addColorStop(1, `rgba(${r},${g},${b},${bottomAlpha})`);
+    return g1;
+  }
+
+  function baseOptions({ showLegend = false } = {}) {
     const t = theme();
+
     return {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 650 },
+
       interaction: { mode: "index", intersect: false },
+
+      elements: {
+        line: {
+          borderCapStyle: "round",
+          borderJoinStyle: "round",
+        }
+      },
+
       scales: {
         x: {
-          ticks: { color: t.text },
-          grid: { color: t.border }
+          ticks: {
+            color: t.textSoft,
+            font: { weight: 600 },
+            maxRotation: 0,
+            autoSkip: true,
+          },
+          grid: {
+            display: false, // like reference
+            drawBorder: false,
+          },
+          border: {
+            display: false
+          }
         },
         y: {
           beginAtZero: true,
-          ticks: { color: t.text },
-          grid: { color: t.border }
+          ticks: {
+            color: t.textSoft,
+            font: { weight: 600 }
+          },
+          grid: {
+            color: gridColor(),
+            drawBorder: false
+          },
+          border: {
+            display: false
+          }
         }
       },
+
       plugins: {
         legend: {
-          labels: { color: t.text }
+          display: showLegend,
+          labels: {
+            color: t.text,
+            usePointStyle: true,
+            pointStyle: "circle",
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 16,
+            font: { weight: 600 }
+          }
         },
         tooltip: {
-          enabled: true
+          enabled: true,
+          backgroundColor: "rgba(15,23,42,0.92)",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          padding: 10,
+          cornerRadius: 12,
+          displayColors: true
         }
       }
+    };
+  }
+
+  // Shared “reference look” for line series
+  function lineDatasetBase(color) {
+    return {
+      borderColor: color,
+      borderWidth: 3,
+      tension: 0.42,
+      cubicInterpolationMode: "monotone",
+      fill: true,
+      pointRadius: 4.5,
+      pointHoverRadius: 5.5,
+      pointBackgroundColor: "#ffffff",
+      pointBorderColor: color,
+      pointBorderWidth: 2
     };
   }
 
@@ -192,16 +293,11 @@
         datasets: [{
           label: "Completed SP",
           data: rows.map(r => r.completed),
-          borderColor: t.green,
-          backgroundColor: "rgba(34,197,94,0.15)",
-          tension: 0.35,
-          fill: true,
-          borderWidth: 3,
-          pointRadius: 2.5,
-          pointHoverRadius: 5
+          ...lineDatasetBase(t.indigo),
+          backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.42, 0.06)
         }]
       },
-      options: baseOptions()
+      options: baseOptions({ showLegend: false })
     });
 
     charts.set(id, chart);
@@ -223,30 +319,23 @@
           {
             label: "Committed",
             data: rows.map(r => r.committed),
-            borderColor: t.indigo,
-            tension: 0.35,
-            borderWidth: 2.5,
-            pointRadius: 2.2,
-            pointHoverRadius: 5
+            ...lineDatasetBase(t.indigo),
+            backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.20, 0.02)
           },
           {
             label: "Completed",
             data: rows.map(r => r.completed),
-            borderColor: t.green,
-            tension: 0.35,
-            borderWidth: 2.5,
-            pointRadius: 2.2,
-            pointHoverRadius: 5
+            ...lineDatasetBase(t.green),
+            backgroundColor: (ctx) => gradientFill(ctx, t.green, 0.18, 0.02)
           }
         ]
       },
-      options: baseOptions()
+      options: baseOptions({ showLegend: false })
     });
 
     charts.set(id, chart);
   }
 
-  /* Capacity vs Completed */
   function renderCapacity(rows) {
     const id = "hist_capacityChart";
     const canvas = $(id);
@@ -263,30 +352,23 @@
           {
             label: "Capacity",
             data: rows.map(r => r.capacity),
-            borderColor: t.amber,
-            tension: 0.35,
-            borderWidth: 2.5,
-            pointRadius: 2.2,
-            pointHoverRadius: 5
+            ...lineDatasetBase(t.amber),
+            backgroundColor: (ctx) => gradientFill(ctx, t.amber, 0.16, 0.02)
           },
           {
             label: "Completed",
             data: rows.map(r => r.completed),
-            borderColor: t.green,
-            tension: 0.35,
-            borderWidth: 2.5,
-            pointRadius: 2.2,
-            pointHoverRadius: 5
+            ...lineDatasetBase(t.green),
+            backgroundColor: (ctx) => gradientFill(ctx, t.green, 0.18, 0.02)
           }
         ]
       },
-      options: baseOptions()
+      options: baseOptions({ showLegend: false })
     });
 
     charts.set(id, chart);
   }
 
-  /* Scope Disruption: Added vs Removed */
   function renderDisruption(rows) {
     const id = "hist_disruptionChart";
     const canvas = $(id);
@@ -303,11 +385,29 @@
       data: {
         labels: rows.map(r => r.sprint),
         datasets: [
-          { label: "Added", data: added, backgroundColor: t.green },
-          { label: "Removed", data: removed, backgroundColor: t.red }
+          {
+            label: "Added",
+            data: added,
+            backgroundColor: "rgba(34,197,94,0.85)",
+            borderRadius: 10,
+            borderSkipped: false
+          },
+          {
+            label: "Removed",
+            data: removed,
+            backgroundColor: "rgba(239,68,68,0.85)",
+            borderRadius: 10,
+            borderSkipped: false
+          }
         ]
       },
-      options: baseOptions()
+      options: (() => {
+        const opt = baseOptions({ showLegend: false });
+        // Bars look better with x grid off, y grid soft
+        opt.scales.x.grid.display = false;
+        opt.scales.y.grid.color = gridColor();
+        return opt;
+      })()
     });
 
     charts.set(id, chart);
@@ -328,14 +428,11 @@
         datasets: [{
           label: "Sick Leave",
           data: rows.map(r => r.sick),
-          borderColor: t.red,
-          tension: 0.35,
-          borderWidth: 2.5,
-          pointRadius: 2.2,
-          pointHoverRadius: 5
+          ...lineDatasetBase(t.red),
+          backgroundColor: (ctx) => gradientFill(ctx, t.red, 0.14, 0.02)
         }]
       },
-      options: baseOptions()
+      options: baseOptions({ showLegend: false })
     });
 
     charts.set(id, chart);
@@ -354,15 +451,14 @@
   }
 
   /* =============================
-     ✅ Chart.js-safe boot (FIX)
-     Wait until Chart exists before rendering
+     ✅ Chart.js-safe boot
   ============================== */
   document.addEventListener("DOMContentLoaded", () => {
     let tries = 0;
     const tick = () => {
       tries++;
       if (window.Chart) return renderAll();
-      if (tries < 60) return setTimeout(tick, 100); // wait up to ~6s
+      if (tries < 60) return setTimeout(tick, 100);
       console.warn("[Scrummer] Chart.js not found. Charts will stay empty.");
     };
     tick();
