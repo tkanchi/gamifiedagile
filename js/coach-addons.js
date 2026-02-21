@@ -1,5 +1,5 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v3.2 (Reference Chart Look)
+ * Scrummer — Coach Addons (Clean / No Snapshots) — v3.3 (Reference Chart Look)
  * --------------------------------------------------------------
  * Uses last 6 sprints from:
  * localStorage["scrummer_sprint_history_v1"]
@@ -454,6 +454,11 @@
      ✅ Chart.js-safe boot
   ============================== */
   document.addEventListener("DOMContentLoaded", () => {
+    // Re-render charts whenever Sprint History changes
+    window.addEventListener("scrummer:historyChanged", () => {
+      if (window.Chart) renderAll();
+    });
+
     let tries = 0;
     const tick = () => {
       tries++;
