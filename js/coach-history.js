@@ -8,6 +8,23 @@
 (() => {
   const KEY = "scrummer_coach_history_v1";
 
+
+  const COLLAPSE_KEY = KEY + "_collapsed";
+
+  function setCollapsed(isCollapsed){
+    const wrap = $("hist_wrap");
+    const btn = $("hist_toggleBtn");
+    if (!wrap || !btn) return;
+
+    wrap.classList.toggle("is-collapsed", !!isCollapsed);
+    btn.setAttribute("aria-expanded", String(!isCollapsed));
+    localStorage.setItem(COLLAPSE_KEY, isCollapsed ? "1" : "0");
+  }
+
+  function loadCollapsed(){
+    return localStorage.getItem(COLLAPSE_KEY) === "1";
+  }
+
   const $ = (id) => document.getElementById(id);
 
   const SPRINTS = ["Sprint N-6","Sprint N-5","Sprint N-4","Sprint N-3","Sprint N-2","Sprint N-1"];
@@ -111,7 +128,7 @@
             const rowsNow = loadRows();
             rowsNow[idx][key] = clamp0(v === "" ? "" : Number(v));
             saveRows(rowsNow);
-            setStatus("Edited (not saved as snapshot — charts update on Save / Demo / CSV).");
+            setStatus("Edited. Click Save to refresh charts (or load demo / import CSV).");
           }
         }));
         tr.appendChild(td);
@@ -285,16 +302,27 @@
   }
 
   function wire(){
+    $("hist_toggleBtn")?.addEventListener("click", () => {
+      const wrap = $("hist_wrap");
+      const isCollapsed = wrap?.classList.contains("is-collapsed");
+      setCollapsed(!isCollapsed);
+    });
+
     $("hist_demoBtn")?.addEventListener("click", () => {
       const variant = $("hist_demoVariant")?.value || "recovery";
       const rows = demoRows(variant);
       saveRows(rows);
       render();
-      setStatus(`✅ Demo loaded (${variant}). Click Save to refresh charts.`);
+      emitChanged(); // ✅ charts update instantly
+      setStatus(`✅ Demo loaded (${variant}). Charts refreshed.`);
     });
 
     $("hist_saveBtn")?.addEventListener("click", () => {
       // already persisted on every input; Save is a “commit + refresh”
+      const wrap = $("hist_wrap");
+      wrap?.classList.add("num-bump");
+      setTimeout(() => wrap?.classList.remove("num-bump"), 520);
+
       setStatus("✅ Saved. Charts refreshed.");
       emitChanged();
     });
@@ -342,6 +370,7 @@
 
   // Boot
   document.addEventListener("DOMContentLoaded", () => {
+    setCollapsed(loadCollapsed());
     render();
     wire();
 
