@@ -46,11 +46,45 @@
 
   // ---------- Data ----------
   function loadRows() {
+    // 1) Preferred: coach-history.js API
     const api = window.ScrummerCoachHistory;
     if (api && typeof api.getRows === "function") {
       const rows = api.getRows();
       return Array.isArray(rows) ? rows : [];
     }
+
+    // 2) Fallback: read directly from the history table DOM (always works)
+    const tbody = document.getElementById("hist_rows");
+    if (!tbody) return [];
+
+    const rows = [];
+    const trs = Array.from(tbody.querySelectorAll("tr"));
+    for (const tr of trs) {
+      const tds = Array.from(tr.querySelectorAll("td"));
+      if (!tds.length) continue;
+
+      // helper to read either input value or text
+      const readCell = (i) => {
+        const td = tds[i];
+        if (!td) return "";
+        const inp = td.querySelector("input, textarea, select");
+        if (inp) return String(inp.value ?? "").trim();
+        return String(td.textContent ?? "").trim();
+      };
+
+      rows.push({
+        sprint: readCell(0),
+        forecastCap: readCell(1),
+        actualCap: readCell(2),
+        committed: readCell(3),
+        completed: readCell(4),
+        addedMid: readCell(5),
+        removedMid: readCell(6),
+        sickLeave: readCell(7),
+      });
+    }
+    return rows;
+  }
     return [];
   }
 
