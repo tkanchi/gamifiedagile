@@ -1,20 +1,109 @@
 /**
- * Scrummer — Coach Addons (Premium Charts / Analytics look) — v1.1
- * --------------------------------------------------------------
- * Uses Chart.js for polished charts:
- * - gradients, smooth lines, tooltips, legends
- * - crisp grid + theme-aware colors
- * - mobile friendly (handles hidden tab sizing)
+ * Scrummer — Coach Addons (Premium Charts / Analytics look) — v2.0
+ * ----------------------------------------------------------------
+ * Charts are driven by ONE clean sprint-history model (no snapshots):
+ *   localStorage key: "scrummer_sprint_history_v1"
+ * Uses last 6 sprints as the single source of truth.
+ *
+ * Backwards compatible:
+ * - If model not found, falls back to coach-history.js:
+ *     window.ScrummerCoachHistory.getRows()
  *
  * Requires:
- *  - coach-history.js exposes window.ScrummerCoachHistory.getRows()
  *  - Chart.js loaded before this file
  */
 
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  // ---------- Theme helpers ----------
+  // =========================
+  // Storage model (no snapshots)
+  // =========================
+  const STORAGE_KEY = "scrummer_sprint_history_v1";
+
+  const defaultModel = {
+    version: 1,
+    team: { name: "Demo Team", focusFactor: 0.8 },
+    sprints: [] // oldest -> newest
+  };
+
+  function safeParse(str, fallback) {
+    try { return JSON.parse(str); } catch { return fallback; }
+  }
+
+  function loadModel() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return structuredClone(defaultModel);
+    const m = safeParse(raw, null);
+    if (!m || !Array.isArray(m.sprints)) return structuredClone(defaultModel);
+    return m;
+  }
+
+  function lastNSprints(model, n = 6) {
+    const s = Array.isArray(model?.sprints) ? model.sprints : [];
+    return s.slice(Math.max(0, s.length - n));
+  }
+
+  // Capacity (simple, consistent)
+  // 1 focused person-day = 1 SP (your chosen approach)
+  function calcCapacitySP(s) {
+    const sprintDays = num(s?.sprintDays);
+    const teamMembers = num(s?.teamMembers);
+    const holidays = num(s?.holidays);
+    const leaveDays = num(s?.leaveDays); // total person-days
+    const focus = clamp01(s?.focusFactor ?? 0.8);
+
+    const ideal = sprintDays * teamMembers;
+    const available = Math.max(0, ideal - holidays - leaveDays);
+    const focused = available * focus;
+    return Math.round(focused);
+  }
+
+  // Convert model -> chart rows
+  function rowsFromModel(model) {
+    const sprints = lastNSprints(model, 6);
+    return sprints.map((s, idx) => {
+      const committed = num(s?.committedSP);
+      const completed = num(s?.completedSP);
+
+      // For charts that show "capacity":
+      // forecast = calculated capacity, actual = calculated capacity (same for now)
+      // If later you store separate "actual capacity", map it here.
+      const cap = calcCapacitySP(s);
+
+      return {
+        sprint: String(s?.id ?? s?.name ?? `Sprint ${idx + 1}`),
+        forecastCap: cap,
+        actualCap: cap,
+        committedSP: committed,
+        completedSP: completed,
+        addedSP: num(s?.unplannedSP ?? s?.addedSP ?? 0),
+        removedSP: num(s?.removedSP ?? 0),
+        sickLeaveDays: num(s?.sickLeaveDays ?? 0)
+      };
+    });
+  }
+
+  // Decide data source:
+  // 1) Use model if it has sprints
+  // 2) Else fall back to coach-history.js rows
+  function loadRows() {
+    const model = loadModel();
+    if (Array.isArray(model?.sprints) && model.sprints.length) {
+      return rowsFromModel(model);
+    }
+
+    const api = window.ScrummerCoachHistory;
+    if (api && typeof api.getRows === "function") {
+      const rows = api.getRows();
+      return Array.isArray(rows) ? rows : [];
+    }
+    return [];
+  }
+
+  // =========================
+  // Theme helpers
+  // =========================
   function cssVar(name, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return v || fallback;
@@ -27,7 +116,6 @@
       border: cssVar("--border-soft", "rgba(17,24,39,0.12)"),
       bg: cssVar("--bg-soft", "#ffffff"),
 
-      // Accent palette (premium)
       indigo: cssVar("--indigo", "#6366f1"),
       green: cssVar("--green", "#22c55e"),
       red: cssVar("--red", "#ef4444"),
@@ -37,26 +125,23 @@
   }
 
   function isDark() {
-    // If your theme.js toggles a class like "dark", this will work.
-    // If not, we fall back to prefers-color-scheme.
     const root = document.documentElement;
     if (root.classList.contains("dark")) return true;
     return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
 
-  // ---------- Data ----------
-  function loadRows() {
-    const api = window.ScrummerCoachHistory;
-    if (api && typeof api.getRows === "function") {
-      const rows = api.getRows();
-      return Array.isArray(rows) ? rows : [];
-    }
-    return [];
-  }
-
-  function toNum(v) {
+  // =========================
+  // Data helpers
+  // =========================
+  function num(v) {
     const x = Number(v);
     return Number.isFinite(x) ? x : 0;
+  }
+
+  function clamp01(v) {
+    const x = Number(v);
+    if (!Number.isFinite(x)) return 0;
+    return Math.max(0, Math.min(1, x));
   }
 
   // Accept multiple possible field names (prevents "empty chart" when keys differ)
@@ -68,22 +153,24 @@
   }
 
   function normalize(rows) {
-    // Support both variants:
+    // Supports both:
     // - forecastCap, actualCap, committed, completed, addedMid, removedMid, sickLeave
     // - forecastCapSP, actualCapSP, committedSP, completedSP, addedSP, removedSP, sickLeaveDays, etc.
     return (rows || []).map((r, idx) => ({
       sprint: String(pick(r, ["sprint", "name", "label"], `Sprint ${idx + 1}`)),
-      forecast: toNum(pick(r, ["forecastCap", "forecast", "forecastCapacity", "forecastCapacitySP", "forecastCapSP"])),
-      actual: toNum(pick(r, ["actualCap", "actual", "actualCapacity", "actualCapacitySP", "actualCapSP"])),
-      committed: toNum(pick(r, ["committed", "committedSP", "commit", "commitSP"])),
-      completed: toNum(pick(r, ["completed", "completedSP", "done", "doneSP"])),
-      added: toNum(pick(r, ["addedMid", "added", "addedSP", "scopeAdded", "scopeAddedSP"])),
-      removed: toNum(pick(r, ["removedMid", "removed", "removedSP", "scopeRemoved", "scopeRemovedSP"])),
-      sick: toNum(pick(r, ["sickLeave", "sick", "sickLeaveDays", "sickLeavePD", "sickLeavePersonDays"])),
+      forecast: num(pick(r, ["forecastCap", "forecast", "forecastCapacity", "forecastCapacitySP", "forecastCapSP"])),
+      actual: num(pick(r, ["actualCap", "actual", "actualCapacity", "actualCapacitySP", "actualCapSP"])),
+      committed: num(pick(r, ["committed", "committedSP", "commit", "commitSP"])),
+      completed: num(pick(r, ["completed", "completedSP", "done", "doneSP"])),
+      added: num(pick(r, ["addedMid", "added", "addedSP", "scopeAdded", "scopeAddedSP", "unplannedSP"])),
+      removed: num(pick(r, ["removedMid", "removed", "removedSP", "scopeRemoved", "scopeRemovedSP"])),
+      sick: num(pick(r, ["sickLeave", "sick", "sickLeaveDays", "sickLeavePD", "sickLeavePersonDays"])),
     }));
   }
 
-  // ---------- Chart.js helpers ----------
+  // =========================
+  // Chart.js helpers
+  // =========================
   const charts = new Map(); // canvasId -> chartInstance
 
   function destroyChart(id) {
@@ -94,14 +181,6 @@
     }
   }
 
-  function makeGradient(ctx, area, colorHex, alphaTop = 0.22, alphaBottom = 0.02) {
-    // Premium soft fill gradient
-    const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
-    g.addColorStop(0, hexToRgba(colorHex, alphaTop));
-    g.addColorStop(1, hexToRgba(colorHex, alphaBottom));
-    return g;
-  }
-
   function hexToRgba(hex, a) {
     const h = String(hex || "").replace("#", "");
     const full = h.length === 3 ? h.split("").map(c => c + c).join("") : h;
@@ -109,6 +188,13 @@
     const g = parseInt(full.slice(2, 4), 16);
     const b = parseInt(full.slice(4, 6), 16);
     return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function makeGradient(ctx, area, colorHex, alphaTop = 0.22, alphaBottom = 0.02) {
+    const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0, hexToRgba(colorHex, alphaTop));
+    g.addColorStop(1, hexToRgba(colorHex, alphaBottom));
+    return g;
   }
 
   function baseOptions() {
@@ -159,22 +245,6 @@
     };
   }
 
-  function lineDataset(label, data, color, ctx, chartArea) {
-    return {
-      label,
-      data,
-      borderColor: color,
-      backgroundColor: chartArea ? makeGradient(ctx, chartArea, color) : hexToRgba(color, 0.12),
-      tension: 0.35,
-      fill: true,
-      borderWidth: 2.5,
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      pointBorderWidth: 0,
-      pointBackgroundColor: color
-    };
-  }
-
   function thinLineDataset(label, data, color) {
     return {
       label,
@@ -191,21 +261,10 @@
     };
   }
 
-  function emptyStatePlugin(message) {
-    return {
-      id: "emptyState",
-      afterDraw(chart) {
-        const ds = (chart.data?.datasets || []).flatMap(d => d?.data || []);
-        const hasAny = ds.some(v => Number(v) !== 0) || ds.length > 0;
-        if (!hasAny) return;
-
-        // If all points are 0, we still consider it "data" and we don't overlay.
-      }
-    };
-  }
-
-  // ---------- Renderers ----------
-    function renderVelocity(rows) {
+  // =========================
+  // Renderers
+  // =========================
+  function renderVelocity(rows) {
     const id = "hist_velocityChart";
     const canvas = $(id);
     if (!canvas) return;
@@ -226,7 +285,6 @@
           label: "Completed SP",
           data,
           borderColor: t.green,
-          // Scriptable so we can build a real gradient once chartArea exists
           backgroundColor: (context) => {
             const chart = context.chart;
             const { ctx, chartArea } = chart;
@@ -356,7 +414,7 @@
     charts.set(id, chart);
   }
 
-    function renderSick(rows) {
+  function renderSick(rows) {
     const id = "hist_sickChart";
     const canvas = $(id);
     if (!canvas) return;
@@ -367,14 +425,13 @@
     const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
     const sick = rows.map(r => Number(r.sick || 0));
 
-    // ✅ Ensure a usable Y scale even if all values are 0 (Chart.js otherwise uses 0..1)
+    // Ensure usable Y scale even if values are 0
     const maxVal = sick.length ? Math.max(...sick) : 0;
     const suggestedMax = Math.max(5, Math.ceil(maxVal + 1));
 
     const ctx = canvas.getContext("2d");
     const opts = baseOptions();
 
-    // Override only Y axis behaviour for this chart
     opts.scales = opts.scales || {};
     opts.scales.y = {
       beginAtZero: true,
@@ -418,14 +475,11 @@
   }
 
   function renderAll() {
-    if (!window.Chart) return; // Chart.js not loaded
+    if (!window.Chart) return;
+
     const rows = normalize(loadRows());
 
-    // Even if everything is zero, we still render (so user sees a baseline)
-    if (!rows.length) {
-      // Nothing to render yet
-      return;
-    }
+    if (!rows.length) return;
 
     renderVelocity(rows);
     renderPredictability(rows);
@@ -434,13 +488,14 @@
     renderSick(rows);
   }
 
-  // ---------- “Hidden tab” + Mobile fixes ----------
+  // =========================
+  // Hidden tab + Mobile fixes
+  // =========================
   function rerenderWhenVisible() {
-    // When a canvas is in a hidden tab, clientWidth is 0 and charts look broken.
-    // So: re-render after tab switch with a short delay.
     const tryNow = () => {
       const any = $("hist_velocityChart");
       if (!any) return;
+
       if (any.clientWidth < 60) {
         clearTimeout(tryNow._t);
         tryNow._t = setTimeout(tryNow, 120);
@@ -452,10 +507,9 @@
   }
 
   function wire() {
-    // initial
     setTimeout(renderAll, 0);
 
-    // History table buttons
+    // History table buttons (fallback mode)
     ["hist_demoBtn", "hist_saveBtn", "hist_resetBtn", "hist_autofillBtn"].forEach(id => {
       $(id)?.addEventListener("click", () => setTimeout(rerenderWhenVisible, 120));
     });
@@ -470,13 +524,11 @@
 
     window.addEventListener("hashchange", () => setTimeout(rerenderWhenVisible, 140));
 
-    // resize / orientation change
     window.addEventListener("resize", () => {
       clearTimeout(wire._r);
       wire._r = setTimeout(rerenderWhenVisible, 180);
     });
 
-    // ResizeObserver (best for mobile layout shifts)
     const wrap = document.querySelector(".chartGrid") || document.querySelector(".coachWrap");
     if ("ResizeObserver" in window && wrap) {
       const ro = new ResizeObserver(() => {
@@ -486,7 +538,6 @@
       ro.observe(wrap);
     }
 
-    // If your theme toggle flips CSS variables, re-render to refresh colors
     $("themeToggle")?.addEventListener("click", () => setTimeout(rerenderWhenVisible, 180));
   }
 
