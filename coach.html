@@ -5,21 +5,20 @@
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <title>Scrummer — Coach</title>
 
-  <!-- ✅ Bump cache after CSS refresh -->
+  <!-- Cache bumped -->
   <link href="css/style.css?v=14" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <style>
-    /* ✅ Keep only page-specific CSS here (everything else is in style.css) */
+    /* Page-specific only */
 
-    /* Tabs (Health / Copilot) */
     .tabBar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
     .tabBtn{
       border-radius:14px;padding:10px 14px;font-weight:650;cursor:pointer;
       border:1px solid var(--border);
       background:var(--bg-soft);
       color:var(--text-main);
-      transition:transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
+      transition:.15s ease;
     }
     .tabBtn:hover{transform:translateY(-1px)}
     .tabBtn.active{
@@ -30,438 +29,193 @@
     }
     .tabPanel.hidden{display:none}
 
-    /* Desktop width */
     .coachWrap{max-width:1100px;margin:0 auto;width:100%;}
 
-    /* Sprint History table (Coach) */
     .historyWrap{ margin-top: 12px; }
     .historyTop{display:flex; justify-content:space-between; align-items:flex-end; gap:10px; flex-wrap:wrap;}
     .historyActions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
     .historyTable{
       width:100%;
       border-collapse:separate;
       border-spacing:0;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:var(--bg-soft);
       overflow:hidden;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: var(--bg-soft);
     }
+
     .historyTable th, .historyTable td{
-      padding: 10px 10px;
-      border-bottom: 1px solid var(--border-soft);
-      vertical-align: middle;
-      white-space: nowrap;
+      padding:10px;
+      border-bottom:1px solid var(--border-soft);
+      white-space:nowrap;
     }
+
     .historyTable thead th{
-      font-size: 12px;
-      letter-spacing: .2px;
-      color: var(--text-muted);
-      font-weight: 750;
-      background: color-mix(in oklab, var(--bg-soft) 72%, rgba(99,102,241,0.06));
+      font-size:12px;
+      font-weight:750;
+      color:var(--text-muted);
+      background:color-mix(in oklab, var(--bg-soft) 72%, rgba(99,102,241,0.06));
     }
-    .historyTable tbody tr:last-child td{ border-bottom:none; }
-    .historyTable td:first-child, .historyTable th:first-child{ padding-left: 12px; }
-    .historyTable td:last-child, .historyTable th:last-child{ padding-right: 12px; }
+
     .fileInput{ display:none; }
+
+    /* Important: chart wrapper */
+    .chartCanvasWrap{
+      position:relative;
+      height:220px;
+      margin-top:6px;
+    }
+
+    @media(max-width:560px){
+      .chartCanvasWrap{ height:190px; }
+    }
   </style>
 </head>
 
 <body data-page="coach">
-  <div class="appShell">
+<div class="appShell">
 
-    <aside class="sideNav">
-      <div class="sideBrand">
-        <div class="brandMark"><span>S</span></div>
-        <div>
-          <div class="brandName">SCRUMMER</div>
-          <div class="brandTag">Gamified Scrum OS</div>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <a class="navlink" href="index.html">🚀 Plan</a>
-        <a class="navlink active" href="coach.html">🤖 Coach</a>
-        <a class="navlink" href="Gamerules.html">🎮 Game Rules</a>
-        <a class="navlink" href="accounts.html">🔐 Account</a>
-      </nav>
-
-      <div class="xpWidget">
-        <div class="xpTop">
-          <div>
-            <div class="lvl" id="xpLevel">Level 1</div>
-            <div class="title" id="xpTitle">Rookie</div>
-          </div>
-          <div id="moodBadge">🐆 Calm</div>
-        </div>
-        <div class="xpBar">
-          <div class="xpFill" id="xpFill"></div>
-        </div>
-        <div class="xpMeta">
-          <span id="xpText">0 / 300 XP</span>
-          <span id="streakText">🧊 streak reset</span>
-        </div>
-      </div>
-
-      <button class="themeToggle" id="themeToggle" type="button">
-        Theme: <span id="themeMode">Light</span>
-      </button>
-    </aside>
-
-    <main class="main">
-      <div class="coachWrap">
-
-        <div class="tabBar">
-          <button class="tabBtn active" data-tab="health">Health</button>
-          <button class="tabBtn" data-tab="copilot">Copilot</button>
-        </div>
-
-        <!-- ================= HEALTH ================= -->
-        <section class="tabPanel" id="panel-health">
-          <div class="sectionCard heroCard">
-            <h1 class="sectionTitle">Sprint Health Dashboard</h1>
-            <p class="sectionSub">Trends + stability signals (no blame). Powered by your last 6 sprints.</p>
-
-            <div class="info-banner">
-              <strong>Tip:</strong> Load demo data once → save → charts stay updated.
-            </div>
-
-            <!-- 6 sprint history -->
-            <div class="info-banner historyWrap" style="margin-top:12px;">
-              <div class="historyTop">
-                <div>
-                  <div class="kvKey">Sprint History (Last 6 sprints)</div>
-                  <div class="mutedText" style="margin-top:6px;">
-                    Use this for trends: velocity, predictability, disruption, team health, and capacity accuracy.
-                  </div>
-                </div>
-
-                <div class="historyActions">
-                  <button class="btnGhost" id="hist_autofillBtn" type="button">✨ Auto-fill from Plan</button>
-
-                  <select class="fun-input" id="hist_demoVariant" style="min-width:220px;">
-                    <option value="stable">🟢 Stable mature team</option>
-                    <option value="recovery" selected>🟡 Chaos → recovery arc</option>
-                    <option value="overcommit">🔴 Overcommit streak → correction</option>
-                  </select>
-
-                  <button class="btnGhost" id="hist_demoBtn" type="button">🧪 Load Demo Data</button>
-                  <button class="btnPrimary" id="hist_saveBtn" type="button">Save</button>
-                  <button class="btnGhost" id="hist_resetBtn" type="button">Reset</button>
-
-                  <input class="fileInput" id="hist_csvInput" type="file" accept=".csv,text/csv" />
-                  <button class="btnGhost" id="hist_uploadCsvBtn" type="button">Upload CSV</button>
-                  <button class="btnGhost" id="hist_downloadTplBtn" type="button">Download Template</button>
-                </div>
-              </div>
-
-              <div style="overflow:auto; margin-top:12px;">
-                <table class="historyTable">
-                  <thead>
-                    <tr>
-                      <th align="left">Sprint</th>
-                      <th align="right">Forecast Capacity (SP)</th>
-                      <th align="right">Actual Capacity (SP)</th>
-                      <th align="right">Committed SP</th>
-                      <th align="right">Completed SP</th>
-                      <th align="right">SP Added (mid)</th>
-                      <th align="right">SP Removed (mid)</th>
-                      <th align="right">Sick leave (person-days)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="hist_rows">
-                    <!-- Rows rendered by js/coach-history.js -->
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="mutedText" id="hist_status" style="margin-top:10px;">—</div>
-            </div>
-
-            <!-- Charts -->
-            <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey">Coach Charts</div>
-              <div class="mutedText" style="margin-top:6px;">
-                Charts auto-render after <b>Load Demo Data</b> / <b>Save</b> / CSV import.
-              </div>
-
-              <div class="chartGrid">
-
-                <!-- Velocity -->
-                <div class="chartCard">
-                  <div class="chartHeader">
-                    <div>
-                      <div class="chartTitle">Velocity Trend</div>
-                      <div class="chartSub">Completed SP (last 6 sprints)</div>
-                    </div>
-                    <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
-                    </div>
-                  </div>
-
-                  <!-- ✅ Wrapper prevents stretching + matches Stitch2 -->
-                  <div class="chartCanvasWrap">
-                    <canvas class="chartCanvas" id="hist_velocityChart"></canvas>
-                  </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Average Velocity</span><span id="rb_velAvgTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_velAvg"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Stability</span><span id="rb_velStabilityTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_velStability"></div></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Predictability -->
-                <div class="chartCard">
-                  <div class="chartHeader">
-                    <div>
-                      <div class="chartTitle">Predictability</div>
-                      <div class="chartSub">Committed vs Completed</div>
-                    </div>
-                    <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#6366f1;"><span class="legendDot"></span>Committed</span>
-                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
-                    </div>
-                  </div>
-
-                  <div class="chartCanvasWrap">
-                    <canvas class="chartCanvas" id="hist_predictChart"></canvas>
-                  </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Say-Do (Latest)</span><span id="rb_sayDoTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_sayDo"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Commitment Risk</span><span id="rb_commitRiskTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_commitRisk"></div></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Capacity -->
-                <div class="chartCard">
-                  <div class="chartHeader">
-                    <div>
-                      <div class="chartTitle">Capacity Fit</div>
-                      <div class="chartSub">Capacity vs Completed</div>
-                    </div>
-                    <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#f59e0b;"><span class="legendDot"></span>Capacity</span>
-                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
-                    </div>
-                  </div>
-
-                  <div class="chartCanvasWrap">
-                    <canvas class="chartCanvas" id="hist_capacityChart"></canvas>
-                  </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Capacity Fit (Latest)</span><span id="rb_capFitTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_capFit"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Overcommit</span><span id="rb_overcommitTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_overcommit"></div></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Scope -->
-                <div class="chartCard">
-                  <div class="chartHeader">
-                    <div>
-                      <div class="chartTitle">Scope Disruption</div>
-                      <div class="chartSub">Added vs Removed mid-sprint</div>
-                    </div>
-                    <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Added</span>
-                      <span class="legendPill" style="--dot:#ef4444;"><span class="legendDot"></span>Removed</span>
-                    </div>
-                  </div>
-
-                  <div class="chartCanvasWrap">
-                    <canvas class="chartCanvas" id="hist_disruptionChart"></canvas>
-                  </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Scope Added (Avg)</span><span id="rb_scopeAddTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_scopeAdd"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Scope Removed (Avg)</span><span id="rb_scopeRemTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_scopeRem"></div></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Sick leave -->
-                <div class="chartCard span2">
-                  <div class="chartHeader">
-                    <div>
-                      <div class="chartTitle">Team Health</div>
-                      <div class="chartSub">Sick leave (person-days)</div>
-                    </div>
-                    <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#ef4444;"><span class="legendDot"></span>Sick leave</span>
-                    </div>
-                  </div>
-
-                  <div class="chartCanvasWrap">
-                    <canvas class="chartCanvas" id="hist_sickChart"></canvas>
-                  </div>
-                </div>
-
-              </div><!-- /chartGrid -->
-            </div><!-- /info-banner charts -->
-
-            <!-- Insights -->
-            <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                <span>Coach Insights</span>
-                <span class="mutedText" style="margin:0;">Auto-generated from the last 6 sprints</span>
-              </div>
-
-              <div class="insightsStack" id="coach_insightsStack">
-                <div class="insightCard insight-risk">
-                  <div class="insightHeader">
-                    <span class="insightTag">RISK</span>
-                    <h3 class="insightTitle">Overcommit risk detected</h3>
-                  </div>
-                  <p class="insightText">Committed work is trending above actual capacity. This increases spillover and quality risk.</p>
-                  <div class="insightAction">Action: Reduce 5–8 SP or add buffer before sprint start.</div>
-                </div>
-
-                <div class="insightCard insight-watch">
-                  <div class="insightHeader">
-                    <span class="insightTag">WATCH</span>
-                    <h3 class="insightTitle">Velocity variance increasing</h3>
-                  </div>
-                  <p class="insightText">Completed SP fluctuates sprint-to-sprint. Forecast confidence is lower when variance is high.</p>
-                  <div class="insightAction">Action: Track carryover % and limit mid-sprint scope changes.</div>
-                </div>
-
-                <div class="insightCard insight-info">
-                  <div class="insightHeader">
-                    <span class="insightTag">INFO</span>
-                    <h3 class="insightTitle">Predictability improving</h3>
-                  </div>
-                  <p class="insightText">Committed vs completed gap is narrowing across recent sprints.</p>
-                  <div class="insightAction">Keep it up: Maintain the same buffer and refinement cadence.</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="stageIndicator">Flow: Setup → Coach Health → Copilot</div>
-            <div class="stageFooter">
-              <div class="left">
-                <a class="btnStage btnStage-back" href="index.html">← Back: Setup</a>
-              </div>
-              <div class="right">
-                <a class="btnStage btnStage-next" href="coach.html#copilot">Next: Copilot →</a>
-              </div>
-            </div>
-
-          </div><!-- /heroCard -->
-        </section>
-
-        <!-- ================= COPILOT ================= -->
-        <section class="tabPanel hidden" id="panel-copilot">
-          <div class="sectionCard">
-            <h1 class="sectionTitle">AI Ceremony Copilot</h1>
-            <p class="sectionSub">Pick a ceremony → guided prompts → capture outcomes.</p>
-
-            <div class="info-banner">
-              <strong>Pro move:</strong> Use Copilot in Daily Scrum to keep your streak alive. 🏆
-            </div>
-
-            <div class="info-banner" id="copilot_modeBanner" style="margin-top:12px; display:none;">
-              <div class="kvKey" id="copilot_modeTitle">—</div>
-              <div class="modeBody" id="copilot_modeBody"
-                   style="color:var(--text-muted); font-weight:450; margin-top:6px; line-height:1.7;">—</div>
-            </div>
-
-            <div class="ceremonyRow" id="copilot_ceremonyRow">
-              <button class="btnGhost cerBtn" data-cer="planning" type="button">🗺️ Planning</button>
-              <button class="btnGhost cerBtn" data-cer="daily" type="button">🧩 Daily</button>
-              <button class="btnGhost cerBtn" data-cer="refine" type="button">🧠 Refinement</button>
-              <button class="btnGhost cerBtn" data-cer="review" type="button">🎬 Review</button>
-              <button class="btnGhost cerBtn" data-cer="retro" type="button">♻️ Retro</button>
-            </div>
-
-            <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey" style="font-size:16px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                <span id="copilot_panelTitle">Choose a ceremony</span>
-                <button class="btnGhost" id="copilot_newAngleBtn" style="padding:8px 10px;" type="button">🔄 New angle</button>
-              </div>
-              <div class="panelBody" id="copilot_panelBody"
-                   style="color:var(--text-muted); font-weight:450; margin-top:6px; line-height:1.7;">
-                Your prompts will appear here.
-              </div>
-            </div>
-
-            <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey">Capture decisions</div>
-              <div class="mutedText" style="margin-top:6px; color:var(--text-muted); font-weight:450;">
-                Saved locally in your browser.
-              </div>
-
-              <textarea class="fun-input" id="copilot_decisionNotes"
-                        placeholder="Decisions / risks / owners..." rows="5"></textarea>
-
-              <div class="btnRow" style="margin-top:10px;">
-                <button class="btnPrimary" id="copilot_saveBtn" type="button">Save</button>
-                <button class="btnGhost" id="copilot_clearBtn" type="button">Reset</button>
-              </div>
-
-              <div id="copilot_saveStatus" style="margin-top:10px; font-weight:650;"></div>
-              <div class="mutedText" id="copilot_saveHint" style="margin-top:6px; color:var(--text-muted); font-weight:450;"></div>
-
-              <div class="info-banner" style="margin-top:12px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                  <div class="kvKey">Saved Decisions</div>
-                  <button class="btnGhost" id="copilot_copyRetroBtn" style="padding:8px 10px;" type="button">📋 Copy Retro Summary</button>
-                </div>
-
-                <div id="copilot_decisionsEmpty" style="color:var(--text-muted); font-weight:450; margin-top:6px;">
-                  No saved decisions yet.
-                </div>
-
-                <div id="copilot_decisionsList" style="display:grid; gap:10px; margin-top:10px;"></div>
-              </div>
-            </div>
-
-            <div class="stageIndicator">Flow: Setup → Coach Health → Copilot</div>
-            <div class="stageFooter">
-              <div class="left">
-                <a class="btnStage btnStage-back" href="coach.html#health">← Back: Health</a>
-              </div>
-              <div class="right">
-                <a class="btnStage btnStage-next" href="index.html">Back to Setup →</a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-      </div><!-- /coachWrap -->
-    </main>
+<aside class="sideNav">
+  <div class="sideBrand">
+    <div class="brandMark"><span>S</span></div>
+    <div>
+      <div class="brandName">SCRUMMER</div>
+      <div class="brandTag">Gamified Scrum OS</div>
+    </div>
   </div>
 
-  <script src="js/theme.js"></script>
-  <script src="js/xp.js"></script>
+  <nav class="nav">
+    <a class="navlink" href="index.html">🚀 Plan</a>
+    <a class="navlink active" href="coach.html">🤖 Coach</a>
+    <a class="navlink" href="Gamerules.html">🎮 Game Rules</a>
+    <a class="navlink" href="accounts.html">🔐 Account</a>
+  </nav>
 
-  <!-- IMPORTANT: history table logic first (also controls tabs health/copilot) -->
-  <script src="js/coach-history.js"></script>
+  <div class="xpWidget">
+    <div class="xpTop">
+      <div>
+        <div class="lvl" id="xpLevel">Level 1</div>
+        <div class="title" id="xpTitle">Rookie</div>
+      </div>
+      <div id="moodBadge">🐆 Calm</div>
+    </div>
+    <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+    <div class="xpMeta">
+      <span id="xpText">0 / 300 XP</span>
+      <span id="streakText">🧊 streak reset</span>
+    </div>
+  </div>
 
-  <!-- Charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/coach-addons.js?v=9"></script>
+  <button class="themeToggle" id="themeToggle" type="button">
+    Theme: <span id="themeMode">Light</span>
+  </button>
+</aside>
+
+<main class="main">
+<div class="coachWrap">
+
+<!-- ================= HEALTH ================= -->
+<section class="tabPanel" id="panel-health">
+<div class="sectionCard heroCard">
+
+<h1 class="sectionTitle">Sprint Health Dashboard</h1>
+<p class="sectionSub">Trends + stability signals (no blame). Powered by your last 6 sprints.</p>
+
+<div class="info-banner">
+  <strong>Tip:</strong> Load demo data once → save → charts stay updated.
+</div>
+
+<!-- Charts -->
+<div class="info-banner" style="margin-top:14px;">
+<div class="kvKey">Coach Charts</div>
+
+<div class="chartGrid">
+
+<!-- Velocity -->
+<div class="chartCard">
+  <div class="chartHeader">
+    <div>
+      <div class="chartTitle">Velocity Trend</div>
+      <div class="chartSub">Completed SP (last 6 sprints)</div>
+    </div>
+  </div>
+  <div class="chartCanvasWrap">
+    <canvas class="chartCanvas" id="hist_velocityChart"></canvas>
+  </div>
+</div>
+
+<!-- Predictability -->
+<div class="chartCard">
+  <div class="chartHeader">
+    <div>
+      <div class="chartTitle">Predictability</div>
+      <div class="chartSub">Committed vs Completed</div>
+    </div>
+  </div>
+  <div class="chartCanvasWrap">
+    <canvas class="chartCanvas" id="hist_predictChart"></canvas>
+  </div>
+</div>
+
+<!-- Capacity -->
+<div class="chartCard">
+  <div class="chartHeader">
+    <div>
+      <div class="chartTitle">Capacity Fit</div>
+      <div class="chartSub">Capacity vs Completed</div>
+    </div>
+  </div>
+  <div class="chartCanvasWrap">
+    <canvas class="chartCanvas" id="hist_capacityChart"></canvas>
+  </div>
+</div>
+
+<!-- Scope -->
+<div class="chartCard">
+  <div class="chartHeader">
+    <div>
+      <div class="chartTitle">Scope Disruption</div>
+      <div class="chartSub">Added vs Removed mid-sprint</div>
+    </div>
+  </div>
+  <div class="chartCanvasWrap">
+    <canvas class="chartCanvas" id="hist_disruptionChart"></canvas>
+  </div>
+</div>
+
+<!-- Sick -->
+<div class="chartCard span2">
+  <div class="chartHeader">
+    <div>
+      <div class="chartTitle">Team Health</div>
+      <div class="chartSub">Sick leave (person-days)</div>
+    </div>
+  </div>
+  <div class="chartCanvasWrap">
+    <canvas class="chartCanvas" id="hist_sickChart"></canvas>
+  </div>
+</div>
+
+</div>
+</div>
+
+</div>
+</section>
+
+</div>
+</main>
+</div>
+
+<script src="js/theme.js"></script>
+<script src="js/xp.js"></script>
+<script src="js/coach-history.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- IMPORTANT: updated version -->
+<script src="js/coach-addons.js?v=10"></script>
+
 </body>
 </html>
