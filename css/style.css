@@ -1221,3 +1221,128 @@ canvas.chartCanvas,
   font-weight: 600;
   color: var(--accent);
 }
+/* ================================
+   Coach Charts — Stitch2 Premium Skin
+   ================================ */
+
+/* Card surface (matches your Stitch2 vibe) */
+.chartCard,
+.coachCard.chartCard,
+.card.chartCard {
+  border-radius: 18px;
+  border: 1px solid var(--border-soft, rgba(255,255,255,0.10));
+  background: var(--card, rgba(255,255,255,0.04));
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+/* Header spacing */
+.chartCard .chartHeader,
+.chartCard header {
+  padding: 14px 16px 8px;
+}
+
+.chartCard .chartTitle,
+.chartCard h4,
+.chartCard h3 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-main, rgba(255,255,255,0.92));
+}
+
+.chartCard .chartSub,
+.chartCard .muted,
+.chartCard p {
+  margin: 6px 0 0;
+  color: var(--text-dim, rgba(255,255,255,0.62));
+}
+
+/* Chart body */
+.chartCard .chartBody {
+  padding: 10px 12px 14px;
+}
+
+/* IMPORTANT: prevent weird stretching (Chart.js likes a fixed parent height) */
+.chartBox,
+.chartWrap,
+.chartCanvasWrap,
+.chartBody {
+  position: relative;
+  height: 260px; /* adjust per card; 240–300 works well */
+}
+
+/* Canvas should fill wrapper */
+.chartBox canvas,
+.chartWrap canvas,
+.chartCanvasWrap canvas,
+.chartBody canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Remove any grey “cell background” behind the canvas */
+.chartCell,
+.chartGridCell,
+.chartSlot,
+.chartPanel {
+  background: transparent !important;
+}
+
+/* Optional: subtle inner plot panel feel (very Stitch-like) */
+.chartBox::before,
+.chartWrap::before,
+.chartCanvasWrap::before,
+.chartBody::before {
+  content: "";
+  position: absolute;
+  inset: 10px 10px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+/* Legend + labels polish */
+.chartLegend,
+.chartCard .chartLegend,
+.chartCard .legend {
+  padding: 0 16px 10px;
+  color: var(--text-dim, rgba(255,255,255,0.65));
+  font-size: 12px;
+}
+
+/* Tooltips (if you use custom tooltip containers) */
+.chartTooltip {
+  background: rgba(10, 12, 18, 0.92);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.40);
+  color: rgba(255,255,255,0.92);
+}
+
+/* Light theme support (if your theme toggle switches vars) */
+:root[data-theme="light"] .chartCard,
+:root.light .chartCard {
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(20, 24, 33, 0.08);
+  box-shadow: 0 10px 30px rgba(20,24,33,0.10), inset 0 1px 0 rgba(255,255,255,0.70);
+}
+
+:root[data-theme="light"] .chartBox::before,
+:root.light .chartBox::before,
+:root[data-theme="light"] .chartWrap::before,
+:root.light .chartWrap::before,
+:root[data-theme="light"] .chartCanvasWrap::before,
+:root.light .chartCanvasWrap::before,
+:root[data-theme="light"] .chartBody::before,
+:root.light .chartBody::before {
+  background: rgba(20,24,33,0.03);
+  border: 1px solid rgba(20,24,33,0.06);
+}
