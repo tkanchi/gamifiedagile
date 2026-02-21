@@ -51,14 +51,14 @@
     .historyTable td:last-child, .historyTable th:last-child{ padding-right: 12px; }
     .fileInput{ display:none; }
 
-    /* Coach Insights layout helpers (minimal, matches new style.css) */
+    /* Coach Insights layout helpers */
     .insightsStack{display:grid; gap:12px; margin-top:12px;}
     .insightHeader{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
     .insightTitle{font-size:15px; font-weight:700; margin:0; color:var(--text-strong);}
     .insightText{font-size:13.5px; color:var(--text-muted); line-height:1.5; margin:6px 0 10px;}
     .insightAction{font-size:13px; font-weight:600; color:var(--accent);}
 
-    /* Insight card severity styling (works even if CSS file changes) */
+    /* Insight card severity styling */
     .insightCard{position:relative; padding:18px; border-radius:16px; border:1px solid var(--border-soft); background:#fff; transition:transform .15s ease, box-shadow .15s ease;}
     .insightCard:hover{transform:translateY(-2px); box-shadow:0 14px 32px rgba(15,23,42,0.08);}
     .insightCard::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:16px 0 0 16px;}
@@ -69,6 +69,17 @@
     .insight-risk .insightTag{background:rgba(244,63,94,.12); color:#be123c;}
     .insight-watch .insightTag{background:rgba(245,158,11,.14); color:#b45309;}
     .insight-info .insightTag{background:rgba(16,185,129,.14); color:#047857;}
+
+    /* ===== Stitch2-style ribbon bars ===== */
+    .ribbonGrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px;}
+    @media (max-width: 920px){ .ribbonGrid{grid-template-columns:1fr;} }
+    .ribbonItem{border:1px solid var(--border-soft); border-radius:14px; padding:10px; background:rgba(255,255,255,0.03);}
+    .ribbonTop{display:flex; justify-content:space-between; gap:10px; font-size:12px; font-weight:800; color:var(--text-muted);}
+    .ribbonBar{height:10px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid var(--border-soft); margin-top:8px; overflow:hidden;}
+    .ribbonFill{height:100%; width:0%; border-radius:999px; transition:width .35s ease;}
+    .ribbonGood{background:linear-gradient(90deg, rgba(34,197,94,0.65), rgba(34,197,94,0.95));}
+    .ribbonBad{background:linear-gradient(90deg, rgba(239,68,68,0.55), rgba(239,68,68,0.95));}
+    .ribbonWarn{background:linear-gradient(90deg, rgba(245,158,11,0.55), rgba(245,158,11,0.95));}
   </style>
 </head>
 
@@ -116,7 +127,6 @@
     <main class="main">
       <div class="coachWrap">
 
-        <!-- ✅ Simplified tabs: only Health + Copilot -->
         <div class="tabBar">
           <button class="tabBtn active" data-tab="health">Health</button>
           <button class="tabBtn" data-tab="copilot">Copilot</button>
@@ -124,7 +134,7 @@
 
         <!-- ================= HEALTH ================= -->
         <section class="tabPanel" id="panel-health">
-          <!-- ✅ HERO EMPHASIS: add heroCard here (top summary container) -->
+
           <div class="sectionCard heroCard">
             <h1 class="sectionTitle">Sprint Health Dashboard</h1>
             <p class="sectionSub">Trends + stability signals (no blame). Powered by your last 6 sprints.</p>
@@ -133,7 +143,7 @@
               <strong>Tip:</strong> Load demo data once → save → charts stay updated.
             </div>
 
-            <!-- ✅ Sprint History table (6 sprints: N-6 → N-1) -->
+            <!-- 6 sprint history -->
             <div class="info-banner historyWrap" style="margin-top:12px;">
               <div class="historyTop">
                 <div>
@@ -185,7 +195,7 @@
               <div class="mutedText" id="hist_status" style="margin-top:10px;">—</div>
             </div>
 
-            <!-- ✅ Charts (IDs match coach-addons.js) -->
+            <!-- Charts -->
             <div class="info-banner" style="margin-top:14px;">
               <div class="kvKey">Coach Charts</div>
               <div class="mutedText" style="margin-top:6px;">
@@ -194,6 +204,7 @@
 
               <div class="chartGrid">
 
+                <!-- Velocity -->
                 <div class="chartCard">
                   <div class="chartHeader">
                     <div>
@@ -205,8 +216,20 @@
                     </div>
                   </div>
                   <canvas class="chartCanvas" id="hist_velocityChart" height="160"></canvas>
+
+                  <div class="ribbonGrid">
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Average Velocity</span><span id="rb_velAvgTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_velAvg"></div></div>
+                    </div>
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Stability</span><span id="rb_velStabilityTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_velStability"></div></div>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Predictability -->
                 <div class="chartCard">
                   <div class="chartHeader">
                     <div>
@@ -219,22 +242,46 @@
                     </div>
                   </div>
                   <canvas class="chartCanvas" id="hist_predictChart" height="160"></canvas>
+
+                  <div class="ribbonGrid">
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Say-Do (Latest)</span><span id="rb_sayDoTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_sayDo"></div></div>
+                    </div>
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Commitment Risk</span><span id="rb_commitRiskTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_commitRisk"></div></div>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Capacity -->
                 <div class="chartCard">
                   <div class="chartHeader">
                     <div>
-                      <div class="chartTitle">Capacity Accuracy</div>
-                      <div class="chartSub">Forecast vs Actual Capacity</div>
+                      <div class="chartTitle">Capacity Fit</div>
+                      <div class="chartSub">Capacity vs Completed</div>
                     </div>
                     <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#f59e0b;"><span class="legendDot"></span>Forecast</span>
-                      <span class="legendPill" style="--dot:#06b6d4;"><span class="legendDot"></span>Actual</span>
+                      <span class="legendPill" style="--dot:#f59e0b;"><span class="legendDot"></span>Capacity</span>
+                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
                     </div>
                   </div>
                   <canvas class="chartCanvas" id="hist_capacityChart" height="160"></canvas>
+
+                  <div class="ribbonGrid">
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Capacity Fit (Latest)</span><span id="rb_capFitTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_capFit"></div></div>
+                    </div>
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Overcommit</span><span id="rb_overcommitTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_overcommit"></div></div>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Scope -->
                 <div class="chartCard">
                   <div class="chartHeader">
                     <div>
@@ -247,8 +294,20 @@
                     </div>
                   </div>
                   <canvas class="chartCanvas" id="hist_disruptionChart" height="160"></canvas>
+
+                  <div class="ribbonGrid">
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Scope Added (Avg)</span><span id="rb_scopeAddTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_scopeAdd"></div></div>
+                    </div>
+                    <div class="ribbonItem">
+                      <div class="ribbonTop"><span>Scope Removed (Avg)</span><span id="rb_scopeRemTxt">—</span></div>
+                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_scopeRem"></div></div>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Sick leave -->
                 <div class="chartCard span2">
                   <div class="chartHeader">
                     <div>
@@ -262,8 +321,10 @@
                   <canvas class="chartCanvas" id="hist_sickChart" height="160"></canvas>
                 </div>
 
-               
-            <!-- ✅ Coach Insights (severity styling) -->
+              </div><!-- /chartGrid -->
+            </div><!-- /info-banner charts -->
+
+            <!-- Insights -->
             <div class="info-banner" style="margin-top:14px;">
               <div class="kvKey" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
                 <span>Coach Insights</span>
@@ -271,8 +332,6 @@
               </div>
 
               <div class="insightsStack" id="coach_insightsStack">
-                <!-- You can later render these from JS. These are safe defaults. -->
-
                 <div class="insightCard insight-risk">
                   <div class="insightHeader">
                     <span class="insightTag">RISK</span>
@@ -299,7 +358,6 @@
                   <p class="insightText">Committed vs completed gap is narrowing across recent sprints.</p>
                   <div class="insightAction">Keep it up: Maintain the same buffer and refinement cadence.</div>
                 </div>
-
               </div>
             </div>
 
@@ -312,7 +370,8 @@
                 <a class="btnStage btnStage-next" href="coach.html#copilot">Next: Copilot →</a>
               </div>
             </div>
-          </div>
+
+          </div><!-- /heroCard -->
         </section>
 
         <!-- ================= COPILOT ================= -->
@@ -405,6 +464,6 @@
 
   <!-- Charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="js/coach-addons.js?v=8"></script>
+  <script src="js/coach-addons.js?v=9"></script>
 </body>
 </html>
