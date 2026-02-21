@@ -1,138 +1,44 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v2 Premium + Robust
- * --------------------------------------------------------------
- * Uses last 6 sprints from:
- * localStorage["scrummer_sprint_history_v1"]
- *
- * Falls back to window.ScrummerCoachHistory.getRows()
- *
- * Fixes:
- * - Charts blank when canvas is hidden / 0 height at render time
- * - Sick leave scale (0..1) by using smart y max
- * - Premium look (grid/ticks/tooltip/legend), Stitch-like
- * - Typography hierarchy (legend/title/ticks/tooltip)
+ * Scrummer — Coach Addons (No Snapshots) — v10 Robust Data + Render Triggers
+ * ------------------------------------------------------------------------
+ * Fixes "charts empty" by:
+ * 1) Loading rows from multiple storage keys + multiple shapes
+ * 2) Waiting/retrying until coach-history has rendered rows
+ * 3) Re-rendering on Load Demo / Save / Reset / CSV import / Autofill
  */
 
 (() => {
   const $ = (id) => document.getElementById(id);
-  const STORAGE_KEY = "scrummer_sprint_history_v1";
+
+  // Try multiple keys because history.js versions often change this.
+  const STORAGE_KEYS = [
+    "scrummer_sprint_history_v1",
+    "scrummer_sprint_history_v2",
+    "scrummer_sprint_history",
+    "scrummer_coach_history_v1",
+    "scrummer_coach_history_v2",
+    "scrummer_coach_history",
+    "scrummer_history_v1",
+  ];
 
   /* =============================
-     Storage / Model
+     Utils
   ============================== */
 
   function safeParse(str, fallback) {
     try { return JSON.parse(str); } catch { return fallback; }
   }
 
-  function loadModel() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { sprints: [] };
-    const m = safeParse(raw, null);
-    if (!m || !Array.isArray(m.sprints)) return { sprints: [] };
-    return m;
+  function toNum(v, d = 0) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : d;
   }
-
-  function lastNSprints(model, n = 6) {
-    return (model.sprints || []).slice(-n);
-  }
-
-  function calcCapacitySP(s) {
-    const sprintDays = Number(s?.sprintDays || 10);
-    const teamMembers = Number(s?.teamMembers || 5);
-    const holidays = Number(s?.holidays || 0);
-    const leaveDays = Number(s?.leaveDays || 0);
-    const focus = Number(s?.focusFactor ?? 0.8);
-
-    const ideal = sprintDays * teamMembers;
-    const available = Math.max(0, ideal - holidays - leaveDays);
-    return Math.round(available * focus);
-  }
-
-  function rowsFromModel(model) {
-    return lastNSprints(model, 6).map((s, i) => ({
-      sprint: s.id || `S${i + 1}`,
-      capacity: calcCapacitySP(s),
-      committed: Number(s?.committedSP || 0),
-      completed: Number(s?.completedSP || 0),
-
-      // Scope
-      added: Number(s?.unplannedSP ?? s?.addedSP ?? s?.addedMid ?? 0),
-      removed: Number(s?.removedMid ?? s?.removedSP ?? s?.scopeRemoved ?? 0),
-
-      // Health
-      sick: Number(s?.sickLeaveDays ?? s?.sickLeave ?? 0),
-    }));
-  }
-
-  // Normalize any row shapes (from history.js) into a consistent shape
-  function normalizeFallbackRows(rawRows) {
-    const rows = Array.isArray(rawRows) ? rawRows : [];
-    return rows.map((r, i) => ({
-      sprint: String(r?.sprint ?? r?.name ?? r?.label ?? `Sprint ${i + 1}`),
-
-      // Capacity variants (use forecast capacity as "capacity" for the chart)
-      capacity: Number(
-        r?.forecastCap ??
-        r?.capacity ??
-        r?.forecast ??
-        r?.forecastCapacity ??
-        r?.forecastCapacitySP ??
-        r?.forecastCapSP ??
-        0
-      ),
-
-      // Commitment / delivery variants
-      committed: Number(r?.committedSP ?? r?.committed ?? r?.commit ?? r?.commitSP ?? 0),
-      completed: Number(r?.completedSP ?? r?.completed ?? r?.done ?? r?.doneSP ?? 0),
-
-      // Scope variants
-      added: Number(
-        r?.addedMid ??
-        r?.addedSP ??
-        r?.unplannedSP ??
-        r?.added ??
-        r?.scopeAdded ??
-        r?.scopeAddedSP ??
-        0
-      ),
-
-      removed: Number(
-        r?.removedMid ??
-        r?.removedSP ??
-        r?.removed ??
-        r?.scopeRemoved ??
-        r?.scopeRemovedSP ??
-        0
-      ),
-
-      // Sick leave variants
-      sick: Number(r?.sickLeaveDays ?? r?.sickLeave ?? r?.sick ?? 0),
-    }));
-  }
-
-  function loadRows() {
-    const model = loadModel();
-    if (model.sprints?.length) return rowsFromModel(model);
-
-    const api = window.ScrummerCoachHistory;
-    if (api?.getRows) {
-      return normalizeFallbackRows(api.getRows());
-    }
-
-    return [];
-  }
-
-  /* =============================
-     Theme Helpers
-  ============================== */
 
   function cssVar(name, fallback) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
   }
 
   function withAlpha(hexOrRgb, alpha) {
-    // supports "#RRGGBB" only; if not, return as-is
     const v = String(hexOrRgb || "").trim();
     if (/^#([0-9a-f]{6})$/i.test(v)) {
       const hex = v.substring(1);
@@ -145,17 +51,13 @@
   }
 
   function theme() {
-    // Prefer your existing vars first (works for light + dark),
-    // then fall back to sensible defaults.
     const textMain =
       cssVar("--text-main", "") ||
       cssVar("--text-strong", "") ||
-      cssVar("--text", "") ||
       "rgba(15,23,42,0.92)";
 
     const textDim =
       cssVar("--text-muted", "") ||
-      cssVar("--text-dim", "") ||
       "rgba(100,116,139,0.92)";
 
     const borderSoft =
@@ -163,7 +65,6 @@
       cssVar("--border", "") ||
       "rgba(148,163,184,0.35)";
 
-    // Softer grid for premium feel
     const grid =
       cssVar("--grid-soft", "") ||
       "rgba(148,163,184,0.18)";
@@ -189,8 +90,116 @@
     return n;
   }
 
+  function setStatus(msg) {
+    const el = $("hist_status");
+    if (el) el.textContent = msg;
+  }
+
   /* =============================
-     Chart.js Defaults (Premium + Hierarchy)
+     Data loading (Robust)
+  ============================== */
+
+  // Normalize any row shapes (from history.js or storage) into a consistent shape
+  function normalizeRows(rawRows) {
+    const rows = Array.isArray(rawRows) ? rawRows : [];
+    return rows.map((r, i) => ({
+      sprint: String(r?.sprint ?? r?.name ?? r?.label ?? r?.id ?? `Sprint ${i + 1}`),
+
+      // Use "forecast capacity" as capacity if present
+      capacity: toNum(
+        r?.forecastCap ??
+        r?.forecastCapacity ??
+        r?.forecastCapacitySP ??
+        r?.forecastCapSP ??
+        r?.capacity ??
+        r?.cap ??
+        0
+      ),
+
+      committed: toNum(r?.committedSP ?? r?.committed ?? r?.commit ?? r?.commitSP ?? 0),
+      completed: toNum(r?.completedSP ?? r?.completed ?? r?.done ?? r?.doneSP ?? 0),
+
+      added: toNum(
+        r?.addedMid ??
+        r?.addedSP ??
+        r?.unplannedSP ??
+        r?.added ??
+        r?.scopeAdded ??
+        r?.scopeAddedSP ??
+        0
+      ),
+
+      removed: toNum(
+        r?.removedMid ??
+        r?.removedSP ??
+        r?.removed ??
+        r?.scopeRemoved ??
+        r?.scopeRemovedSP ??
+        0
+      ),
+
+      sick: toNum(r?.sickLeaveDays ?? r?.sickLeave ?? r?.sick ?? 0),
+    }));
+  }
+
+  function normalizeFromModel(obj) {
+    if (!obj) return [];
+    // common shapes:
+    // 1) { rows:[...] }
+    // 2) { sprints:[...] } (each sprint might already contain fields)
+    // 3) [...] array
+    if (Array.isArray(obj)) return normalizeRows(obj);
+
+    if (Array.isArray(obj.rows)) return normalizeRows(obj.rows);
+
+    if (Array.isArray(obj.sprints)) {
+      // If sprints already look like rows, normalize directly
+      return normalizeRows(obj.sprints);
+    }
+
+    return [];
+  }
+
+  function loadFromStorageAnyKey() {
+    for (const key of STORAGE_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = safeParse(raw, null);
+      const rows = normalizeFromModel(parsed);
+      if (rows.length) {
+        return { rows, source: `localStorage["${key}"]` };
+      }
+    }
+    return { rows: [], source: "storage:none" };
+  }
+
+  function loadFromHistoryAPI() {
+    const api = window.ScrummerCoachHistory;
+    if (api?.getRows) {
+      const rows = normalizeRows(api.getRows());
+      if (rows.length) return { rows, source: "ScrummerCoachHistory.getRows()" };
+    }
+    return { rows: [], source: "api:none" };
+  }
+
+  function loadRows() {
+    // Prefer API if it exists (it reflects what user sees in table),
+    // but storage is okay too.
+    let a = loadFromHistoryAPI();
+    if (a.rows.length) return a;
+
+    let s = loadFromStorageAnyKey();
+    if (s.rows.length) return s;
+
+    return { rows: [], source: "none" };
+  }
+
+  function lastN(rows, n = 6) {
+    return rows.slice(-n);
+  }
+
+  /* =============================
+     Chart Defaults (Premium)
   ============================== */
 
   function applyChartDefaults() {
@@ -198,41 +207,23 @@
 
     const t = theme();
 
-    // Global
     window.Chart.defaults.responsive = true;
     window.Chart.defaults.maintainAspectRatio = false;
     window.Chart.defaults.animation = { duration: 520, easing: "easeOutQuart" };
+    window.Chart.defaults.interaction = { mode: "index", intersect: false };
 
-    // Font
     window.Chart.defaults.font = {
       family: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial",
       size: 12,
       weight: "500",
     };
 
-    // Interaction
-    window.Chart.defaults.interaction = { mode: "index", intersect: false };
-
-    // Plugins
     window.Chart.defaults.plugins = window.Chart.defaults.plugins || {};
 
-    // Legend (stronger hierarchy)
     window.Chart.defaults.plugins.legend = {
-      display: true,
-      position: "top",
-      align: "start",
-      labels: {
-        color: t.textDim,
-        usePointStyle: true,
-        pointStyle: "circle",
-        boxWidth: 10,
-        boxHeight: 10,
-        padding: 14,
-        font: { size: 12, weight: "700" },
-      },
+      display: false, // you already have custom legend pills in HTML
     };
 
-    // Tooltip (clear title/body hierarchy)
     window.Chart.defaults.plugins.tooltip = {
       enabled: true,
       backgroundColor: "rgba(15,23,42,0.92)",
@@ -247,7 +238,6 @@
       displayColors: true,
     };
 
-    // Scales defaults
     window.Chart.defaults.scales = window.Chart.defaults.scales || {};
     for (const s of ["linear", "category"]) {
       window.Chart.defaults.scales[s] = window.Chart.defaults.scales[s] || {};
@@ -259,11 +249,10 @@
       window.Chart.defaults.scales[s].ticks = {
         color: t.textDim,
         padding: 8,
-        font: { size: 11, weight: "650" }, // hierarchy: slightly smaller but strong weight
+        font: { size: 11, weight: "650" },
       };
     }
 
-    // Elements
     window.Chart.defaults.elements = window.Chart.defaults.elements || {};
     window.Chart.defaults.elements.point = { radius: 2.6, hoverRadius: 4.6, hitRadius: 12 };
     window.Chart.defaults.elements.line = { borderWidth: 2.4 };
@@ -285,14 +274,10 @@
 
   function baseOptions(overrides = {}) {
     const t = theme();
-
-    // per-chart options that keep things consistent
     const opt = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: t.textDim } }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         x: {
           ticks: { color: t.textDim, font: { size: 11, weight: "650" }, maxRotation: 0 },
@@ -305,7 +290,6 @@
         }
       }
     };
-
     return deepMerge(opt, overrides);
   }
 
@@ -350,13 +334,41 @@
         cb();
         return;
       }
-      if (tries < 20) requestAnimationFrame(tick);
+      if (tries < 30) requestAnimationFrame(tick);
       else {
         try { ro.disconnect(); } catch {}
         cb();
       }
     };
     requestAnimationFrame(tick);
+  }
+
+  /* =============================
+     Ribbon helpers
+  ============================== */
+
+  function pct(n) {
+    const v = Math.max(0, Math.min(100, Math.round(n)));
+    return `${v}%`;
+  }
+
+  function setRibbon(fillId, textId, percent, labelText) {
+    const fill = $(fillId);
+    const txt = $(textId);
+    if (fill) fill.style.width = pct(percent);
+    if (txt) txt.textContent = labelText ?? "—";
+  }
+
+  function mean(arr) {
+    if (!arr.length) return 0;
+    return arr.reduce((a,b)=>a+b,0) / arr.length;
+  }
+
+  function stdev(arr) {
+    if (arr.length < 2) return 0;
+    const m = mean(arr);
+    const v = mean(arr.map(x => (x - m) ** 2));
+    return Math.sqrt(v);
   }
 
   /* =============================
@@ -374,7 +386,7 @@
     waitForCanvasSize(canvas, () => {
       destroyChart(id);
 
-      const completed = rows.map(r => Number(r.completed || 0));
+      const completed = rows.map(r => toNum(r.completed, 0));
       const yMax = niceMax(completed, 8);
 
       const chart = new Chart(canvas, {
@@ -388,8 +400,6 @@
             backgroundColor: withAlpha(t.green, 0.16),
             tension: 0.35,
             fill: true,
-
-            // hierarchy: primary series slightly stronger
             borderWidth: 3,
             pointRadius: 3,
             pointHoverRadius: 5,
@@ -402,6 +412,14 @@
       });
 
       charts.set(id, chart);
+
+      // ribbons
+      const avg = Math.round(mean(completed));
+      const sd = stdev(completed);
+      // stability: higher is better; map SD down to %
+      const stability = Math.max(0, Math.min(100, Math.round(100 - (sd * 7))));
+      setRibbon("rb_velAvg", "rb_velAvgTxt", Math.min(100, Math.round((avg / Math.max(1, yMax)) * 100)), `${avg} SP`);
+      setRibbon("rb_velStability", "rb_velStabilityTxt", stability, `${stability}%`);
     });
   }
 
@@ -416,8 +434,8 @@
     waitForCanvasSize(canvas, () => {
       destroyChart(id);
 
-      const committed = rows.map(r => Number(r.committed || 0));
-      const completed = rows.map(r => Number(r.completed || 0));
+      const committed = rows.map(r => toNum(r.committed, 0));
+      const completed = rows.map(r => toNum(r.completed, 0));
       const yMax = niceMax([...committed, ...completed], 8);
 
       const chart = new Chart(canvas, {
@@ -429,7 +447,6 @@
               label: "Committed",
               data: committed,
               borderColor: t.indigo,
-              backgroundColor: withAlpha(t.indigo, 0.10),
               tension: 0.35,
               fill: false,
               borderWidth: 2.4,
@@ -441,10 +458,8 @@
               label: "Completed",
               data: completed,
               borderColor: t.green,
-              backgroundColor: withAlpha(t.green, 0.10),
               tension: 0.35,
               fill: false,
-              // hierarchy: completed slightly stronger
               borderWidth: 3,
               pointRadius: 2.9,
               pointHoverRadius: 5,
@@ -458,6 +473,16 @@
       });
 
       charts.set(id, chart);
+
+      // ribbons: say-do latest, risk (committed > completed)
+      const last = rows[rows.length - 1];
+      const sayDo = last ? (toNum(last.completed) / Math.max(1, toNum(last.committed))) : 0;
+      const sayDoPct = Math.max(0, Math.min(120, Math.round(sayDo * 100)));
+      const risk = last ? Math.max(0, toNum(last.committed) - toNum(last.completed)) : 0;
+      const riskPct = Math.max(0, Math.min(100, Math.round((risk / Math.max(1, toNum(last.committed))) * 100)));
+
+      setRibbon("rb_sayDo", "rb_sayDoTxt", Math.min(100, sayDoPct), `${sayDoPct}%`);
+      setRibbon("rb_commitRisk", "rb_commitRiskTxt", riskPct, risk ? `+${risk} SP` : "0 SP");
     });
   }
 
@@ -472,8 +497,8 @@
     waitForCanvasSize(canvas, () => {
       destroyChart(id);
 
-      const cap = rows.map(r => Number(r.capacity || 0));
-      const completed = rows.map(r => Number(r.completed || 0));
+      const cap = rows.map(r => toNum(r.capacity, 0));
+      const completed = rows.map(r => toNum(r.completed, 0));
       const yMax = niceMax([...cap, ...completed], 10);
 
       const chart = new Chart(canvas, {
@@ -485,7 +510,6 @@
               label: "Capacity",
               data: cap,
               borderColor: t.amber,
-              backgroundColor: withAlpha(t.amber, 0.10),
               tension: 0.35,
               fill: false,
               borderWidth: 2.4,
@@ -497,7 +521,6 @@
               label: "Completed",
               data: completed,
               borderColor: t.green,
-              backgroundColor: withAlpha(t.green, 0.10),
               tension: 0.35,
               fill: false,
               borderWidth: 3,
@@ -513,6 +536,15 @@
       });
 
       charts.set(id, chart);
+
+      const last = rows[rows.length - 1];
+      const fit = last ? (toNum(last.completed) / Math.max(1, toNum(last.capacity))) : 0;
+      const fitPct = Math.max(0, Math.min(140, Math.round(fit * 100)));
+      const over = last ? Math.max(0, toNum(last.committed) - toNum(last.capacity)) : 0;
+      const overPct = Math.max(0, Math.min(100, Math.round((over / Math.max(1, toNum(last.capacity))) * 100)));
+
+      setRibbon("rb_capFit", "rb_capFitTxt", Math.min(100, fitPct), `${fitPct}%`);
+      setRibbon("rb_overcommit", "rb_overcommitTxt", overPct, over ? `+${over} SP` : "0 SP");
     });
   }
 
@@ -527,8 +559,8 @@
     waitForCanvasSize(canvas, () => {
       destroyChart(id);
 
-      const added = rows.map(r => Number(r.added || 0));
-      const removed = rows.map(r => Number(r.removed || 0));
+      const added = rows.map(r => toNum(r.added, 0));
+      const removed = rows.map(r => toNum(r.removed, 0));
       const yMax = niceMax([...added, ...removed], 4);
 
       const chart = new Chart(canvas, {
@@ -556,6 +588,14 @@
       });
 
       charts.set(id, chart);
+
+      const avgAdd = Math.round(mean(added));
+      const avgRem = Math.round(mean(removed));
+      const addPct = Math.min(100, Math.round((avgAdd / Math.max(1, yMax)) * 100));
+      const remPct = Math.min(100, Math.round((avgRem / Math.max(1, yMax)) * 100));
+
+      setRibbon("rb_scopeAdd", "rb_scopeAddTxt", addPct, `${avgAdd} SP`);
+      setRibbon("rb_scopeRem", "rb_scopeRemTxt", remPct, `${avgRem} SP`);
     });
   }
 
@@ -570,7 +610,7 @@
     waitForCanvasSize(canvas, () => {
       destroyChart(id);
 
-      const sick = rows.map(r => Number(r.sick || 0));
+      const sick = rows.map(r => toNum(r.sick, 0));
       const yMax = niceMax(sick, 2);
 
       const chart = new Chart(canvas, {
@@ -605,37 +645,83 @@
   }
 
   function renderAll() {
-    if (!window.Chart) return;
+    if (!window.Chart) {
+      setStatus("Chart.js not loaded yet.");
+      return false;
+    }
+
     applyChartDefaults();
 
-    const rows = loadRows();
-    if (!rows.length) return;
+    const { rows, source } = loadRows();
+    const last6 = lastN(rows, 6);
 
-    renderVelocity(rows);
-    renderPredictability(rows);
-    renderCapacity(rows);
-    renderDisruption(rows);
-    renderSick(rows);
-  }
-
-  // Re-render on theme change / resize
-  let rerenderTimer = null;
-  function scheduleRerender() {
-    clearTimeout(rerenderTimer);
-    rerenderTimer = setTimeout(() => renderAll(), 120);
-  }
-
-  document.addEventListener("DOMContentLoaded", renderAll);
-  window.addEventListener("resize", scheduleRerender);
-
-  const mo = new MutationObserver((muts) => {
-    for (const m of muts) {
-      if (m.type === "attributes") {
-        scheduleRerender();
-        break;
-      }
+    if (!last6.length) {
+      setStatus("No sprint history found yet. Click “🧪 Load Demo Data” then “Save”.");
+      return false;
     }
-  });
+
+    setStatus(`Charts updated from ${source} • ${last6.length} sprints`);
+
+    renderVelocity(last6);
+    renderPredictability(last6);
+    renderCapacity(last6);
+    renderDisruption(last6);
+    renderSick(last6);
+
+    return true;
+  }
+
+  /* =============================
+     Triggers
+  ============================== */
+
+  let rerenderTimer = null;
+  function scheduleRerender(delay = 120) {
+    clearTimeout(rerenderTimer);
+    rerenderTimer = setTimeout(() => renderAll(), delay);
+  }
+
+  function hookUITriggers() {
+    const clickIds = [
+      "hist_demoBtn",
+      "hist_saveBtn",
+      "hist_resetBtn",
+      "hist_autofillBtn",
+      "hist_uploadCsvBtn",
+      "hist_downloadTplBtn",
+    ];
+    clickIds.forEach(id => {
+      const el = $(id);
+      if (el) el.addEventListener("click", () => scheduleRerender(180));
+    });
+
+    const csv = $("hist_csvInput");
+    if (csv) csv.addEventListener("change", () => scheduleRerender(260));
+
+    const variant = $("hist_demoVariant");
+    if (variant) variant.addEventListener("change", () => scheduleRerender(180));
+  }
+
+  // Retry a few times on initial load (history table may render AFTER DOMContentLoaded)
+  function initialBoot() {
+    hookUITriggers();
+
+    let tries = 0;
+    const tryRender = () => {
+      tries++;
+      const ok = renderAll();
+      if (ok) return;
+
+      if (tries < 18) setTimeout(tryRender, 180);
+    };
+
+    tryRender();
+  }
+
+  document.addEventListener("DOMContentLoaded", initialBoot);
+  window.addEventListener("resize", () => scheduleRerender(140));
+
+  const mo = new MutationObserver(() => scheduleRerender(140));
   try {
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
   } catch {}
