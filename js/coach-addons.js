@@ -1,12 +1,11 @@
 /**
- * Scrummer — Coach Addons (Premium Charts / Analytics look) — v2.0
- * ----------------------------------------------------------------
- * Charts are driven by ONE clean sprint-history model (no snapshots):
- *   localStorage key: "scrummer_sprint_history_v1"
- * Uses last 6 sprints as the single source of truth.
+ * Scrummer — Coach Addons (No Snapshots) — v2.0
+ * --------------------------------------------------------------
+ * One source of truth: last 6 sprints.
+ * Storage key: localStorage["scrummer_sprint_history_v1"]
  *
- * Backwards compatible:
- * - If model not found, falls back to coach-history.js:
+ * Backward compatible:
+ * - If the model doesn't exist / has no sprints, falls back to:
  *     window.ScrummerCoachHistory.getRows()
  *
  * Requires:
@@ -44,8 +43,7 @@
     return s.slice(Math.max(0, s.length - n));
   }
 
-  // Capacity (simple, consistent)
-  // 1 focused person-day = 1 SP (your chosen approach)
+  // 1 focused person-day = 1 SP
   function calcCapacitySP(s) {
     const sprintDays = num(s?.sprintDays);
     const teamMembers = num(s?.teamMembers);
@@ -59,16 +57,11 @@
     return Math.round(focused);
   }
 
-  // Convert model -> chart rows
   function rowsFromModel(model) {
     const sprints = lastNSprints(model, 6);
     return sprints.map((s, idx) => {
       const committed = num(s?.committedSP);
       const completed = num(s?.completedSP);
-
-      // For charts that show "capacity":
-      // forecast = calculated capacity, actual = calculated capacity (same for now)
-      // If later you store separate "actual capacity", map it here.
       const cap = calcCapacitySP(s);
 
       return {
@@ -84,9 +77,6 @@
     });
   }
 
-  // Decide data source:
-  // 1) Use model if it has sprints
-  // 2) Else fall back to coach-history.js rows
   function loadRows() {
     const model = loadModel();
     if (Array.isArray(model?.sprints) && model.sprints.length) {
@@ -98,6 +88,7 @@
       const rows = api.getRows();
       return Array.isArray(rows) ? rows : [];
     }
+
     return [];
   }
 
@@ -115,7 +106,6 @@
       ink: cssVar("--text-main", "#111827"),
       border: cssVar("--border-soft", "rgba(17,24,39,0.12)"),
       bg: cssVar("--bg-soft", "#ffffff"),
-
       indigo: cssVar("--indigo", "#6366f1"),
       green: cssVar("--green", "#22c55e"),
       red: cssVar("--red", "#ef4444"),
@@ -144,7 +134,6 @@
     return Math.max(0, Math.min(1, x));
   }
 
-  // Accept multiple possible field names (prevents "empty chart" when keys differ)
   function pick(r, keys, fallback = 0) {
     for (const k of keys) {
       if (r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return r[k];
@@ -153,9 +142,6 @@
   }
 
   function normalize(rows) {
-    // Supports both:
-    // - forecastCap, actualCap, committed, completed, addedMid, removedMid, sickLeave
-    // - forecastCapSP, actualCapSP, committedSP, completedSP, addedSP, removedSP, sickLeaveDays, etc.
     return (rows || []).map((r, idx) => ({
       sprint: String(pick(r, ["sprint", "name", "label"], `Sprint ${idx + 1}`)),
       forecast: num(pick(r, ["forecastCap", "forecast", "forecastCapacity", "forecastCapacitySP", "forecastCapSP"])),
@@ -171,7 +157,7 @@
   // =========================
   // Chart.js helpers
   // =========================
-  const charts = new Map(); // canvasId -> chartInstance
+  const charts = new Map();
 
   function destroyChart(id) {
     const c = charts.get(id);
@@ -425,7 +411,6 @@
     const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
     const sick = rows.map(r => Number(r.sick || 0));
 
-    // Ensure usable Y scale even if values are 0
     const maxVal = sick.length ? Math.max(...sick) : 0;
     const suggestedMax = Math.max(5, Math.ceil(maxVal + 1));
 
@@ -478,7 +463,6 @@
     if (!window.Chart) return;
 
     const rows = normalize(loadRows());
-
     if (!rows.length) return;
 
     renderVelocity(rows);
@@ -486,10 +470,14 @@
     renderCapacity(rows);
     renderDisruption(rows);
     renderSick(rows);
+
+    // Debug signal in console so you know v2.0 loaded
+    // eslint-disable-next-line no-console
+    console.debug("[Scrummer] coach-addon.js v2.0 rendered", { source: localStorage.getItem(STORAGE_KEY) ? "model" : "fallback", points: rows.length });
   }
 
   // =========================
-  // Hidden tab + Mobile fixes
+  // Rerender when visible
   // =========================
   function rerenderWhenVisible() {
     const tryNow = () => {
@@ -514,10 +502,8 @@
       $(id)?.addEventListener("click", () => setTimeout(rerenderWhenVisible, 120));
     });
 
-    // coach-history.js emits this event
     window.addEventListener("scrummer:historyChanged", () => setTimeout(rerenderWhenVisible, 120));
 
-    // tab open (health/copilot buttons)
     document.querySelectorAll(".tabBtn").forEach(btn => {
       btn.addEventListener("click", () => setTimeout(rerenderWhenVisible, 140));
     });
