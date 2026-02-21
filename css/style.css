@@ -1320,11 +1320,15 @@ body{
   canvas.chartCanvas{ height: 190px; }
 }
 
-/* ===== Lock chart height (prevents stretch on scroll) ===== */
-.chartCard{
-  height: 300px;
-}
+/* =========================================================
+   v13 HOTFIX: Chart.js canvas stretching on scroll
+   - Force a stable, explicit canvas height on desktop
+   ========================================================= */
+.chartCard{ position: relative; }
 
-canvas.chartCanvas{
-  height: 100% !important;
+@media (min-width: 561px){
+  canvas.chartCanvas{
+    height: 220px !important;
+    max-height: 220px !important;
+  }
 }
