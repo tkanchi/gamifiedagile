@@ -356,7 +356,7 @@
     charts.set(id, chart);
   }
 
-  function renderSick(rows) {
+    function renderSick(rows) {
     const id = "hist_sickChart";
     const canvas = $(id);
     if (!canvas) return;
@@ -365,21 +365,52 @@
 
     const t = theme();
     const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
-    const sick = rows.map(r => r.sick);
+    const sick = rows.map(r => Number(r.sick || 0));
+
+    // ✅ Ensure a usable Y scale even if all values are 0 (Chart.js otherwise uses 0..1)
+    const maxVal = sick.length ? Math.max(...sick) : 0;
+    const suggestedMax = Math.max(5, Math.ceil(maxVal + 1));
 
     const ctx = canvas.getContext("2d");
+    const opts = baseOptions();
+
+    // Override only Y axis behaviour for this chart
+    opts.scales = opts.scales || {};
+    opts.scales.y = {
+      beginAtZero: true,
+      suggestedMax,
+      ticks: {
+        color: theme().text,
+        font: { family: "Inter, system-ui", weight: "600" },
+        stepSize: 1
+      },
+      grid: { color: theme().border, drawBorder: false }
+    };
+
     const cfg = {
       type: "line",
-      data: { labels, datasets: [] },
-      options: baseOptions(),
-      plugins: [{
-        id: "gradientFillSick",
-        beforeDatasetsDraw(chart) {
-          const { ctx, chartArea } = chart;
-          if (!chartArea) return;
-          chart.data.datasets[0] = lineDataset("Sick leave (person-days)", sick, t.red, ctx, chartArea);
-        }
-      }]
+      data: {
+        labels,
+        datasets: [{
+          label: "Sick leave (person-days)",
+          data: sick,
+          borderColor: t.red,
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return hexToRgba(t.red, 0.14);
+            return makeGradient(ctx, chartArea, t.red, 0.18, 0.02);
+          },
+          tension: 0.35,
+          fill: true,
+          borderWidth: 3,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBorderWidth: 0,
+          pointBackgroundColor: t.red,
+        }]
+      },
+      options: opts
     };
 
     const chart = new Chart(ctx, cfg);
