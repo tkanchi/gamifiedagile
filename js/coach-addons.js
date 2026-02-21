@@ -52,7 +52,7 @@
 
       // Scope
       added: Number(s?.unplannedSP ?? s?.addedSP ?? s?.addedMid ?? 0),
-      removed: Number(s?.removedSP ?? s?.removedMid ?? s?.scopeRemoved ?? 0),
+      removed: Number(s?.removedMid ?? s?.removedSP ?? s?.scopeRemoved ?? 0),
 
       // Health
       sick: Number(s?.sickLeaveDays ?? s?.sickLeave ?? 0),
@@ -63,12 +63,12 @@
   function normalizeFallbackRows(rawRows) {
     const rows = Array.isArray(rawRows) ? rawRows : [];
     return rows.map((r, i) => ({
-      sprint: String(r?.sprint ?? r?.name ?? r?.label ?? `S${i + 1}`),
+      sprint: String(r?.sprint ?? r?.name ?? r?.label ?? `Sprint ${i + 1}`),
 
-      // Capacity variants
+      // Capacity variants (use forecast capacity as "capacity" for the chart)
       capacity: Number(
-        r?.capacity ??
         r?.forecastCap ??
+        r?.capacity ??
         r?.forecast ??
         r?.forecastCapacity ??
         r?.forecastCapacitySP ??
@@ -82,9 +82,9 @@
 
       // Scope variants
       added: Number(
-        r?.unplannedSP ??
+        r?.addedMid ??        // ✅ matches "SP Added (mid)"
         r?.addedSP ??
-        r?.addedMid ??
+        r?.unplannedSP ??
         r?.added ??
         r?.scopeAdded ??
         r?.scopeAddedSP ??
@@ -92,8 +92,8 @@
       ),
 
       removed: Number(
+        r?.removedMid ??      // ✅ FIX: matches "SP Removed (mid)"
         r?.removedSP ??
-        r?.removedMid ??
         r?.removed ??
         r?.scopeRemoved ??
         r?.scopeRemovedSP ??
@@ -269,7 +269,7 @@
     charts.set(id, chart);
   }
 
-  /* ✅ Always show Removed (even if 0) */
+  /* Scope Disruption: Added vs Removed */
   function renderDisruption(rows) {
     const id = "hist_disruptionChart";
     const canvas = $(id);
