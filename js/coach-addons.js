@@ -1,6 +1,6 @@
 /**
- * Scrummer — Coach Addons (Premium Charts / Analytics look)
- * --------------------------------------------------------
+ * Scrummer — Coach Addons (Premium Charts / Analytics look) — v1.1
+ * --------------------------------------------------------------
  * Uses Chart.js for polished charts:
  * - gradients, smooth lines, tooltips, legends
  * - crisp grid + theme-aware colors
@@ -46,29 +46,40 @@
 
   // ---------- Data ----------
   function loadRows() {
-    if (window.ScrummerCoachHistory && typeof window.ScrummerCoachHistory.getRows === "function") {
-      const rows = window.ScrummerCoachHistory.getRows();
+    const api = window.ScrummerCoachHistory;
+    if (api && typeof api.getRows === "function") {
+      const rows = api.getRows();
       return Array.isArray(rows) ? rows : [];
     }
     return [];
   }
 
-  function n(v) {
+  function toNum(v) {
     const x = Number(v);
     return Number.isFinite(x) ? x : 0;
   }
 
+  // Accept multiple possible field names (prevents "empty chart" when keys differ)
+  function pick(r, keys, fallback = 0) {
+    for (const k of keys) {
+      if (r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return r[k];
+    }
+    return fallback;
+  }
+
   function normalize(rows) {
-    // coach-history.js uses: forecastCap, actualCap, committed, completed, addedMid, removedMid, sickLeave
+    // Support both variants:
+    // - forecastCap, actualCap, committed, completed, addedMid, removedMid, sickLeave
+    // - forecastCapSP, actualCapSP, committedSP, completedSP, addedSP, removedSP, sickLeaveDays, etc.
     return (rows || []).map((r, idx) => ({
-      sprint: String(r.sprint || `Sprint ${idx + 1}`),
-      forecast: n(r.forecastCap),
-      actual: n(r.actualCap),
-      committed: n(r.committed),
-      completed: n(r.completed),
-      added: n(r.addedMid),
-      removed: n(r.removedMid),
-      sick: n(r.sickLeave),
+      sprint: String(pick(r, ["sprint", "name", "label"], `Sprint ${idx + 1}`)),
+      forecast: toNum(pick(r, ["forecastCap", "forecast", "forecastCapacity", "forecastCapacitySP", "forecastCapSP"])),
+      actual: toNum(pick(r, ["actualCap", "actual", "actualCapacity", "actualCapacitySP", "actualCapSP"])),
+      committed: toNum(pick(r, ["committed", "committedSP", "commit", "commitSP"])),
+      completed: toNum(pick(r, ["completed", "completedSP", "done", "doneSP"])),
+      added: toNum(pick(r, ["addedMid", "added", "addedSP", "scopeAdded", "scopeAddedSP"])),
+      removed: toNum(pick(r, ["removedMid", "removed", "removedSP", "scopeRemoved", "scopeRemovedSP"])),
+      sick: toNum(pick(r, ["sickLeave", "sick", "sickLeaveDays", "sickLeavePD", "sickLeavePersonDays"])),
     }));
   }
 
@@ -92,7 +103,7 @@
   }
 
   function hexToRgba(hex, a) {
-    const h = hex.replace("#", "");
+    const h = String(hex || "").replace("#", "");
     const full = h.length === 3 ? h.split("").map(c => c + c).join("") : h;
     const r = parseInt(full.slice(0, 2), 16);
     const g = parseInt(full.slice(2, 4), 16);
@@ -106,7 +117,7 @@
 
     return {
       responsive: true,
-      maintainAspectRatio: false, // IMPORTANT for mobile
+      maintainAspectRatio: false,
       animation: { duration: 650, easing: "easeOutQuart" },
       interaction: { mode: "index", intersect: false },
       plugins: {
@@ -123,7 +134,7 @@
         },
         tooltip: {
           enabled: true,
-          backgroundColor: dark ? "rgba(17,24,39,0.92)" : "rgba(255,255,255,0.95)",
+          backgroundColor: dark ? "rgba(17,24,39,0.92)" : "rgba(255,255,255,0.96)",
           titleColor: dark ? "#fff" : t.ink,
           bodyColor: dark ? "rgba(255,255,255,0.85)" : t.text,
           borderColor: t.border,
@@ -140,6 +151,7 @@
           ticks: { color: t.text, font: { family: "Inter, system-ui", weight: "600" } }
         },
         y: {
+          beginAtZero: true,
           grid: { color: t.border, drawBorder: false },
           ticks: { color: t.text, font: { family: "Inter, system-ui", weight: "600" } }
         }
@@ -179,6 +191,19 @@
     };
   }
 
+  function emptyStatePlugin(message) {
+    return {
+      id: "emptyState",
+      afterDraw(chart) {
+        const ds = (chart.data?.datasets || []).flatMap(d => d?.data || []);
+        const hasAny = ds.some(v => Number(v) !== 0) || ds.length > 0;
+        if (!hasAny) return;
+
+        // If all points are 0, we still consider it "data" and we don't overlay.
+      }
+    };
+  }
+
   // ---------- Renderers ----------
   function renderVelocity(rows) {
     const id = "hist_velocityChart";
@@ -188,7 +213,7 @@
     destroyChart(id);
 
     const t = theme();
-    const labels = rows.map(r => r.sprint.replace("Sprint ", ""));
+    const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
     const data = rows.map(r => r.completed);
 
     const ctx = canvas.getContext("2d");
@@ -219,7 +244,7 @@
     destroyChart(id);
 
     const t = theme();
-    const labels = rows.map(r => r.sprint.replace("Sprint ", ""));
+    const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
     const committed = rows.map(r => r.committed);
     const completed = rows.map(r => r.completed);
 
@@ -248,7 +273,7 @@
     destroyChart(id);
 
     const t = theme();
-    const labels = rows.map(r => r.sprint.replace("Sprint ", ""));
+    const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
     const forecast = rows.map(r => r.forecast);
     const actual = rows.map(r => r.actual);
 
@@ -277,7 +302,7 @@
     destroyChart(id);
 
     const t = theme();
-    const labels = rows.map(r => r.sprint.replace("Sprint ", ""));
+    const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
     const added = rows.map(r => r.added);
     const removed = rows.map(r => r.removed);
 
@@ -326,7 +351,7 @@
     destroyChart(id);
 
     const t = theme();
-    const labels = rows.map(r => r.sprint.replace("Sprint ", ""));
+    const labels = rows.map(r => String(r.sprint).replace("Sprint ", ""));
     const sick = rows.map(r => r.sick);
 
     const ctx = canvas.getContext("2d");
@@ -351,7 +376,12 @@
   function renderAll() {
     if (!window.Chart) return; // Chart.js not loaded
     const rows = normalize(loadRows());
-    if (!rows.length) return;
+
+    // Even if everything is zero, we still render (so user sees a baseline)
+    if (!rows.length) {
+      // Nothing to render yet
+      return;
+    }
 
     renderVelocity(rows);
     renderPredictability(rows);
