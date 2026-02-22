@@ -330,3 +330,50 @@ body[data-page="coach"] .coachWrap{
   margin: 0 auto;
   width: 100%;
 }
+
+/* ============================
+   Sprint History Table — HARD FIX
+   (prevents broken layout)
+   ============================ */
+
+body[data-page="coach"] .historyBody{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Force table to keep column widths and allow horizontal scroll */
+body[data-page="coach"] .historyTable{
+  width: 100%;
+  min-width: 980px;              /* ✅ key: prevents squishing */
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Stable cells */
+body[data-page="coach"] .historyTable th,
+body[data-page="coach"] .historyTable td{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+/* Keep first column a bit wider */
+body[data-page="coach"] .historyTable th:first-child,
+body[data-page="coach"] .historyTable td:first-child{
+  width: 140px;
+}
+
+/* Inputs must never overflow cells */
+body[data-page="coach"] .historyTable input.fun-input{
+  width: 100% !important;        /* ✅ fill cell */
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  text-align: center;
+}
