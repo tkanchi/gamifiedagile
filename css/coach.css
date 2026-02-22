@@ -372,6 +372,25 @@ body[data-page="coach"] .historyTable input.fun-input{
   max-width: 100% !important;
   min-width: 0 !important;
   height: 34px;
+
+   /* ============================
+   Sprint labels (N-6 … N-1) — normalize typography
+   ============================ */
+body[data-page="coach"] .historyTable td:first-child,
+body[data-page="coach"] .historyTable th:first-child{
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  text-align: center !important;
+}
+
+/* Ensure ALL table body cells use same baseline */
+body[data-page="coach"] .historyTable tbody td{
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+}
   padding: 0 10px;
   border-radius: 8px;
   box-sizing: border-box;
