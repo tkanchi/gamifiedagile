@@ -126,3 +126,162 @@ body[data-page="coach"] .historyTable thead th:first-child{
   background: #f3f4f6 !important;
   z-index: 3 !important;
 }
+
+/* =========================================================
+   COACH UI RESTORE — Tabs + Sprint History header + Actions
+   Paste at END of coach.css (last wins)
+   ========================================================= */
+
+/* ---- Health / Copilot tabs (top) ---- */
+body[data-page="coach"] .tabBar{
+  display:flex !important;
+  gap:10px !important;
+  margin: 10px 0 14px !important;
+  flex-wrap:wrap !important;
+}
+
+body[data-page="coach"] .tabBtn{
+  height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(15,23,42,0.10) !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  transition: background .15s ease, transform .12s ease, border-color .15s ease !important;
+}
+
+body[data-page="coach"] .tabBtn:hover{
+  background:#f8fafc !important;
+  transform: translateY(-1px) !important;
+}
+
+body[data-page="coach"] .tabBtn.active{
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  color:#fff !important;
+}
+
+/* ---- Sprint History header (works for BOTH button + details/summary) ---- */
+body[data-page="coach"] .historyWrap{
+  background:#ffffff !important;
+  border: 1px solid rgba(15,23,42,0.08) !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+}
+
+body[data-page="coach"] .historyHead{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:flex-start !important;
+  gap:12px !important;
+  flex-wrap:wrap !important;
+}
+
+/* If you use a BUTTON toggle */
+body[data-page="coach"] .historyToggle{
+  appearance: none !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  cursor:pointer !important;
+  color:#0f172a !important;
+  text-decoration: none !important;
+}
+
+body[data-page="coach"] .historyToggle .chev{
+  width: 18px !important;
+  height: 18px !important;
+  line-height: 18px !important;
+  text-align:center !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(15,23,42,0.12) !important;
+  background:#ffffff !important;
+  color:#334155 !important;
+  font-weight: 900 !important;
+}
+
+/* If you use DETAILS/SUMMARY (native triangle + underline) */
+body[data-page="coach"] .historyWrap details{
+  width:100% !important;
+}
+
+body[data-page="coach"] .historyWrap summary{
+  list-style: none !important;              /* remove default */
+  cursor: pointer !important;
+  user-select: none !important;
+  text-decoration: none !important;         /* remove underline */
+  font-weight: 850 !important;
+  font-size: 13px !important;
+  color:#0f172a !important;
+  display: inline-flex !important;
+  align-items:center !important;
+  gap: 10px !important;
+}
+
+body[data-page="coach"] .historyWrap summary::-webkit-details-marker{
+  display:none !important;                  /* remove default arrow */
+}
+
+/* Add our own chevron for summary */
+body[data-page="coach"] .historyWrap summary::before{
+  content:"▾" !important;
+  display:inline-flex !important;
+  width: 18px !important;
+  height: 18px !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(15,23,42,0.12) !important;
+  background:#ffffff !important;
+  color:#334155 !important;
+  font-weight: 900 !important;
+  transform: rotate(0deg);
+  transition: transform .16s ease;
+}
+
+body[data-page="coach"] .historyWrap details[open] summary::before{
+  transform: rotate(0deg);
+}
+
+body[data-page="coach"] .historyWrap details:not([open]) summary::before{
+  transform: rotate(-90deg);
+}
+
+/* ---- Actions row: buttons + dropdown should look premium again ---- */
+body[data-page="coach"] .historyActions{
+  display:flex !important;
+  gap:8px !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+}
+
+body[data-page="coach"] .historyActions .btnGhost,
+body[data-page="coach"] .historyActions .btnPrimary{
+  height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+body[data-page="coach"] #hist_demoVariant{
+  height: 34px !important;
+  border-radius: 10px !important;
+  padding: 0 12px !important;
+  border: 1px solid rgba(15,23,42,0.10) !important;
+  background: #ffffff !important;
+  font-weight: 650 !important;
+}
+
+/* Tip banner polish (the line-through look usually comes from native <summary>/<fieldset> styles) */
+body[data-page="coach"] .info-banner{
+  border-radius: 12px !important;
+  border: 1px solid rgba(15,23,42,0.10) !important;
+  background: #ffffff !important;
+}
