@@ -300,5 +300,38 @@
   <script src="js/coach-history.js?v=50"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="js/coach-addons.js?v=50"></script>
+
+
+  <script>
+(function () {
+  const KEY = "scrummer_demo_variant_v1";
+  const sel = document.getElementById("hist_demoVariant");
+  const btn = document.getElementById("hist_demoBtn");
+  if (!sel || !btn) return;
+
+  // restore last selection
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) sel.value = saved;
+  } catch {}
+
+  function applyVariant(v){
+    try { localStorage.setItem(KEY, v); } catch {}
+    // some implementations read data-variant from the button
+    btn.dataset.variant = v;
+    // if coach-history exposes APIs, use them; else click
+    const api = window.ScrummerCoachHistory;
+    if (api?.loadDemoVariant) return api.loadDemoVariant(v);
+    if (api?.loadDemoData) return api.loadDemoData(v);
+    btn.click();
+  }
+
+  // change = load immediately
+  sel.addEventListener("change", () => applyVariant(sel.value));
+
+  // ensure clicking Load Demo uses latest selection
+  btn.addEventListener("click", () => applyVariant(sel.value), true);
+})();
+</script>
 </body>
 </html>
