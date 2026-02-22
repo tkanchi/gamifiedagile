@@ -1,5 +1,5 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v3.5
+ * Scrummer — Coach Addons (Clean / No Snapshots) — v3.4
  * --------------------------------------------------------------
  * Uses last 6 sprints from:
  * localStorage["scrummer_sprint_history_v1"]
@@ -7,15 +7,18 @@
  * Falls back to window.ScrummerCoachHistory.getRows()
  *
  * Updates:
- * ✅ Predictability tooltip shows "85%"
- * ✅ Scope Disruption y-axis step = 10
- * ✅ Scope Disruption bars more rounded + cleaner grid
- * ✅ Keeps your existing premium line look
+ * ✅ Y-axis step = 10 (Velocity, Capacity, Predictability %)
+ * ✅ Predictability = (Completed ÷ Committed) × 100 (single series)
+ * ✅ Premium reference look (indigo + gradient + white points)
  */
 
 (() => {
   const $ = (id) => document.getElementById(id);
   const STORAGE_KEY = "scrummer_sprint_history_v1";
+
+  /* =============================
+     Storage / Model
+  ============================== */
 
   function safeParse(str, fallback) {
     try { return JSON.parse(str); } catch { return fallback; }
@@ -51,8 +54,10 @@
       capacity: calcCapacitySP(s),
       committed: Number(s?.committedSP || 0),
       completed: Number(s?.completedSP || 0),
+
       added: Number(s?.unplannedSP ?? s?.addedSP ?? s?.addedMid ?? 0),
       removed: Number(s?.removedMid ?? s?.removedSP ?? s?.scopeRemoved ?? 0),
+
       sick: Number(s?.sickLeaveDays ?? s?.sickLeave ?? 0),
     }));
   }
@@ -91,6 +96,10 @@
 
     return [];
   }
+
+  /* =============================
+     Theme helpers
+  ============================== */
 
   function cssVar(name, fallback) {
     return getComputedStyle(document.documentElement)
@@ -141,7 +150,7 @@
     return g1;
   }
 
-  function baseOptions({ yStep = null, yMin = null, yMax = null, tooltipLabelFormatter = null } = {}) {
+  function baseOptions({ yStep = null, yMin = null, yMax = null } = {}) {
     const t = theme();
 
     const yTicks = {
@@ -187,10 +196,7 @@
           bodyColor: "#fff",
           padding: 10,
           cornerRadius: 12,
-          displayColors: true,
-          callbacks: tooltipLabelFormatter
-            ? { label: tooltipLabelFormatter }
-            : undefined
+          displayColors: true
         }
       }
     };
@@ -218,6 +224,10 @@
       charts.delete(id);
     }
   }
+
+  /* =============================
+     Charts
+  ============================== */
 
   function renderVelocity(rows) {
     const id = "hist_velocityChart";
@@ -264,18 +274,13 @@
       data: {
         labels: rows.map(r => r.sprint),
         datasets: [{
-          label: "Predictability",
+          label: "Predictability (%)",
           data: pct,
           ...lineDatasetBase(t.indigo),
           backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.28, 0.04)
         }]
       },
-      options: baseOptions({
-        yStep: 10,
-        yMin: 0,
-        yMax: 120,
-        tooltipLabelFormatter: (ctx) => `Predictability: ${ctx.parsed.y}%`
-      })
+      options: baseOptions({ yStep: 10, yMin: 0, yMax: 120 })
     });
 
     charts.set(id, chart);
@@ -329,32 +334,11 @@
       data: {
         labels: rows.map(r => r.sprint),
         datasets: [
-          {
-            label: "Added",
-            data: added,
-            backgroundColor: "rgba(34,197,94,0.85)",
-            borderRadius: 12,
-            borderSkipped: false,
-            barPercentage: 0.72,
-            categoryPercentage: 0.72
-          },
-          {
-            label: "Removed",
-            data: removed,
-            backgroundColor: "rgba(239,68,68,0.85)",
-            borderRadius: 12,
-            borderSkipped: false,
-            barPercentage: 0.72,
-            categoryPercentage: 0.72
-          }
+          { label: "Added", data: added, backgroundColor: "rgba(34,197,94,0.85)", borderRadius: 10, borderSkipped: false },
+          { label: "Removed", data: removed, backgroundColor: "rgba(239,68,68,0.85)", borderRadius: 10, borderSkipped: false }
         ]
       },
-      options: (() => {
-        const opt = baseOptions({ yStep: 10 });
-        opt.scales.x.grid.display = false;      // cleaner
-        opt.scales.y.grid.color = gridColor();  // soft grid
-        return opt;
-      })()
+      options: baseOptions({ yStep: 1 })
     });
 
     charts.set(id, chart);
