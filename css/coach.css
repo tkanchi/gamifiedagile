@@ -332,6 +332,8 @@ body[data-page="coach"] .coachWrap{
 }
 
 /* ============================
+
+/* ============================
    Sprint History Table — HARD FIX
    (prevents broken layout)
    ============================ */
@@ -341,16 +343,14 @@ body[data-page="coach"] .historyBody{
   -webkit-overflow-scrolling: touch;
 }
 
-/* Force table to keep column widths and allow horizontal scroll */
 body[data-page="coach"] .historyTable{
   width: 100%;
-  min-width: 980px;              /* ✅ key: prevents squishing */
+  min-width: 980px;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
 }
 
-/* Stable cells */
 body[data-page="coach"] .historyTable th,
 body[data-page="coach"] .historyTable td{
   overflow: hidden;
@@ -360,22 +360,23 @@ body[data-page="coach"] .historyTable td{
   vertical-align: middle;
 }
 
-/* Keep first column a bit wider */
 body[data-page="coach"] .historyTable th:first-child,
 body[data-page="coach"] .historyTable td:first-child{
   width: 140px;
 }
 
-/* Inputs must never overflow cells */
 body[data-page="coach"] .historyTable input.fun-input{
-  width: 100% !important;        /* ✅ fill cell */
+  width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  text-align: center;
+}
 
-   /* ============================
-   Sprint labels (N-6 … N-1) — normalize typography
-   ============================ */
+/* Sprint labels typography */
 body[data-page="coach"] .historyTable td:first-child,
 body[data-page="coach"] .historyTable th:first-child{
   font-size: 12.5px !important;
@@ -385,14 +386,17 @@ body[data-page="coach"] .historyTable th:first-child{
   text-align: center !important;
 }
 
-/* Ensure ALL table body cells use same baseline */
 body[data-page="coach"] .historyTable tbody td{
   font-size: 12.5px;
   font-weight: 600;
   line-height: 1.2;
 }
-  padding: 0 10px;
-  border-radius: 8px;
-  box-sizing: border-box;
-  text-align: center;
+
+/* Legend alignment — pixel perfect */
+body[data-page="coach"] .chartHeader{ align-items: center; }
+body[data-page="coach"] .chartLegend{
+  margin-top: 0;
+  gap: 14px;
+  align-items: center;
 }
+
