@@ -399,4 +399,47 @@ body[data-page="coach"] .chartLegend{
   gap: 14px;
   align-items: center;
 }
+/* ===== Sprint History polish ===== */
+body[data-page="coach"] .historyBody{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* sticky first column */
+body[data-page="coach"] .historyTable th:first-child,
+body[data-page="coach"] .historyTable td:first-child{
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #ffffff;
+  box-shadow: 6px 0 10px rgba(15,23,42,0.04);
+}
+
+/* keep header sticky cell matching header background */
+body[data-page="coach"] .historyTable thead th:first-child{
+  background: #f3f4f6;
+  z-index: 3;
+}
+
+/* subtle row hover */
+body[data-page="coach"] .historyTable tbody tr:hover td{
+  background: rgba(15,23,42,0.02);
+}
+body[data-page="coach"] .historyTable tbody tr:hover td:first-child{
+  background: #ffffff; /* keep sticky cell clean */
+}
+
+/* ===== Chart consistency ===== */
+body[data-page="coach"] .chartGrid{ gap: 12px; }
+body[data-page="coach"] .chartHeader{ margin-bottom: 6px; }
+body[data-page="coach"] canvas.chartCanvas{
+  height: 250px !important;
+  max-height: 250px !important;
+}
+@media (max-width: 560px){
+  body[data-page="coach"] canvas.chartCanvas{
+    height: 210px !important;
+    max-height: 210px !important;
+  }
+}
 
