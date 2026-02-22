@@ -1,0 +1,200 @@
+/* =========================================================
+   Scrummer — Coach Page CSS (isolated)
+   Load AFTER css/style.css in coach.html:
+     <link rel="stylesheet" href="css/style.css?v=12">
+     <link rel="stylesheet" href="css/coach.css?v=1">
+   Requires: <body data-page="coach">
+   ========================================================= */
+
+/* ---------- Slack-minimal buttons (Coach only) ---------- */
+body[data-page="coach"] .btnGhost,
+body[data-page="coach"] .btnPrimary,
+body[data-page="coach"] .tabBtn,
+body[data-page="coach"] .themeToggle{
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all .15s ease;
+  border: 1px solid transparent;
+}
+
+body[data-page="coach"] .btnGhost,
+body[data-page="coach"] .tabBtn,
+body[data-page="coach"] .themeToggle{
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,0.10);
+  color: #1f2937;
+}
+
+body[data-page="coach"] .btnGhost:hover,
+body[data-page="coach"] .tabBtn:hover,
+body[data-page="coach"] .themeToggle:hover{
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+body[data-page="coach"] .btnPrimary{
+  background: #4f46e5;
+  color: #fff;
+  border: 1px solid #4f46e5;
+}
+
+body[data-page="coach"] .btnPrimary:hover{
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
+body[data-page="coach"] .tabBtn.active{
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+
+/* ---------- Remove big rounded container look (Coach section) ---------- */
+body[data-page="coach"] .sectionCard.heroCard{
+  border-radius: 10px !important;
+}
+
+/* ---------- Sprint History (Collapsible) ---------- */
+body[data-page="coach"] .historyWrap{
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #f9fafb;
+  border: 1px solid rgba(15,23,42,0.05);
+}
+
+body[data-page="coach"] .historyHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+body[data-page="coach"] .historyHeadLeft{ min-width: 260px; }
+
+body[data-page="coach"] .historyToggle{
+  border:none;
+  background: transparent;
+  padding: 0;
+  height: auto;
+  border-radius: 10px;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+  color:#0f172a;
+}
+
+body[data-page="coach"] .historyToggle .chev{
+  display:inline-block;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align:center;
+  border-radius: 6px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background:#fff;
+  transition: transform .16s ease;
+  font-weight: 700;
+  color:#334155;
+}
+
+body[data-page="coach"] #hist_wrap.is-collapsed .historyToggle .chev{
+  transform: rotate(-90deg);
+}
+
+body[data-page="coach"] .historyTitle{
+  font-weight: 850;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+body[data-page="coach"] .historySub{
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+body[data-page="coach"] #hist_wrap.is-collapsed .historyBody{ display:none; }
+
+body[data-page="coach"] .historyActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+/* ---------- Sprint History table: center all cells ---------- */
+body[data-page="coach"] .historyTable{
+  margin-top: 10px;
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  background:#ffffff;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid rgba(15,23,42,0.06);
+  table-layout: fixed;
+}
+
+body[data-page="coach"] .historyTable th,
+body[data-page="coach"] .historyTable td{
+  padding:10px 8px;
+  border-bottom:1px solid rgba(15,23,42,0.05);
+  white-space: nowrap;
+  text-align: center;
+}
+
+body[data-page="coach"] .historyTable thead th{
+  background:#f3f4f6;
+  font-size:11.5px;
+  letter-spacing:.35px;
+  font-weight:800;
+  color:#64748b;
+  text-transform: uppercase;
+}
+
+body[data-page="coach"] .fun-input.numSm{
+  width: 104px !important;
+  min-width: 104px !important;
+  max-width: 104px !important;
+  text-align: center;
+}
+
+/* ---------- Charts: match reference (no inner boxed border) ---------- */
+body[data-page="coach"] .chartCard{
+  border: 1px solid rgba(17,24,39,0.10);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px;
+  overflow:hidden;
+  box-shadow: 0 10px 24px rgba(17,24,39,0.06);
+}
+
+body[data-page="coach"] .chartCanvasWrap{ padding: 6px 2px 0; }
+
+body[data-page="coach"] canvas.chartCanvas{
+  width: 100% !important;
+  display: block;
+  height: 260px !important;
+  max-height: 260px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+@media (max-width: 560px){
+  body[data-page="coach"] canvas.chartCanvas{
+    height: 220px !important;
+    max-height: 220px !important;
+  }
+}

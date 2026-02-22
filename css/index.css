@@ -1,0 +1,25 @@
+/* =========================================================
+   Scrummer — Index Page CSS (isolated)
+   Load AFTER css/style.css in index.html:
+     <link rel="stylesheet" href="css/style.css?v=12">
+     <link rel="stylesheet" href="css/index.css?v=1">
+   ========================================================= */
+
+/* Ensure index has: <body data-page="index"> */
+body[data-page="index"]{
+  /* index-specific overrides go here */
+}
+
+/* Safety reset: never center tables globally */
+body[data-page="index"] table th,
+body[data-page="index"] table td{
+  text-align: left;
+}
+
+/* If any Coach-only table rules leaked, neutralize them on index */
+body[data-page="index"] .historyWrap,
+body[data-page="index"] .historyTable,
+body[data-page="index"] .chartGrid,
+body[data-page="index"] .chartCard{
+  all: unset;
+}
