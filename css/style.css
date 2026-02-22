@@ -1391,3 +1391,51 @@ canvas.chartCanvas,
 
 /* Softer chart wrapper banners on Coach */
 body[data-page="coach"] .info-banner{ background: #ffffff !important; }
+
+/* =========================================================
+   Elite Nav (site-wide) — v200
+   ========================================================= */
+:root{
+  --elite-text:#0b1220;
+  --elite-muted:#64748b;
+}
+
+body{
+  color: var(--elite-text);
+}
+
+/* Smaller sidebar */
+.sideNav{
+  padding: 16px 14px !important;
+}
+
+/* Brand */
+.brandMark{
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+}
+.brandMark .material-symbols-rounded{
+  font-size: 22px;
+}
+
+/* Nav tabs elite */
+.navlink{
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.navlink .navIco{
+  font-size: 20px;
+  opacity: 0.9;
+}
+
+/* Less “puffy” active */
+.navlink.active{
+  background: rgba(17,24,39,0.06) !important;
+  border-color: rgba(17,24,39,0.10) !important;
+}
