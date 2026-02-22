@@ -1,30 +1,32 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v3.7
- * --------------------------------------------------------------
- * Uses last 6 sprints from:
- * localStorage["scrummer_sprint_history_v1"]
+ * Scrummer — Coach Addons — v200 (Elite)
+ * --------------------------------------
+ * - Slack palette only
+ * - Predictability max 100%
+ * - KPI tiles + Insights rendering
+ * - Adds Commitment vs Delivery (rounded bars)
+ * - No Team Health chart (Team Health is a KPI tile)
  *
- * Falls back to window.ScrummerCoachHistory.getRows()
- *
- * Updates:
- * ✅ Predictability axis ticks show % and tooltip shows "85%"
- * ✅ Predictability has dashed 100% target line
- * ✅ Y-axis step=10 for Predictability, Capacity Fit, Scope Disruption
- * ✅ Scope Disruption bars more rounded + cleaner grid + premium spacing
- * ✅ Legend alignment handled via CSS (coach.css)
+ * Data source:
+ * localStorage["scrummer_sprint_history_v1"]  (model {sprints:[]})
+ * Fallback: window.ScrummerCoachHistory.getRows()
  */
 
 (() => {
   const $ = (id) => document.getElementById(id);
   const STORAGE_KEY = "scrummer_sprint_history_v1";
 
-  /* =============================
-     Storage / Model
-  ============================== */
+  const COLORS = {
+    blue: "#36C5F0",   // Slack
+    green: "#2EB67D",
+    yellow: "#ECB22E",
+    red: "#E01E5A"
+  };
 
-  function safeParse(str, fallback) {
-    try { return JSON.parse(str); } catch { return fallback; }
-  }
+  /* ----------------------------
+     Storage / Model
+  ----------------------------- */
+  function safeParse(str, fallback) { try { return JSON.parse(str); } catch { return fallback; } }
 
   function loadModel() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -38,27 +40,20 @@
     return (model.sprints || []).slice(-n);
   }
 
-  function calcCapacitySP(s) {
-    const sprintDays = Number(s?.sprintDays || 10);
-    const teamMembers = Number(s?.teamMembers || 5);
-    const holidays = Number(s?.holidays || 0);
-    const leaveDays = Number(s?.leaveDays || 0);
-    const focus = Number(s?.focusFactor ?? 0.8);
-
-    const ideal = sprintDays * teamMembers;
-    const available = Math.max(0, ideal - holidays - leaveDays);
-    return Math.round(available * focus);
-  }
-
   function rowsFromModel(model) {
     return lastNSprints(model, 6).map((s, i) => ({
-      sprint: s.id || `Sprint ${i + 1}`,
-      capacity: calcCapacitySP(s),
-      committed: Number(s?.committedSP || 0),
-      completed: Number(s?.completedSP || 0),
+      sprint: String(s?.id ?? `Sprint ${i + 1}`),
 
-      added: Number(s?.unplannedSP ?? s?.addedSP ?? s?.addedMid ?? 0),
-      removed: Number(s?.removedMid ?? s?.removedSP ?? s?.scopeRemoved ?? 0),
+      // Forecast capacity from table
+      capacity: Number(s?.forecastCapacitySP ?? s?.forecastCap ?? s?.capacity ?? 0),
+
+      actualCap: Number(s?.actualCapacitySP ?? s?.actualCap ?? 0),
+
+      committed: Number(s?.committedSP ?? s?.committed ?? 0),
+      completed: Number(s?.completedSP ?? s?.completed ?? 0),
+
+      added: Number(s?.addedMid ?? s?.unplannedSP ?? s?.addedSP ?? 0),
+      removed: Number(s?.removedMid ?? s?.removedSP ?? 0),
 
       sick: Number(s?.sickLeaveDays ?? s?.sickLeave ?? 0),
     }));
@@ -68,98 +63,119 @@
     const rows = Array.isArray(rawRows) ? rawRows : [];
     return rows.map((r, i) => ({
       sprint: String(r?.sprint ?? r?.name ?? r?.label ?? `Sprint ${i + 1}`),
-
-      capacity: Number(
-        r?.forecastCap ??
-        r?.capacity ??
-        r?.forecast ??
-        r?.forecastCapacity ??
-        r?.forecastCapacitySP ??
-        r?.forecastCapSP ??
-        0
-      ),
-
-      committed: Number(r?.committedSP ?? r?.committed ?? r?.commit ?? r?.commitSP ?? 0),
-      completed: Number(r?.completedSP ?? r?.completed ?? r?.done ?? r?.doneSP ?? 0),
-
-      added: Number(r?.addedMid ?? r?.addedSP ?? r?.unplannedSP ?? r?.added ?? r?.scopeAdded ?? r?.scopeAddedSP ?? 0),
-      removed: Number(r?.removedMid ?? r?.removedSP ?? r?.removed ?? r?.scopeRemoved ?? r?.scopeRemovedSP ?? 0),
-
-      sick: Number(r?.sickLeaveDays ?? r?.sickLeave ?? r?.sick ?? 0),
+      capacity: Number(r?.forecastCap ?? r?.capacity ?? 0),
+      actualCap: Number(r?.actualCap ?? 0),
+      committed: Number(r?.committed ?? r?.committedSP ?? 0),
+      completed: Number(r?.completed ?? r?.completedSP ?? 0),
+      added: Number(r?.addedMid ?? r?.added ?? 0),
+      removed: Number(r?.removedMid ?? r?.removed ?? 0),
+      sick: Number(r?.sickLeave ?? r?.sick ?? 0),
     }));
   }
 
   function loadRows() {
     const model = loadModel();
     if (model.sprints?.length) return rowsFromModel(model);
-
     const api = window.ScrummerCoachHistory;
     if (api?.getRows) return normalizeFallbackRows(api.getRows());
-
     return [];
   }
 
-  /* =============================
-     Theme helpers
-  ============================== */
+  /* ----------------------------
+     Chart helpers
+  ----------------------------- */
+  function gridColor() { return "rgba(15, 23, 42, 0.06)"; }
 
-  function cssVar(name, fallback) {
-    return getComputedStyle(document.documentElement)
-      .getPropertyValue(name)
-      .trim() || fallback;
-  }
-
-  function theme() {
-    return {
-      textSoft: cssVar("--text-soft", "#94a3b8"),
-      indigo: cssVar("--indigo", cssVar("--accent", "#6366f1")),
-      green: cssVar("--green", "#22c55e"),
-      red: cssVar("--red", "#ef4444"),
-      amber: cssVar("--amber", "#f59e0b"),
-    };
-  }
-
-  function gridColor() {
-    return "rgba(15, 23, 42, 0.06)";
-  }
-
-  function gradientFill(context, hexOrRgb, topAlpha = 0.36, bottomAlpha = 0.06) {
+  function gradientFill(context, colorHex, topAlpha = 0.32, bottomAlpha = 0.05) {
     const chart = context.chart;
     const { ctx, chartArea } = chart;
-    if (!chartArea) return `rgba(99,102,241,${bottomAlpha})`;
+    if (!chartArea) return `${colorHex}22`;
 
-    const toRgb = (c) => {
-      if (!c) return { r: 99, g: 102, b: 241 };
-      const s = String(c).trim();
-      if (s.startsWith("rgb")) {
-        const m = s.match(/(\d+)\D+(\d+)\D+(\d+)/);
-        if (m) return { r: +m[1], g: +m[2], b: +m[3] };
-      }
-      let h = s.replace("#", "");
-      if (h.length === 3) h = h.split("").map(ch => ch + ch).join("");
-      if (h.length !== 6) return { r: 99, g: 102, b: 241 };
-      return {
-        r: parseInt(h.slice(0, 2), 16),
-        g: parseInt(h.slice(2, 4), 16),
-        b: parseInt(h.slice(4, 6), 16)
-      };
+    const toRgb = (hex) => {
+      const h = String(hex).replace("#", "");
+      const full = (h.length === 3) ? h.split("").map(c => c+c).join("") : h;
+      const r = parseInt(full.slice(0,2),16);
+      const g = parseInt(full.slice(2,4),16);
+      const b = parseInt(full.slice(4,6),16);
+      return { r,g,b };
     };
 
-    const { r, g, b } = toRgb(hexOrRgb);
+    const { r,g,b } = toRgb(colorHex);
     const g1 = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
     g1.addColorStop(0, `rgba(${r},${g},${b},${topAlpha})`);
     g1.addColorStop(1, `rgba(${r},${g},${b},${bottomAlpha})`);
     return g1;
   }
 
-  /* =============================
-     Predictability 100% target line (plugin)
-  ============================== */
+  function baseOptions({ yStep = 10, yMin = 0, yMax = null, yIsPercent = false, tooltipSuffix = "" } = {}) {
+    const yTicks = {
+      stepSize: yStep,
+      color: "rgba(100,116,139,0.85)",
+      font: { weight: 600 },
+      callback: (v) => yIsPercent ? `${v}%` : v
+    };
+
+    const yScale = {
+      beginAtZero: true,
+      ticks: yTicks,
+      grid: { color: gridColor(), drawBorder: false },
+      border: { display: false }
+    };
+    if (Number.isFinite(yMax)) yScale.max = yMax;
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 500 },
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: {
+          ticks: { color: "rgba(100,116,139,0.85)", font: { weight: 600 }, maxRotation: 0 },
+          grid: { display: false },
+          border: { display: false }
+        },
+        y: yScale
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: "rgba(15,23,42,0.92)",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          padding: 10,
+          cornerRadius: 12,
+          callbacks: {
+            label: (ctx) => {
+              const v = Number.isFinite(ctx.parsed?.y) ? ctx.parsed.y : (ctx.raw ?? 0);
+              return `${ctx.dataset.label}: ${v}${tooltipSuffix}`;
+            }
+          }
+        }
+      }
+    };
+  }
+
+  function lineDataset(color) {
+    return {
+      borderColor: color,
+      borderWidth: 3,
+      tension: 0.42,
+      cubicInterpolationMode: "monotone",
+      fill: true,
+      pointRadius: 4,
+      pointHoverRadius: 5,
+      pointBackgroundColor: "#ffffff",
+      pointBorderColor: color,
+      pointBorderWidth: 2
+    };
+  }
+
+  /* Predictability 100% target line */
   const predictTargetLine = {
     id: "predictTargetLine",
     afterDatasetsDraw(chart) {
       if (chart?.canvas?.id !== "hist_predictChart") return;
-
       const yScale = chart.scales?.y;
       if (!yScale) return;
 
@@ -179,102 +195,6 @@
     }
   };
 
-  function ensurePlugins() {
-    if (!window.Chart) return;
-    if (window.__scrummerPredictLineRegistered) return;
-    Chart.register(predictTargetLine);
-    window.__scrummerPredictLineRegistered = true;
-  }
-
-  /* =============================
-     Chart options
-  ============================== */
-
-  function baseOptions({
-    yStep = null,
-    yMin = null,
-    yMax = null,
-    yIsPercent = false,
-    tooltipValueSuffix = "",
-    tooltipLabelFormatter = null
-  } = {}) {
-    const t = theme();
-
-    const yTicks = {
-      color: t.textSoft,
-      font: { weight: 600 },
-      callback: (v) => (yIsPercent ? `${v}%` : v)
-    };
-    if (Number.isFinite(yStep)) yTicks.stepSize = yStep;
-
-    const yScale = {
-      beginAtZero: true,
-      ticks: yTicks,
-      grid: { color: gridColor(), drawBorder: false },
-      border: { display: false }
-    };
-    if (Number.isFinite(yMin)) yScale.min = yMin;
-    if (Number.isFinite(yMax)) yScale.max = yMax;
-
-    const tooltipCallbacks = tooltipLabelFormatter
-      ? { label: tooltipLabelFormatter }
-      : {
-          label: (ctx) => {
-            const v = Number.isFinite(ctx.parsed?.y) ? ctx.parsed.y : (ctx.raw ?? 0);
-            return `${ctx.dataset.label}: ${v}${tooltipValueSuffix || ""}`;
-          }
-        };
-
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 650 },
-      interaction: { mode: "index", intersect: false },
-
-      elements: {
-        line: { borderCapStyle: "round", borderJoinStyle: "round" }
-      },
-
-      scales: {
-        x: {
-          ticks: { color: t.textSoft, font: { weight: 600 }, maxRotation: 0, autoSkip: true },
-          grid: { display: false, drawBorder: false },
-          border: { display: false }
-        },
-        y: yScale
-      },
-
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          enabled: true,
-          backgroundColor: "rgba(15,23,42,0.92)",
-          titleColor: "#fff",
-          bodyColor: "#fff",
-          padding: 10,
-          cornerRadius: 12,
-          displayColors: true,
-          callbacks: tooltipCallbacks
-        }
-      }
-    };
-  }
-
-  function lineDatasetBase(color) {
-    return {
-      borderColor: color,
-      borderWidth: 3,
-      tension: 0.42,
-      cubicInterpolationMode: "monotone",
-      fill: true,
-      pointRadius: 4.5,
-      pointHoverRadius: 5.5,
-      pointBackgroundColor: "#ffffff",
-      pointBorderColor: color,
-      pointBorderWidth: 2
-    };
-  }
-
   const charts = new Map();
   function destroyChart(id) {
     if (charts.has(id)) {
@@ -283,29 +203,159 @@
     }
   }
 
-  /* =============================
-     Charts
-  ============================== */
+  /* ----------------------------
+     KPI + Insights
+  ----------------------------- */
+  const mean = (a) => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
+  const stdev = (a) => {
+    if (a.length < 2) return 0;
+    const m = mean(a);
+    const v = mean(a.map(x => (x-m)*(x-m)));
+    return Math.sqrt(v);
+  };
+  const fmt = (n) => (Number.isFinite(n) ? String(Math.round(n)) : "—");
 
-  function renderVelocity(rows) {
+  function setText(id, txt){
+    const el = $(id);
+    if (el) el.textContent = txt;
+  }
+
+  function updateKPIs(rows){
+    const completed = rows.map(r => r.completed || 0);
+    const committed = rows.map(r => r.committed || 0);
+    const cap = rows.map(r => r.capacity || 0);
+    const churn = rows.map(r => (r.added||0) + (r.removed||0));
+    const sick = rows.map(r => r.sick || 0);
+
+    const velAvg = mean(completed);
+    const velSd = stdev(completed);
+
+    const pred = rows.map(r => {
+      const c = r.committed || 0;
+      const d = r.completed || 0;
+      if (!c) return 0;
+      return Math.min(100, Math.round((d/c)*100));
+    });
+    const predAvg = mean(pred);
+    const predLatest = pred[pred.length-1] ?? 0;
+
+    const churnAvg = mean(churn);
+    const churnLatest = churn[churn.length-1] ?? 0;
+
+    const sickTotal = sick.reduce((s,x)=>s+x,0);
+    const sickLatest = sick[sick.length-1] ?? 0;
+
+    const ocLatest = (cap[cap.length-1] ? (committed[committed.length-1] / cap[cap.length-1]) : 0);
+
+    setText("kpi_velAvg", fmt(velAvg));
+    setText("kpi_velVar", `Variance: ${fmt(velSd)}`);
+
+    setText("kpi_predAvg", `${fmt(predAvg)}%`);
+    setText("kpi_predLatest", `Latest: ${fmt(predLatest)}%`);
+
+    setText("kpi_scopeAvg", fmt(churnAvg));
+    setText("kpi_scopeHint", `Latest: ${fmt(churnLatest)}`);
+
+    setText("kpi_sickTotal", fmt(sickTotal));
+    setText("kpi_sickLatest", `Latest: ${fmt(sickLatest)}`);
+
+    setText("kpi_overcommit", ocLatest ? `${Math.round(ocLatest*100)}%` : "—");
+    setText("kpi_overcommitHint", "Committed ÷ Forecast");
+  }
+
+  function renderInsights(rows){
+    const host = $("coach_insightsStack");
+    if (!host) return;
+
+    const last = rows[rows.length-1] || {};
+    const predLatest = last.committed ? Math.min(100, Math.round((last.completed/last.committed)*100)) : 0;
+    const overcommit = last.capacity ? (last.committed / last.capacity) : 0;
+    const churnAvg = mean(rows.map(r => (r.added||0)+(r.removed||0)));
+    const velSd = stdev(rows.map(r => r.completed||0));
+
+    const items = [];
+
+    if (overcommit > 1.05){
+      items.push({
+        tag: "RISK",
+        title: "Overcommit risk detected",
+        text: `Committed is above forecast capacity (${Math.round(overcommit*100)}%). Expect spillover.`,
+        action: "Action: Reduce scope 5–10% or add buffer before start."
+      });
+    } else {
+      items.push({
+        tag: "INFO",
+        title: "Commitment looks healthy",
+        text: `Committed is within forecast capacity (${Math.round(overcommit*100)}%).`,
+        action: "Keep it up: maintain the same buffer and refinement cadence."
+      });
+    }
+
+    if (velSd >= 6){
+      items.push({
+        tag: "WATCH",
+        title: "Velocity variance is high",
+        text: `Completion varies sprint-to-sprint. Forecast confidence is lower.`,
+        action: "Action: track carryover and reduce mid-sprint scope changes."
+      });
+    } else {
+      items.push({
+        tag: "INFO",
+        title: "Velocity is stable",
+        text: "Delivery trend looks stable across the last 6 sprints.",
+        action: "You can forecast with higher confidence."
+      });
+    }
+
+    if (churnAvg >= 6){
+      items.push({
+        tag: "WATCH",
+        title: "Scope churn is high",
+        text: `Average churn is ${Math.round(churnAvg)} SP (added+removed).`,
+        action: "Action: tighten refinement + add a scope buffer."
+      });
+    } else {
+      items.push({
+        tag: "INFO",
+        title: "Scope churn is under control",
+        text: `Average churn is ${Math.round(churnAvg)} SP.`,
+        action: "Keep protecting the sprint goal."
+      });
+    }
+
+    // render
+    host.innerHTML = items.slice(0,3).map(it => `
+      <div class="insightCard">
+        <div class="insightHeader">
+          <span class="insightTag">${it.tag}</span>
+          <h3 class="insightTitle">${it.title}</h3>
+        </div>
+        <div class="insightText">${it.text}</div>
+        <div class="insightAction">${it.action}</div>
+      </div>
+    `).join("");
+  }
+
+  /* ----------------------------
+     Charts
+  ----------------------------- */
+
+  function renderVelocity(rows){
     const id = "hist_velocityChart";
     const canvas = $(id);
     if (!canvas) return;
 
     destroyChart(id);
-    ensurePlugins();
-
-    const t = theme();
 
     const chart = new Chart(canvas, {
       type: "line",
       data: {
         labels: rows.map(r => r.sprint),
         datasets: [{
-          label: "Completed SP",
+          label: "Completed",
           data: rows.map(r => r.completed),
-          ...lineDatasetBase(t.indigo),
-          backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.42, 0.06)
+          ...lineDataset(COLORS.green),
+          backgroundColor: (ctx) => gradientFill(ctx, COLORS.green, 0.28, 0.04)
         }]
       },
       options: baseOptions({ yStep: 10 })
@@ -314,21 +364,18 @@
     charts.set(id, chart);
   }
 
-  function renderPredictability(rows) {
+  function renderPredictability(rows){
     const id = "hist_predictChart";
     const canvas = $(id);
     if (!canvas) return;
 
     destroyChart(id);
-    ensurePlugins();
-
-    const t = theme();
 
     const pct = rows.map(r => {
-      const committed = Number(r.committed || 0);
-      const completed = Number(r.completed || 0);
-      if (!committed) return 0;
-      return Math.round((completed / committed) * 100);
+      const c = r.committed || 0;
+      const d = r.completed || 0;
+      if (!c) return 0;
+      return Math.min(100, Math.round((d/c)*100));  // ✅ clamp to 100
     });
 
     const chart = new Chart(canvas, {
@@ -338,32 +385,66 @@
         datasets: [{
           label: "Predictability",
           data: pct,
-          ...lineDatasetBase(t.indigo),
-          backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.28, 0.04)
+          ...lineDataset(COLORS.blue),
+          backgroundColor: (ctx) => gradientFill(ctx, COLORS.blue, 0.22, 0.03)
         }]
       },
-      options: baseOptions({
-        yStep: 10,
-        yMin: 0,
-        yMax: 120,
-        yIsPercent: true,
-        tooltipValueSuffix: "%",
-        tooltipLabelFormatter: (ctx) => `Predictability: ${ctx.parsed.y}%`
-      })
+      options: baseOptions({ yStep: 10, yMax: 100, yIsPercent: true, tooltipSuffix: "%" }),
+      plugins: [predictTargetLine]
     });
 
     charts.set(id, chart);
   }
 
-  function renderCapacity(rows) {
+  function renderCommitment(rows){
+    const id = "hist_commitChart";
+    const canvas = $(id);
+    if (!canvas) return;
+
+    destroyChart(id);
+
+    const chart = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: rows.map(r => r.sprint),
+        datasets: [
+          {
+            label: "Committed",
+            data: rows.map(r => r.committed),
+            backgroundColor: "rgba(54,197,240,0.85)",
+            borderRadius: 12,
+            borderSkipped: false,
+            barPercentage: 0.75,
+            categoryPercentage: 0.75
+          },
+          {
+            label: "Completed",
+            data: rows.map(r => r.completed),
+            backgroundColor: "rgba(46,182,125,0.85)",
+            borderRadius: 12,
+            borderSkipped: false,
+            barPercentage: 0.75,
+            categoryPercentage: 0.75
+          }
+        ]
+      },
+      options: (() => {
+        const opt = baseOptions({ yStep: 10 });
+        opt.scales.x.grid.display = false;
+        opt.layout = { padding: { left: 6, right: 6 } };
+        return opt;
+      })()
+    });
+
+    charts.set(id, chart);
+  }
+
+  function renderCapacity(rows){
     const id = "hist_capacityChart";
     const canvas = $(id);
     if (!canvas) return;
 
     destroyChart(id);
-    ensurePlugins();
-
-    const t = theme();
 
     const chart = new Chart(canvas, {
       type: "line",
@@ -371,16 +452,16 @@
         labels: rows.map(r => r.sprint),
         datasets: [
           {
-            label: "Capacity",
+            label: "Forecast",
             data: rows.map(r => r.capacity),
-            ...lineDatasetBase(t.amber),
-            backgroundColor: (ctx) => gradientFill(ctx, t.amber, 0.16, 0.02)
+            ...lineDataset(COLORS.yellow),
+            backgroundColor: (ctx) => gradientFill(ctx, COLORS.yellow, 0.18, 0.03)
           },
           {
             label: "Completed",
             data: rows.map(r => r.completed),
-            ...lineDatasetBase(t.green),
-            backgroundColor: (ctx) => gradientFill(ctx, t.green, 0.18, 0.02)
+            ...lineDataset(COLORS.green),
+            backgroundColor: (ctx) => gradientFill(ctx, COLORS.green, 0.18, 0.03)
           }
         ]
       },
@@ -390,16 +471,12 @@
     charts.set(id, chart);
   }
 
-  function renderDisruption(rows) {
+  function renderDisruption(rows){
     const id = "hist_disruptionChart";
     const canvas = $(id);
     if (!canvas) return;
 
     destroyChart(id);
-    ensurePlugins();
-
-    const added = rows.map(r => Number(r.added || 0));
-    const removed = rows.map(r => Number(r.removed || 0));
 
     const chart = new Chart(canvas, {
       type: "bar",
@@ -408,8 +485,8 @@
         datasets: [
           {
             label: "Added",
-            data: added,
-            backgroundColor: "rgba(34,197,94,0.85)",
+            data: rows.map(r => r.added),
+            backgroundColor: "rgba(46,182,125,0.85)",
             borderRadius: 12,
             borderSkipped: false,
             barPercentage: 0.72,
@@ -417,8 +494,8 @@
           },
           {
             label: "Removed",
-            data: removed,
-            backgroundColor: "rgba(239,68,68,0.85)",
+            data: rows.map(r => r.removed),
+            backgroundColor: "rgba(224,30,90,0.85)",
             borderRadius: 12,
             borderSkipped: false,
             barPercentage: 0.72,
@@ -428,9 +505,8 @@
       },
       options: (() => {
         const opt = baseOptions({ yStep: 10 });
-        opt.scales.x.grid.display = false;       // cleaner
-        opt.scales.y.grid.color = gridColor();   // soft grid
-        opt.layout = { padding: { left: 6, right: 6 } }; // premium spacing
+        opt.scales.x.grid.display = false;
+        opt.layout = { padding: { left: 6, right: 6 } };
         return opt;
       })()
     });
@@ -438,45 +514,19 @@
     charts.set(id, chart);
   }
 
-  function renderSick(rows) {
-    const id = "hist_sickChart";
-    const canvas = $(id);
-    if (!canvas) return;
-
-    destroyChart(id);
-    ensurePlugins();
-
-    const t = theme();
-
-    const chart = new Chart(canvas, {
-      type: "line",
-      data: {
-        labels: rows.map(r => r.sprint),
-        datasets: [{
-          label: "Sick Leave",
-          data: rows.map(r => r.sick),
-          ...lineDatasetBase(t.red),
-          backgroundColor: (ctx) => gradientFill(ctx, t.red, 0.14, 0.02)
-        }]
-      },
-      options: baseOptions({ yStep: 1 })
-    });
-
-    charts.set(id, chart);
-  }
-
-  function renderAll() {
+  function renderAll(){
     if (!window.Chart) return;
-    ensurePlugins();
-
     const rows = loadRows();
     if (!rows.length) return;
 
+    updateKPIs(rows);
+    renderInsights(rows);
+
     renderVelocity(rows);
     renderPredictability(rows);
+    renderCommitment(rows);
     renderCapacity(rows);
     renderDisruption(rows);
-    renderSick(rows);
   }
 
   document.addEventListener("DOMContentLoaded", () => {
