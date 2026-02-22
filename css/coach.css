@@ -19,7 +19,7 @@ body[data-page="coach"] .historyTable tbody tr:hover td{
   background: rgba(15,23,42,0.02);
 }
 body[data-page="coach"] .historyTable tbody tr:hover td:first-child{
-  background:#ffffff;
+  background: rgba(15,23,42,0.02); /* match row hover */
 }
 
 /* Chart spacing + height consistency */
