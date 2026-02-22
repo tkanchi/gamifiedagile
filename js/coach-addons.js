@@ -1,5 +1,5 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v3.3 (Reference Chart Look)
+ * Scrummer — Coach Addons (Clean / No Snapshots) — v3.4
  * --------------------------------------------------------------
  * Uses last 6 sprints from:
  * localStorage["scrummer_sprint_history_v1"]
@@ -7,9 +7,9 @@
  * Falls back to window.ScrummerCoachHistory.getRows()
  *
  * Updates:
- * ✅ Velocity looks like reference (indigo curve + gradient + white points)
- * ✅ Removes “boxed” plot feel (lighter grid, no harsh borders)
- * ✅ Consistent premium styling across all charts
+ * ✅ Y-axis step = 10 (Velocity, Capacity, Predictability %)
+ * ✅ Predictability = (Completed ÷ Committed) × 100 (single series)
+ * ✅ Premium reference look (indigo + gradient + white points)
  */
 
 (() => {
@@ -55,11 +55,9 @@
       committed: Number(s?.committedSP || 0),
       completed: Number(s?.completedSP || 0),
 
-      // Scope
       added: Number(s?.unplannedSP ?? s?.addedSP ?? s?.addedMid ?? 0),
       removed: Number(s?.removedMid ?? s?.removedSP ?? s?.scopeRemoved ?? 0),
 
-      // Health
       sick: Number(s?.sickLeaveDays ?? s?.sickLeave ?? 0),
     }));
   }
@@ -82,24 +80,8 @@
       committed: Number(r?.committedSP ?? r?.committed ?? r?.commit ?? r?.commitSP ?? 0),
       completed: Number(r?.completedSP ?? r?.completed ?? r?.done ?? r?.doneSP ?? 0),
 
-      added: Number(
-        r?.addedMid ??
-        r?.addedSP ??
-        r?.unplannedSP ??
-        r?.added ??
-        r?.scopeAdded ??
-        r?.scopeAddedSP ??
-        0
-      ),
-
-      removed: Number(
-        r?.removedMid ??
-        r?.removedSP ??
-        r?.removed ??
-        r?.scopeRemoved ??
-        r?.scopeRemovedSP ??
-        0
-      ),
+      added: Number(r?.addedMid ?? r?.addedSP ?? r?.unplannedSP ?? r?.added ?? r?.scopeAdded ?? r?.scopeAddedSP ?? 0),
+      removed: Number(r?.removedMid ?? r?.removedSP ?? r?.removed ?? r?.scopeRemoved ?? r?.scopeRemovedSP ?? 0),
 
       sick: Number(r?.sickLeaveDays ?? r?.sickLeave ?? r?.sick ?? 0),
     }));
@@ -116,7 +98,7 @@
   }
 
   /* =============================
-     Theme Helpers
+     Theme helpers
   ============================== */
 
   function cssVar(name, fallback) {
@@ -127,10 +109,7 @@
 
   function theme() {
     return {
-      text: cssVar("--text-muted", "#6b7280"),
       textSoft: cssVar("--text-soft", "#94a3b8"),
-      border: cssVar("--border-soft", "rgba(0,0,0,0.08)"),
-
       indigo: cssVar("--indigo", cssVar("--accent", "#6366f1")),
       green: cssVar("--green", "#22c55e"),
       red: cssVar("--red", "#ef4444"),
@@ -138,9 +117,7 @@
     };
   }
 
-  // Subtle grid like reference
   function gridColor() {
-    // very soft cool gray
     return "rgba(15, 23, 42, 0.06)";
   }
 
@@ -149,7 +126,6 @@
     const { ctx, chartArea } = chart;
     if (!chartArea) return `rgba(99,102,241,${bottomAlpha})`;
 
-    // Convert hex → rgba quickly (supports #rgb/#rrggbb)
     const toRgb = (c) => {
       if (!c) return { r: 99, g: 102, b: 241 };
       const s = String(c).trim();
@@ -174,68 +150,45 @@
     return g1;
   }
 
-  function baseOptions({ showLegend = false } = {}) {
+  function baseOptions({ yStep = null, yMin = null, yMax = null } = {}) {
     const t = theme();
+
+    const yTicks = {
+      color: t.textSoft,
+      font: { weight: 600 }
+    };
+    if (Number.isFinite(yStep)) yTicks.stepSize = yStep;
+
+    const yScale = {
+      beginAtZero: true,
+      ticks: yTicks,
+      grid: { color: gridColor(), drawBorder: false },
+      border: { display: false }
+    };
+    if (Number.isFinite(yMin)) yScale.min = yMin;
+    if (Number.isFinite(yMax)) yScale.max = yMax;
 
     return {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 650 },
-
       interaction: { mode: "index", intersect: false },
 
       elements: {
-        line: {
-          borderCapStyle: "round",
-          borderJoinStyle: "round",
-        }
+        line: { borderCapStyle: "round", borderJoinStyle: "round" }
       },
 
       scales: {
         x: {
-          ticks: {
-            color: t.textSoft,
-            font: { weight: 600 },
-            maxRotation: 0,
-            autoSkip: true,
-          },
-          grid: {
-            display: false, // like reference
-            drawBorder: false,
-          },
-          border: {
-            display: false
-          }
+          ticks: { color: t.textSoft, font: { weight: 600 }, maxRotation: 0, autoSkip: true },
+          grid: { display: false, drawBorder: false },
+          border: { display: false }
         },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: t.textSoft,
-            font: { weight: 600 }
-          },
-          grid: {
-            color: gridColor(),
-            drawBorder: false
-          },
-          border: {
-            display: false
-          }
-        }
+        y: yScale
       },
 
       plugins: {
-        legend: {
-          display: showLegend,
-          labels: {
-            color: t.text,
-            usePointStyle: true,
-            pointStyle: "circle",
-            boxWidth: 8,
-            boxHeight: 8,
-            padding: 16,
-            font: { weight: 600 }
-          }
-        },
+        legend: { display: false },
         tooltip: {
           enabled: true,
           backgroundColor: "rgba(15,23,42,0.92)",
@@ -249,7 +202,6 @@
     };
   }
 
-  // Shared “reference look” for line series
   function lineDatasetBase(color) {
     return {
       borderColor: color,
@@ -283,7 +235,6 @@
     if (!canvas) return;
 
     destroyChart(id);
-
     const t = theme();
 
     const chart = new Chart(canvas, {
@@ -297,7 +248,7 @@
           backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.42, 0.06)
         }]
       },
-      options: baseOptions({ showLegend: false })
+      options: baseOptions({ yStep: 10 })
     });
 
     charts.set(id, chart);
@@ -311,26 +262,25 @@
     destroyChart(id);
     const t = theme();
 
+    const pct = rows.map(r => {
+      const committed = Number(r.committed || 0);
+      const completed = Number(r.completed || 0);
+      if (!committed) return 0;
+      return Math.round((completed / committed) * 100);
+    });
+
     const chart = new Chart(canvas, {
       type: "line",
       data: {
         labels: rows.map(r => r.sprint),
-        datasets: [
-          {
-            label: "Committed",
-            data: rows.map(r => r.committed),
-            ...lineDatasetBase(t.indigo),
-            backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.20, 0.02)
-          },
-          {
-            label: "Completed",
-            data: rows.map(r => r.completed),
-            ...lineDatasetBase(t.green),
-            backgroundColor: (ctx) => gradientFill(ctx, t.green, 0.18, 0.02)
-          }
-        ]
+        datasets: [{
+          label: "Predictability (%)",
+          data: pct,
+          ...lineDatasetBase(t.indigo),
+          backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.28, 0.04)
+        }]
       },
-      options: baseOptions({ showLegend: false })
+      options: baseOptions({ yStep: 10, yMin: 0, yMax: 120 })
     });
 
     charts.set(id, chart);
@@ -363,7 +313,7 @@
           }
         ]
       },
-      options: baseOptions({ showLegend: false })
+      options: baseOptions({ yStep: 10 })
     });
 
     charts.set(id, chart);
@@ -375,7 +325,6 @@
     if (!canvas) return;
 
     destroyChart(id);
-    const t = theme();
 
     const added = rows.map(r => Number(r.added || 0));
     const removed = rows.map(r => Number(r.removed || 0));
@@ -385,29 +334,11 @@
       data: {
         labels: rows.map(r => r.sprint),
         datasets: [
-          {
-            label: "Added",
-            data: added,
-            backgroundColor: "rgba(34,197,94,0.85)",
-            borderRadius: 10,
-            borderSkipped: false
-          },
-          {
-            label: "Removed",
-            data: removed,
-            backgroundColor: "rgba(239,68,68,0.85)",
-            borderRadius: 10,
-            borderSkipped: false
-          }
+          { label: "Added", data: added, backgroundColor: "rgba(34,197,94,0.85)", borderRadius: 10, borderSkipped: false },
+          { label: "Removed", data: removed, backgroundColor: "rgba(239,68,68,0.85)", borderRadius: 10, borderSkipped: false }
         ]
       },
-      options: (() => {
-        const opt = baseOptions({ showLegend: false });
-        // Bars look better with x grid off, y grid soft
-        opt.scales.x.grid.display = false;
-        opt.scales.y.grid.color = gridColor();
-        return opt;
-      })()
+      options: baseOptions({ yStep: 1 })
     });
 
     charts.set(id, chart);
@@ -432,7 +363,7 @@
           backgroundColor: (ctx) => gradientFill(ctx, t.red, 0.14, 0.02)
         }]
       },
-      options: baseOptions({ showLegend: false })
+      options: baseOptions({ yStep: 1 })
     });
 
     charts.set(id, chart);
@@ -450,11 +381,7 @@
     renderSick(rows);
   }
 
-  /* =============================
-     ✅ Chart.js-safe boot
-  ============================== */
   document.addEventListener("DOMContentLoaded", () => {
-    // Re-render charts whenever Sprint History changes
     window.addEventListener("scrummer:historyChanged", () => {
       if (window.Chart) renderAll();
     });
