@@ -11,6 +11,156 @@
 
 (function () {
   const STORAGE_KEY = "scrummer_plan_setup_v3";
+
+// ✅ Shared Sprint History (Coach ↔ Plan)
+// Single source of truth: localStorage["scrummer_sprint_history_v1"]
+const HISTORY_KEY = "scrummer_sprint_history_v1";
+
+function ensureHistoryModel() {
+  const raw = localStorage.getItem(HISTORY_KEY);
+  const m = safeParse(raw || "null", null);
+  if (m && Array.isArray(m.sprints) && m.sprints.length >= 6) return m;
+
+  const ids = ["Sprint N-6","Sprint N-5","Sprint N-4","Sprint N-3","Sprint N-2","Sprint N-1"];
+  return {
+    sprints: ids.map(id => ({
+      id,
+      forecastCapacitySP: 0,
+      actualCapacitySP: 0,
+      committedSP: 0,
+      completedSP: 0,
+      addedMid: 0,
+      removedMid: 0,
+      sickLeaveDays: 0
+    }))
+  };
+}
+
+function saveHistoryModel(model) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(model));
+}
+
+function getSprint(model, id) {
+  return (model.sprints || []).find(s => String(s?.id) === id);
+}
+
+function syncPlanVelFromHistoryIfBlank() {
+  const v1 = qs("setup_v1"), v2 = qs("setup_v2"), v3 = qs("setup_v3");
+  if (!v1 || !v2 || !v3) return;
+
+  const hasAny = String(v1.value||"").trim() || String(v2.value||"").trim() || String(v3.value||"").trim();
+  if (hasAny) return;
+
+  const m = ensureHistoryModel();
+  const n1 = getSprint(m, "Sprint N-1")?.completedSP ?? "";
+  const n2 = getSprint(m, "Sprint N-2")?.completedSP ?? "";
+  const n3 = getSprint(m, "Sprint N-3")?.completedSP ?? "";
+
+  v1.value = (n1 ? String(n1) : "");
+  v2.value = (n2 ? String(n2) : "");
+  v3.value = (n3 ? String(n3) : "");
+}
+
+function writePlanVelToHistory(setup) {
+  const m = ensureHistoryModel();
+
+  const map = [
+    ["Sprint N-1", setup?.v1],
+    ["Sprint N-2", setup?.v2],
+    ["Sprint N-3", setup?.v3],
+  ];
+
+  map.forEach(([id, v]) => {
+    const sp = clampInt3(Number(v));
+    if (sp == null) return;
+    const s = getSprint(m, id);
+    if (!s) return;
+
+    s.completedSP = sp;
+
+    // If committed is empty/0, set it = completed so Predictability isn't blank
+    if (!Number(s.committedSP || 0)) s.committedSP = sp;
+
+    // If forecast/actual capacity is empty/0, add a small baseline so Capacity Fit isn't blank
+    if (!Number(s.forecastCapacitySP || 0)) s.forecastCapacitySP = Math.max(0, sp + 2);
+    if (!Number(s.actualCapacitySP || 0)) s.actualCapacitySP = (sp + 1);
+  });
+
+  saveHistoryModel(m);
+  window.dispatchEvent(new CustomEvent("scrummer:historyChanged"));
+}
+
+// Shared demo variants (same as Coach)
+function historyModelFromVariant(variant) {
+  const ids = ["Sprint N-6","Sprint N-5","Sprint N-4","Sprint N-3","Sprint N-2","Sprint N-1"];
+  const stable = [
+    [40,38,38,37,2,1,0],
+    [42,40,40,39,2,1,0],
+    [41,40,40,40,1,1,0],
+    [43,41,41,40,2,1,0],
+    [42,41,41,41,1,1,0],
+    [44,42,42,41,2,1,0],
+  ];
+  const recovery = [
+    [30,24,40,18,14,3,4],
+    [32,28,42,24,12,5,3],
+    [35,32,40,30,8,6,2],
+    [38,36,39,34,6,5,2],
+    [40,39,40,38,4,3,1],
+    [42,41,41,41,2,1,0],
+  ];
+  const overcommit = [
+    [38,34,48,30,8,2,1],
+    [40,36,50,32,7,3,1],
+    [42,38,52,34,6,3,1],
+    [44,40,54,36,5,3,1],
+    [44,41,48,39,3,2,0],
+    [44,42,44,41,2,1,0],
+  ];
+
+  const base = variant === "stable" ? stable : (variant === "overcommit" ? overcommit : recovery);
+
+  return {
+    sprints: ids.map((id, i) => {
+      const [fc, ac, com, done, add, rem, sick] = base[i];
+      return {
+        id,
+        forecastCapacitySP: fc,
+        actualCapacitySP: ac,
+        committedSP: com,
+        completedSP: done,
+        addedMid: add,
+        removedMid: rem,
+        sickLeaveDays: sick
+      };
+    })
+  };
+}
+
+function applySharedHistoryVariantFromPreset(presetName) {
+  const variant =
+    presetName === "excellent" ? "stable" :
+    presetName === "risky" ? "overcommit" :
+    "recovery";
+
+  const m = historyModelFromVariant(variant);
+  saveHistoryModel(m);
+  window.dispatchEvent(new CustomEvent("scrummer:historyChanged"));
+
+  // Align Plan velocity inputs with the scenario
+  const v1 = qs("setup_v1"), v2 = qs("setup_v2"), v3 = qs("setup_v3");
+  if (v1 && v2 && v3) {
+    v1.value = String(getSprint(m, "Sprint N-1")?.completedSP ?? "");
+    v2.value = String(getSprint(m, "Sprint N-2")?.completedSP ?? "");
+    v3.value = String(getSprint(m, "Sprint N-3")?.completedSP ?? "");
+  }
+
+  // Optional: nudge committed SP input to match last sprint committed in scenario
+  const c = qs("setup_committedSP");
+  const committedN = getSprint(m, "Sprint N-1")?.committedSP;
+  if (c && committedN != null) c.value = String(committedN);
+}
+
   const qs = (id) => document.getElementById(id);
 
   // If IDs are missing in HTML, do NOT crash — only warn.
@@ -559,6 +709,8 @@
     put("setup_v2", p.v2);
     put("setup_v3", p.v3);
 
+    applySharedHistoryVariantFromPreset(name);
+
     hideWarn();
     sparkleXP();
     showToast(`✅ ${name[0].toUpperCase()+name.slice(1)} preset applied. Edit values anytime, then hit Save.`);
@@ -584,6 +736,8 @@
     qs("setup_saveBtn")?.addEventListener("click",()=>{
       const setup = readSetupFromUI();
       saveSetup(setup);
+      // ✅ keep Coach history in sync with Plan velocities
+      writePlanVelToHistory(setup);
       hideWarn();
       sparkleXP();
       setSaveStatus("Saved ✔");
@@ -614,6 +768,10 @@
   }
 
   document.addEventListener("DOMContentLoaded",()=>{
+
+    // ✅ If Coach history exists, auto-fill last 3 velocities when blank
+    syncPlanVelFromHistoryIfBlank();
+
     logMissingIds();
 
     // Set defaults if blank
