@@ -1,411 +1,6 @@
-/* =========================================================
-   Scrummer — Coach Page CSS (FULL / RESTORED) — v20
-   Load AFTER css/style.css in coach.html
-   Requires: <body data-page="coach">
+/* ===== D: Sprint History + Charts polish ===== */
 
-   Fixes:
-   - Restores coach layout (chart grid, cards, insights, copilot)
-   - Hides the "ribbon" text under charts (Average Velocity— etc.)
-   - Simplifies legend (dot + label; no pill tile background)
-   - Keeps corners premium (not too round)
-   ========================================================= */
-
-/* ---------- Tabs (Health / Copilot) ---------- */
-body[data-page="coach"] .tabBar{ display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 14px; }
-body[data-page="coach"] .tabBtn{
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 650;
-  cursor:pointer;
-  border: 1px solid rgba(15,23,42,0.10);
-  background: #ffffff;
-  color: #0f172a;
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
-}
-body[data-page="coach"] .tabBtn:hover{ transform: translateY(-1px); background:#f8fafc; }
-body[data-page="coach"] .tabBtn.active{
-  background:#4f46e5;
-  color:#fff;
-  border-color:#4f46e5;
-}
-body[data-page="coach"] .tabPanel.hidden{ display:none; }
-
-/* ---------- Slack-minimal buttons (Coach only) ---------- */
-body[data-page="coach"] .btnGhost,
-body[data-page="coach"] .btnPrimary,
-body[data-page="coach"] .themeToggle{
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: .2px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all .15s ease;
-  border: 1px solid transparent;
-}
-body[data-page="coach"] .btnGhost,
-body[data-page="coach"] .themeToggle{
-  background: #ffffff;
-  border: 1px solid rgba(15,23,42,0.10);
-  color: #1f2937;
-}
-body[data-page="coach"] .btnGhost:hover,
-body[data-page="coach"] .themeToggle:hover{
-  background: #f8fafc;
-  transform: translateY(-1px);
-}
-body[data-page="coach"] .btnPrimary{
-  background: #4f46e5;
-  color: #fff;
-  border: 1px solid #4f46e5;
-}
-body[data-page="coach"] .btnPrimary:hover{
-  background: #4338ca;
-  transform: translateY(-1px);
-}
-
-/* ---------- Keep Sprint Health "hero" not overly rounded ---------- */
-body[data-page="coach"] .sectionCard.heroCard{
-  border-radius: 10px !important;
-}
-
-/* ---------- Sprint History ---------- */
-body[data-page="coach"] .historyWrap{
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid rgba(15,23,42,0.08);
-}
-body[data-page="coach"] .historyHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:14px;
-  flex-wrap:wrap;
-}
-body[data-page="coach"] .historyHeadLeft{ min-width: 260px; }
-body[data-page="coach"] .historyToggle{
-  border:none;
-  background: transparent;
-  padding: 0;
-  height: auto;
-  border-radius: 10px;
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  cursor:pointer;
-  color:#0f172a;
-}
-body[data-page="coach"] .historyToggle .chev{
-  display:inline-block;
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  text-align:center;
-  border-radius: 6px;
-  border: 1px solid rgba(15,23,42,0.10);
-  background:#fff;
-  transition: transform .16s ease;
-  font-weight: 700;
-  color:#334155;
-}
-body[data-page="coach"] #hist_wrap.is-collapsed .historyToggle .chev{ transform: rotate(-90deg); }
-body[data-page="coach"] .historyTitle{
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: -0.01em;
-}
-body[data-page="coach"] .historySub{
-  margin-top: 6px;
-  font-size: 12.5px;
-  color: #64748b;
-}
-body[data-page="coach"] #hist_wrap.is-collapsed .historyBody{ display:none; }
-body[data-page="coach"] .historyActions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-/* Table */
-body[data-page="coach"] .historyTable{
-  margin-top: 10px;
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  background:#ffffff;
-  border-radius:10px;
-  overflow:hidden;
-  border:1px solid rgba(15,23,42,0.08);
-  table-layout: fixed;
-}
-body[data-page="coach"] .historyTable th,
-body[data-page="coach"] .historyTable td{
-  padding:10px 8px;
-  border-bottom:1px solid rgba(15,23,42,0.06);
-  white-space: nowrap;
-  text-align: center !important;
-}
-body[data-page="coach"] .historyTable thead th{
-  background:#f3f4f6;
-  font-size:11.5px;
-  letter-spacing:.35px;
-  font-weight:800;
-  color:#64748b;
-  text-transform: uppercase;
-  text-align:center !important;
-}
-body[data-page="coach"] .fun-input.numSm{
-  width: 104px !important;
-  min-width: 104px !important;
-  max-width: 104px !important;
-  text-align: center;
-}
-
-/* ---------- Coach Charts section ---------- */
-body[data-page="coach"] .chartGrid{
-  display:grid;
-  gap: 14px;
-  margin-top: 12px;
-}
-@media (min-width: 980px){
-  body[data-page="coach"] .chartGrid{ grid-template-columns: 1fr 1fr; }
-  body[data-page="coach"] .chartGrid .span2{ grid-column: 1 / -1; }
-}
-
-body[data-page="coach"] .chartCard{
-  border: 1px solid rgba(17,24,39,0.10);
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 14px;
-  overflow:hidden;
-  box-shadow: 0 10px 24px rgba(17,24,39,0.06);
-}
-
-body[data-page="coach"] .chartHeader{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:10px;
-  margin-bottom: 8px;
-}
-body[data-page="coach"] .chartTitle{
-  font-weight:800;
-  font-size:13px;
-  color:#0f172a;
-  letter-spacing:.2px;
-}
-body[data-page="coach"] .chartSub{
-  font-size:12px;
-  color:#64748b;
-  margin-top:4px;
-}
-
-/* Simple legend (no pill tile) */
-body[data-page="coach"] .chartLegend{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  align-items:center;
-}
-body[data-page="coach"] .legendPill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  box-shadow:none !important;
-  color:#64748b;
-  font-weight:700;
-  font-size:12.5px;
-  white-space:nowrap;
-}
-body[data-page="coach"] .legendDot{
-  width:10px;
-  height:10px;
-  border-radius:999px;
-  background: var(--dot, #6366f1);
-  box-shadow:none !important;
-}
-
-body[data-page="coach"] .chartCanvasWrap{ padding: 6px 2px 0; }
-body[data-page="coach"] canvas.chartCanvas{
-  width: 100% !important;
-  display: block;
-  height: 260px !important;
-  max-height: 260px !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-}
-@media (max-width: 560px){
-  body[data-page="coach"] canvas.chartCanvas{
-    height: 220px !important;
-    max-height: 220px !important;
-  }
-}
-
-/* ---------- Remove the "text below charts" (ribbon metrics) ---------- */
-body[data-page="coach"] .ribbonGrid{ display:none !important; }
-/* extra safety: hide any leftover ribbon values if HTML got mangled */
-body[data-page="coach"] [id^="rb_"]{ display:none !important; }
-
-/* ---------- Coach Insights (restore premium cards) ---------- */
-body[data-page="coach"] .insightsStack{
-  display:grid;
-  gap: 12px;
-  margin-top: 12px;
-}
-body[data-page="coach"] .insightCard{
-  border: 1px solid rgba(15,23,42,0.10);
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 14px;
-}
-body[data-page="coach"] .insightHeader{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-body[data-page="coach"] .insightTag{
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .5px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(15,23,42,0.10);
-  background: rgba(15,23,42,0.03);
-  color:#0f172a;
-}
-body[data-page="coach"] .insightTitle{
-  margin:0;
-  font-size: 14px;
-  font-weight: 850;
-  color:#0f172a;
-}
-body[data-page="coach"] .insightText{
-  margin: 10px 0 0;
-  color:#334155;
-  font-size: 13px;
-}
-body[data-page="coach"] .insightAction{
-  margin-top: 10px;
-  color:#0f172a;
-  font-weight: 700;
-  font-size: 13px;
-}
-
-/* subtle category colors */
-body[data-page="coach"] .insight-risk{ border-color: rgba(239,68,68,0.25); }
-body[data-page="coach"] .insight-watch{ border-color: rgba(245,158,11,0.25); }
-body[data-page="coach"] .insight-info{ border-color: rgba(99,102,241,0.22); }
-
-/* ---------- Copilot ceremony row ---------- */
-body[data-page="coach"] .ceremonyRow{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top: 12px;
-}
-body[data-page="coach"] .cerBtn{
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-}
-
-/* ---------- Coach wrap max width ---------- */
-body[data-page="coach"] .coachWrap{
-  max-width: 1100px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* ============================
-
-/* ============================
-   Sprint History Table — HARD FIX
-   (prevents broken layout)
-   ============================ */
-
-body[data-page="coach"] .historyBody{
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-body[data-page="coach"] .historyTable{
-  width: 100%;
-  min-width: 980px;
-  table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-body[data-page="coach"] .historyTable th,
-body[data-page="coach"] .historyTable td{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center !important;
-  vertical-align: middle;
-}
-
-body[data-page="coach"] .historyTable th:first-child,
-body[data-page="coach"] .historyTable td:first-child{
-  width: 140px;
-}
-
-body[data-page="coach"] .historyTable input.fun-input{
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 8px;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-/* Sprint labels typography */
-body[data-page="coach"] .historyTable td:first-child,
-body[data-page="coach"] .historyTable th:first-child{
-  font-size: 12.5px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.2px;
-  line-height: 1.2;
-  text-align: center !important;
-}
-
-body[data-page="coach"] .historyTable tbody td{
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-/* Legend alignment — pixel perfect */
-body[data-page="coach"] .chartHeader{ align-items: center; }
-body[data-page="coach"] .chartLegend{
-  margin-top: 0;
-  gap: 14px;
-  align-items: center;
-}
-/* ===== Sprint History polish ===== */
-body[data-page="coach"] .historyBody{
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* sticky first column */
+/* Sticky first column */
 body[data-page="coach"] .historyTable th:first-child,
 body[data-page="coach"] .historyTable td:first-child{
   position: sticky;
@@ -414,24 +9,30 @@ body[data-page="coach"] .historyTable td:first-child{
   background: #ffffff;
   box-shadow: 6px 0 10px rgba(15,23,42,0.04);
 }
-
-/* keep header sticky cell matching header background */
 body[data-page="coach"] .historyTable thead th:first-child{
-  background: #f3f4f6;
+  background:#f3f4f6;
   z-index: 3;
 }
 
-/* subtle row hover */
+/* Row hover */
 body[data-page="coach"] .historyTable tbody tr:hover td{
   background: rgba(15,23,42,0.02);
 }
 body[data-page="coach"] .historyTable tbody tr:hover td:first-child{
-  background: #ffffff; /* keep sticky cell clean */
+  background:#ffffff;
 }
 
-/* ===== Chart consistency ===== */
+/* Chart spacing + height consistency */
 body[data-page="coach"] .chartGrid{ gap: 12px; }
-body[data-page="coach"] .chartHeader{ margin-bottom: 6px; }
+body[data-page="coach"] .chartHeader{
+  align-items: center;
+  margin-bottom: 6px;
+}
+body[data-page="coach"] .chartLegend{
+  align-items: center;
+  gap: 14px;
+  margin-top: 0;
+}
 body[data-page="coach"] canvas.chartCanvas{
   height: 250px !important;
   max-height: 250px !important;
@@ -443,3 +44,7 @@ body[data-page="coach"] canvas.chartCanvas{
   }
 }
 
+/* Ensure legend dots always use --dot color */
+body[data-page="coach"] .legendDot{
+  background: var(--dot, #6366f1);
+}
