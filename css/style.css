@@ -1,6 +1,11 @@
 /* =========================================================
-   SCRUMMER — style.css (FULL, UPDATED v15)
-   - Coach charts: match reference (no boxed plot area)
+   SCRUMMER — style.css (FULL, UPDATED v12)
+   Adds:
+   - Neon electric glow ⚡
+   - Retro pixelated focus 🎲
+   - XP sparkle burst on Save 😄
+   - Neon forecast crackle spark ONLY on update (requires JS to toggle .spark)
+   - Optional Neon digit glow
    ========================================================= */
 
 /* =======================
@@ -9,35 +14,25 @@
 :root{
   --font-ui: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 
-  /* Page surfaces */
-  --bg-app: #f6f8fc;
+  --bg-app: #f6f7fb;
   --bg-panel: #ffffff;
   --bg-soft: rgba(17,24,39,0.04);
 
-  /* Text */
-  --text-strong: #0f172a;
   --text-main: #111827;
   --text-muted: #6b7280;
   --text-soft: #94a3b8;
-  --text-light: rgba(255,255,255,0.92);
 
-  /* Borders / shadows */
   --border: rgba(17,24,39,0.10);
-  --border-soft: rgba(17,24,39,0.08);
   --border-strong: rgba(17,24,39,0.14);
 
   --shadow: 0 16px 40px rgba(17,24,39,0.10);
   --shadow-soft: 0 10px 24px rgba(17,24,39,0.08);
 
-  /* Radius + spacing */
-  --radius: 14px;
-  --radius-m: 12px;
+  --radius: 18px;
 
-  /* Accents */
   --accent: #6366f1;
   --accent-2: #22c55e;
 
-  /* Inputs */
   --input-bg: #ffffff;
   --input-border: rgba(17,24,39,0.12);
   --input-focus: rgba(99,102,241,0.25);
@@ -46,26 +41,6 @@
   --glow-strong: 0 0 18px color-mix(in oklab, var(--accent) 35%, transparent);
   --glow-soft: 0 0 10px color-mix(in oklab, var(--accent) 22%, transparent);
   --pixel-shadow: 2px 2px 0 rgba(0,0,0,0.35);
-
-  /* Typography scale */
-  --fs-title: 32px;
-  --fs-h2: 18px;
-  --fs-body: 14.5px;
-  --fs-small: 12.5px;
-
-  --lh-title: 1.15;
-  --lh-body: 1.45;
-
-  /* Card system */
-  --card-bg: var(--bg-panel);
-  --card-border: var(--border-soft);
-  --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  --radius-card: 12px;
-  --pad-card: 18px;
-
-  /* Hero */
-  --hero-border: rgba(99,102,241,0.25);
-  --hero-glow: 0 18px 55px rgba(99,102,241,0.10);
 }
 
 /* =======================
@@ -83,69 +58,32 @@ body{
   margin:0;
   color: var(--text-main);
   background: var(--bg-app);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
-a{ color: inherit; }
-a, button{ -webkit-tap-highlight-color: transparent; }
-img{ max-width:100%; height:auto; }
-hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
-
-.mutedText{ color: var(--text-muted); }
-
-/* =======================
-   TYPOGRAPHY HIERARCHY
-   ======================= */
-.pageTitle, h1{
-  font-size: var(--fs-title);
-  line-height: var(--lh-title);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-strong);
-  margin: 0 0 6px;
-}
-.pageSubtitle, .subTitle{
-  color: var(--text-muted);
-  font-size: 15px;
-  margin: 0 0 14px;
-}
-.sectionTitle, h2{
-  font-size: var(--fs-h2);
+.sectionTitle{
+  font-size: 26px;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text-strong);
-  margin: 0 0 10px;
+  letter-spacing: -0.4px;
+  margin: 0;
 }
 .sectionSub{
   margin-top: 6px;
   color: var(--text-muted);
   font-weight: 450;
 }
+
 .kvKey{
   font-weight: 650;
   color: var(--text-main);
   margin-bottom: 6px;
 }
-.kpiLabel, .metaLabel, .chartMeta, label{
-  font-size: var(--fs-small);
+.mutedText{
+  font-size: 13px;
+  font-weight: 450;
   color: var(--text-muted);
-  font-weight: 600;
-}
-.kpiValue, .metricValue, .bigNum{
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-strong);
-}
-.unit{
-  font-size: 12px;
-  font-weight: 650;
-  color: var(--text-muted);
-  margin-left: 6px;
 }
 
 /* =======================
@@ -156,76 +94,29 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
   grid-template-columns: 280px 1fr;
   min-height: 100vh;
 }
+@media (max-width: 980px){
+  .appShell{ grid-template-columns: 1fr; }
+  .sideNav{ position: sticky; top:0; z-index: 10; }
+}
+
+@media (max-width: 560px){
+  canvas.chartCanvas{ height: 180px; }
+}
+
 
 .sideNav{
   padding: 18px 16px;
   border-right: 1px solid var(--border);
   background: var(--bg-panel);
 }
+.main{ padding: 22px 22px 40px; }
 
-.main{
-  padding: 22px 22px 40px;
-  min-width: 0;
-}
-
-/* Responsive shell */
-@media (max-width: 980px){
-  .appShell{ display:flex; flex-direction: column; min-height: 100dvh; }
-  .sideNav{
-    position: relative;
-    width: 100%;
-    height: auto;
-    max-height: none;
-    overflow: visible;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .main{ width: 100%; overflow: visible; }
-  body{ overflow-x: hidden; }
-}
-
-/* Desktop sticky sidebar only */
-@media (min-width: 1024px){
-  .sideNav{
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow: auto;
-  }
-}
-
-/* =======================
-   UNIFIED CARD SYSTEM
-   ======================= */
-.sectionCard,
-.card, .panel, .chartCard, .kpiCard, .insightCard, .forecastTile, .info-banner{
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--card-shadow);
-}
-
-.sectionCard,
-.card, .panel, .chartCard, .info-banner{
-  padding: var(--pad-card);
-}
-
-.cardHeader, .chartHeader{
-  display:flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.card:hover, .panel:hover, .chartCard:hover, .kpiCard:hover, .forecastTile:hover{
-  transform: translateY(-1px);
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-
-.info-banner{
-  background: color-mix(in oklab, var(--bg-panel) 90%, var(--bg-soft));
-  border-color: var(--border-soft);
+.sectionCard{
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-soft);
 }
 
 /* =======================
@@ -248,7 +139,10 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
   font-size: 18px;
   font-weight: 800;
 }
-.brandName{ font-weight: 800; letter-spacing: 0.06em; }
+.brandName{
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
 .brandTag{
   color: var(--text-muted);
   font-weight: 450;
@@ -282,19 +176,9 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
   border-color: color-mix(in oklab, var(--accent) 24%, transparent);
 }
 
-/* =======================
-   HERO
-   ======================= */
-.heroCard{
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(99,102,241,0.10), rgba(255,255,255,0.92));
-  border: 1px solid var(--hero-border);
-  box-shadow: var(--hero-glow);
-  padding: 18px;
-}
-.heroCard .kpiValue,
-.heroCard .metricValue{
-  font-size: 34px;
+/* Neon: active nav electric */
+:root[data-theme="neon"] .navlink.active{
+  box-shadow: var(--glow-soft);
 }
 
 /* =======================
@@ -316,7 +200,7 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
   gap: 10px;
 }
 .lvl{ font-weight: 650; font-size: 13px; color: var(--text-muted); }
-.title{ font-weight: 800; margin-top: 2px; }
+.title{ font-weight: 700; margin-top: 2px; }
 
 #moodBadge{
   padding: 6px 10px;
@@ -350,7 +234,7 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
   font-size: 13px;
 }
 
-/* XP Sparkle burst */
+/* ✅ XP Sparkle burst */
 .xpWidget.xp-sparkle::before,
 .xpWidget.xp-sparkle::after{
   content:"";
@@ -380,11 +264,25 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
 }
 
 /* =======================
+   CARDS
+   ======================= */
+.info-banner{
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+/* =======================
    BUTTONS
    ======================= */
-.btnRow{ display:flex; gap: 10px; flex-wrap:wrap; align-items:center; }
+.btnRow{
+  display:flex;
+  gap: 10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
 .btnRow-right{ justify-content:flex-end; }
-
 .btnGhost{
   border-radius: 14px;
   padding: 10px 14px;
@@ -397,18 +295,116 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
 }
 .btnGhost:hover{ transform: translateY(-1px); }
 
-.btnPrimary{
+.btnStage{
+  padding: 12px 18px;
   border-radius: 14px;
-  padding: 10px 14px;
-  font-weight: 750;
-  cursor:pointer;
-  border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
-  background: color-mix(in oklab, var(--accent) 88%, white);
-  color: #fff;
-  box-shadow: 0 10px 24px color-mix(in oklab, var(--accent) 18%, transparent);
+  font-weight: 650;
+  font-size: 14px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
   transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+  user-select:none;
 }
-.btnPrimary:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+.btnStage:hover{ transform: translateY(-1px); }
+.btnStage-next{
+  background: color-mix(in oklab, var(--accent) 92%, white);
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+  color:#fff;
+  box-shadow: 0 10px 24px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.btnStage-next:hover{ filter: brightness(1.05); }
+
+/* =======================
+   PLAN PAGE POLISH (v1.1)
+   Neatly organized + dashboard-quality layout
+   ======================= */
+.miniHeader{ margin: 2px 0 10px; }
+.miniTitle{ font-weight: 750; font-size: 14px; }
+.miniSub{ color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
+.coachNote{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.coachNoteIcon{ line-height: 1.5; }
+
+.rightPills{ display:flex; gap:10px; align-items:center; justify-content:flex-end; }
+
+.forecastGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+.forecastTile{
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  background: var(--bg-panel);
+}
+.tileLabel{ font-size: 12px; font-weight: 750; color: var(--text-muted); }
+.tileSub{ margin-top: 8px; font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+.bigNum{ font-size: 30px; font-weight: 850; letter-spacing: -0.4px; line-height: 1.1; }
+.unit{ font-size: 12px; font-weight: 650; color: var(--text-muted); margin-left: 6px; }
+
+
+
+.calcWrap{ margin-top: 16px; }
+.calcHead{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+.calcDetails summary{
+  cursor:pointer;
+  user-select:none;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.calcBody{
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.bottomCTA{
+  margin-top: 24px;
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px){
+  .forecastGrid{ grid-template-columns: 1fr; }
+  .bottomCTA{ flex-direction: column; align-items: stretch; }
+  .bottomCTA .btnStage{ width: 100%; justify-content:center; }
+}
+
+/* Neon: button electric glow */
+:root[data-theme="neon"] .btnStage-next{
+  box-shadow:
+    0 10px 26px color-mix(in oklab, var(--accent) 22%, transparent),
+    var(--glow-strong);
+}
+:root[data-theme="neon"] .btnGhost:hover{
+  box-shadow: var(--glow-soft);
+}
 
 /* =======================
    INPUTS
@@ -430,59 +426,854 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
   box-shadow: 0 0 0 4px var(--input-focus);
   transform: translateY(-1px);
 }
-.fun-input.numSm{ width: 100% !important; max-width: 140px; }
 
-textarea.fun-input{
-  height: auto;
-  padding: 12px;
-  resize: vertical;
-  min-height: 120px;
+/* compact vibe but aligned */
+.fun-input.numSm{
+  width: 100% !important;
+  max-width: 140px;
 }
 
 /* =======================
-   COACH CHARTS — Reference Look (UPDATED)
+   RELIABLE UNDERLINE GLOW
    ======================= */
+.inputWrap{
+  position: relative;
+  /* Keep the focus underline only under the input (not across the whole row) */
+  display: inline-block;
+  width: fit-content;
+}
+.inputWrap::after{
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -2px;
+  height: 2px;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--accent) 88%, white),
+    color-mix(in oklab, var(--accent-2) 80%, white)
+  );
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.22s ease, filter .2s ease, opacity .2s ease;
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0.92;
+  filter: none;
+}
+.inputWrap:focus-within::after{ transform: scaleX(1); }
 
+/* ⚡ Neon: electric underline flicker */
+:root[data-theme="neon"] .inputWrap::after{
+  opacity: 1;
+  filter:
+    drop-shadow(0 0 10px color-mix(in oklab, var(--accent) 55%, transparent))
+    drop-shadow(0 0 18px color-mix(in oklab, var(--accent) 35%, transparent));
+}
+:root[data-theme="neon"] .inputWrap:focus-within::after{
+  /* Keep calm: no flicker animation on focus underline */
+  animation: none;
+}
+@keyframes neonPulse{
+  0%,100%{ filter: drop-shadow(0 0 10px color-mix(in oklab, var(--accent) 55%, transparent)); }
+  50%{ filter: drop-shadow(0 0 18px color-mix(in oklab, var(--accent) 70%, transparent)); }
+}
+:root[data-theme="neon"] .fun-input:focus{
+  box-shadow:
+    0 0 0 4px color-mix(in oklab, var(--accent) 26%, transparent),
+    0 0 22px color-mix(in oklab, var(--accent) 24%, transparent);
+}
+
+
+/* ===========================
+   Two-column combined inputs with vertical divider
+   =========================== */
+
+.inputComboCard.twoCol{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.inputComboCard.twoCol .inputSection{
+  padding: 18px 20px;
+}
+
+/* Vertical divider (inset top & bottom) */
+.verticalDivider{
+  width: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+/* Stronger divider for dark themes */
+:root[data-theme="neon"] .verticalDivider,
+:root[data-theme="retro"] .verticalDivider{
+  background: var(--border-strong);
+}
+
+/* Mobile fallback */
+@media (max-width: 900px){
+  .inputComboCard.twoCol{
+    grid-template-columns: 1fr;
+  }
+
+  .verticalDivider{
+    width: auto;
+    height: 1px;
+    margin: 0 20px;
+  }
+}
+/* Links styled as buttons should never show underline */
+.btnStage,
+.btnStage:link,
+.btnStage:visited{
+  text-decoration: none;
+}
+
+/* 🎲 Retro: pixel focus */
+:root[data-theme="retro"] .fun-input{
+  border-radius: 10px;
+}
+:root[data-theme="retro"] .fun-input:focus{
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 28%, transparent),
+    var(--pixel-shadow);
+  transform: translateY(0);
+}
+:root[data-theme="retro"] .inputWrap::after{
+  height: 3px;
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(90deg,
+      color-mix(in oklab, var(--accent) 70%, white) 0 6px,
+      color-mix(in oklab, var(--accent-2) 70%, white) 6px 12px);
+  image-rendering: pixelated;
+  filter: none;
+  opacity: 0.95;
+}
+:root[data-theme="retro"] .inputWrap:focus-within::after{
+  animation: pixelBlink 420ms steps(2,end) infinite;
+}
+@keyframes pixelBlink{
+  0%{ opacity: 1; }
+  50%{ opacity: 0.55; }
+  100%{ opacity: 1; }
+}
+
+/* =======================
+   ✅ EVEN GRID (NO JUMP)
+   ======================= */
+.fieldGrid.fieldGrid-even{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.fieldGrid.fieldGrid-even > div{
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+.fieldGrid.fieldGrid-even .kvKey{
+  font-size: 13px;
+  line-height: 1.25;
+  min-height: 32px;
+  display:flex;
+  align-items:flex-end;
+}
+
+/* Velocity row aligned */
+.velocityRow{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.velItem{ display:flex; flex-direction:column; gap: 8px; }
+.velLabel{
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-muted);
+  min-height: 28px;
+  display:flex;
+  align-items:flex-end;
+}
+
+/* responsive */
+@media (max-width: 980px){
+  .fieldGrid.fieldGrid-even{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fun-input.numSm{ max-width: 100%; }
+}
+@media (max-width: 520px){
+  .fieldGrid.fieldGrid-even{ grid-template-columns: 1fr; }
+  .velocityRow{ grid-template-columns: 1fr; }
+}
+
+/* =======================
+   BADGES + ANIMATION
+   ======================= */
+.badge{
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  font-weight: 800;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.badge-high{
+  border-color: rgba(34,197,94,.45);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.12));
+}
+.badge-med{
+  border-color: rgba(245,158,11,.45);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(245,158,11,.14));
+}
+.badge-low{
+  border-color: rgba(239,68,68,.45);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.14));
+}
+
+.num-bump{ animation: numBump .52s ease; }
+@keyframes numBump{
+  0%{ transform: translateY(0) scale(1); }
+  35%{ transform: translateY(-2px) scale(1.04); }
+  100%{ transform: translateY(0) scale(1); }
+}
+
+.overcommit{
+  border-color: rgba(239,68,68,.55) !important;
+  box-shadow: 0 14px 34px rgba(239,68,68,.12);
+}
+
+/* =======================
+   THEME DROPDOWN FIX
+   ======================= */
+#themeSelect{
+  color: var(--text-main);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+}
+:root[data-theme="neon"] #themeSelect{
+  background: #1d1d34;
+  color: rgba(255,255,255,0.92);
+}
+:root[data-theme="retro"] #themeSelect{
+  background: #241a40;
+  color: rgba(255,242,255,0.93);
+}
+:root[data-theme="neon"] #themeSelect option{
+  background: #1d1d34;
+  color: #ffffff;
+}
+:root[data-theme="retro"] #themeSelect option{
+  background: #241a40;
+  color: #ffffff;
+}
+:root[data-theme="mint"] #themeSelect option{
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* =========================================================
+   NEON: forecast crackle spark ONLY on update
+   HTML: <div class="forecastNumber neonFx">
+   JS must toggle: .spark (added briefly on update)
+   ========================================================= */
+
+:root[data-theme="neon"] .forecastNumber.neonFx{
+  position: relative;
+  isolation: isolate;
+}
+
+/* default OFF */
+:root[data-theme="neon"] .forecastNumber.neonFx::before,
+:root[data-theme="neon"] .forecastNumber.neonFx::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  opacity:0;
+  pointer-events:none;
+}
+
+/* crackle streak */
+:root[data-theme="neon"] .forecastNumber.neonFx::before{
+  left:-10px;
+  right:-10px;
+  top: 50%;
+  height: 26px;
+  transform: translateY(-50%);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(34,211,238,0.00) 18%,
+      rgba(34,211,238,0.25) 40%,
+      rgba(167,139,250,0.20) 55%,
+      rgba(34,211,238,0.18) 70%,
+      transparent 100%),
+    repeating-linear-gradient(135deg,
+      transparent 0 10px,
+      rgba(34,211,238,0.18) 10px 11px,
+      transparent 11px 18px),
+    repeating-linear-gradient(-135deg,
+      transparent 0 12px,
+      rgba(167,139,250,0.14) 12px 13px,
+      transparent 13px 22px);
+
+  filter:
+    blur(0.2px)
+    drop-shadow(0 0 10px rgba(34,211,238,0.25))
+    drop-shadow(0 0 18px rgba(34,211,238,0.18));
+}
+
+/* shimmer sweep */
+:root[data-theme="neon"] .forecastNumber.neonFx::after{
+  inset:-6px -12px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(34,211,238,0.18), transparent 60%),
+    radial-gradient(circle at 80% 50%, rgba(167,139,250,0.14), transparent 60%);
+}
+
+/* ON: spark burst animations */
+:root[data-theme="neon"] .forecastNumber.neonFx.spark::before{
+  opacity: 0.75;
+  animation: neonCrackleOnce 520ms ease;
+}
+:root[data-theme="neon"] .forecastNumber.neonFx.spark::after{
+  opacity: 0.60;
+  animation: neonSweepOnce 700ms ease;
+}
+
+@keyframes neonCrackleOnce{
+  0%   { opacity:0; transform: translateY(-50%) scaleX(0.96); }
+  35%  { opacity:0.85; transform: translateY(-50%) scaleX(1.03); }
+  100% { opacity:0; transform: translateY(-50%) scaleX(0.99); }
+}
+@keyframes neonSweepOnce{
+  0%   { opacity:0; filter: blur(0.0px); }
+  50%  { opacity:0.7; filter: blur(0.2px); }
+  100% { opacity:0; filter: blur(0.0px); }
+}
+
+/* ✅ Optional: digit glow (Neon only) */
+:root[data-theme="neon"] #forecast_value{
+  text-shadow:
+    0 0 10px rgba(34,211,238,0.28),
+    0 0 18px rgba(34,211,238,0.14);
+}
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  :root[data-theme="neon"] .forecastNumber.neonFx.spark::before,
+  :root[data-theme="neon"] .forecastNumber.neonFx.spark::after{
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
+/* =======================
+   THEMES
+   ======================= */
+:root[data-theme="light"]{}
+
+/* Mint Arcade */
+:root[data-theme="mint"]{
+  --bg-app:#f2fbf7;
+  --bg-panel:#ffffff;
+  --bg-soft:rgba(16,185,129,0.10);
+
+  --text-main:#0f172a;
+  --text-muted:#334155;
+  --text-soft:#64748b;
+
+  --border:rgba(16,185,129,0.22);
+  --border-strong:rgba(16,185,129,0.30);
+
+  --shadow:0 16px 40px rgba(15,23,42,0.08);
+  --shadow-soft:0 10px 24px rgba(15,23,42,0.06);
+
+  --accent:#10b981;
+  --accent-2:#6366f1;
+
+  --input-bg:#ffffff;
+  --input-border:rgba(16,185,129,0.24);
+  --input-focus:rgba(16,185,129,0.22);
+}
+
+/* Neon Arena */
+:root[data-theme="neon"]{
+  --bg-app:#141425;
+  --bg-panel:#1d1d34;
+  --bg-soft:rgba(255,255,255,0.08);
+
+  --text-main:rgba(255,255,255,0.92);
+  --text-muted:rgba(208,214,255,0.80);
+  --text-soft:rgba(208,214,255,0.58);
+
+  --border:rgba(129,140,248,0.30);
+  --border-strong:rgba(129,140,248,0.36);
+
+  --shadow:0 18px 44px rgba(0,0,0,0.45);
+  --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
+
+  --accent:#22d3ee;   /* cyan electric */
+  --accent-2:#a78bfa; /* purple */
+
+  --input-bg:rgba(255,255,255,0.08);
+  --input-border:rgba(255,255,255,0.16);
+  --input-focus:rgba(34,211,238,0.22);
+
+  --glow-strong: 0 0 22px rgba(34,211,238,0.40);
+  --glow-soft: 0 0 14px rgba(34,211,238,0.26);
+}
+
+/* Retro Arcade */
+:root[data-theme="retro"]{
+  --bg-app:#1a1330;
+  --bg-panel:#241a40;
+  --bg-soft:rgba(255,255,255,0.08);
+
+  --text-main:rgba(255,242,255,0.93);
+  --text-muted:rgba(255,186,236,0.80);
+  --text-soft:rgba(255,186,236,0.58);
+
+  --border:rgba(244,114,182,0.30);
+  --border-strong:rgba(244,114,182,0.36);
+
+  --shadow:0 18px 44px rgba(0,0,0,0.45);
+  --shadow-soft:0 12px 26px rgba(0,0,0,0.30);
+
+  --accent:#f472b6;
+  --accent-2:#facc15; /* yellow pop */
+
+  --input-bg:rgba(255,255,255,0.08);
+  --input-border:rgba(255,255,255,0.16);
+  --input-focus:rgba(244,114,182,0.18);
+
+  --pixel-shadow: 3px 3px 0 rgba(0,0,0,0.45);
+}
+
+/* Mood badge variants */
+#moodBadge.mood-calm{
+  border-color: rgba(34,197,94,.35);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(34,197,94,.10));
+}
+#moodBadge.mood-alert{
+  border-color: rgba(245,158,11,.45);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(245,158,11,.12));
+}
+#moodBadge.mood-sprinting{
+  border-color: rgba(239,68,68,.50);
+  background: color-mix(in oklab, var(--bg-soft) 65%, rgba(239,68,68,.12));
+}
+
+/* ===========================
+   Input stacks (v1.2)
+   =========================== */
+.fieldStack{
+  grid-template-columns: 1fr !important;
+  row-gap: 16px !important;
+}
+.velStack{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+.velStack .velItem{
+  width: 100%;
+}
+
+/* Forecast tiles responsive: 4 → 2 → 1 */
+@media (max-width: 1100px){
+  .forecastGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Keep over-commit ratio pill from overflowing */
+#forecast_overcommit{
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  padding: 8px 10px;
+}
+
+.mini-game-container{
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: var(--radius-m);
+
+  /* XP-style gradient glow */
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.18),
+    rgba(59, 130, 246, 0.18)
+  );
+
+  border: 1px solid rgba(124, 58, 237, 0.35);
+
+  /* Glass effect */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  /* Soft XP glow */
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.05) inset,
+    0 8px 20px rgba(124, 58, 237, 0.25);
+
+  text-align: center;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mini-game-container:hover{
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 12px 28px rgba(124, 58, 237, 0.35);
+}
+
+
+#gameCanvas{
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid rgba(148,163,184,0.22);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+}
+
+.game-hint{
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+/* --- FIX: Gap tile pills getting cut off --- */
+
+/* Let the row wrap instead of overflowing */
+.deltaRow{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: left;
+}
+
+/* Allow pills to shrink and wrap inside tiles */
+.forecastTile{ min-width: 0; }
+
+/* Override earlier nowrap in .deltaPill so long text doesn't clip */
+.deltaPill { 
+  padding:6px 10px; 
+  border-radius:999px; 
+  font-size:12px; 
+  font-weight:600; 
+  white-space: normal;        /* allow wrapping */
+  word-break: break-word;     /* prevent clipping */
+  overflow-wrap: anywhere;    /* force wrap if needed */
+  max-width: 100%;
+}
+
+/* Optional: keep overcommit pill slightly more compact */
+#forecast_overcommit{
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.deltaPill--wrap{
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+}
+/* =========================================================
+   v12.1 HOTFIX: Over-commit ratio pill clipping
+   (Ensures long text wraps inside the Gap tile)
+  
+
+/* Gap tile: allow pills to wrap onto next line
+.deltaRow{
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+}
+
+ ========================================================= */
+/* Prevent any flex child from forcing overflow */
+.forecastTile{ min-width: 0; overflow: visible; }
+
+/* Over-commit ratio: override .badge nowrap */
+#forecast_overcommit{
+  display: inline-flex !important;
+  align-items: center;
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+/* Safety: if forecast pills reuse .badge */
+.forecastTile .badge{
+  max-width: 100%;
+}
+/* ===== Over-commit wide bar (below tiles) ===== */
+.overcommitBar{
+  margin-top: 12px;
+}
+
+.overcommitWidePill{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 12px 14px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(148,163,184,0.25);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* If you want it to reflect status (optional styling hooks) */
+.forecastCard.overcommit .overcommitWidePill{
+  border-color: rgba(239,68,68,0.45);
+  background: rgba(239,68,68,0.08);
+}
+
+.forecastCard:not(.overcommit) .overcommitWidePill{
+  border-color: rgba(34,197,94,0.35);
+  background: rgba(34,197,94,0.06);
+}
+
+/* ================================
+   Mobile layout fix: show MAIN content
+   ================================ */
+
+/* 1) Ensure the app shell doesn't clip main content */
+.appShell,
+.appShell * {
+  box-sizing: border-box;
+}
+
+/* If you have any overflow hidden on the shell, neutralize it on small screens */
+@media (max-width: 900px) {
+  .appShell {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important; /* prevents "only sidebar visible" */
+    display: flex;
+    flex-direction: column;       /* stack sidebar above content */
+  }
+
+  /* 2) Sidebar becomes a top section (NOT fixed) */
+  .sideNav {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* 3) Main must be visible and take full width */
+  .main {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0;
+    overflow: visible !important;
+  }
+
+  /* 4) Prevent horizontal scroll caused by fixed sidebar widths/padding */
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* Optional: if you have a fixed-width grid wrapper */
+@media (max-width: 900px) {
+  .planWrap,
+  .mainContent,
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ================================
+   MOBILE: stop sideNav from eating the whole screen
+   and restore normal page scrolling
+   ================================ */
+@media (max-width: 900px){
+
+  /* Make body the scroll container */
+  html, body{
+    height: auto !important;
+    min-height: 100%;
+    overflow: auto !important;
+  }
+
+  /* App shell must not lock scrolling */
+  .appShell{
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important;
+  }
+
+  /* If you have any inner scroll containers, disable on mobile */
+  .main, .sideNav{
+    overflow: visible !important;
+  }
+
+  /* Key fix: sideNav should size to content, not viewport */
+  .sideNav{
+    height: auto !important;
+    max-height: none !important;
+    position: relative !important;
+  }
+
+  /* If you have a sticky/fixed nav, remove it on mobile */
+  .sideNav.sticky,
+  .sideNav.fixed{
+    position: relative !important;
+    top: auto !important;
+  }
+
+  /* If your layout uses grid with fixed columns, stack it */
+  .appShell{
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Ensure main is visible and full width */
+  .main{
+    width: 100% !important;
+    min-width: 0;
+    display: block !important;
+  }
+
+  /* Reduce sidebar padding a bit (optional) */
+  .sideNav{
+    padding-bottom: 10px;
+  }
+}
+
+
+/* ===== Mobile layout fix: prevent sideNav from consuming full viewport ===== */
+@media (max-width: 900px){
+  html, body{
+    height: auto !important;
+    min-height: 100%;
+    overflow: auto !important;
+  }
+
+  .appShell{
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .sideNav{
+    position: relative !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .main{
+    width: 100% !important;
+    min-width: 0;
+    overflow: visible !important;
+    display: block !important;
+  }
+}
+
+
+
+/* ===== Desktop-only enforcement (does NOT affect mobile) ===== */
+@media (min-width: 1024px){
+  .appShell{
+    display: grid !important;
+    grid-template-columns: 280px 1fr !important;
+    min-height: 100vh !important;
+  }
+
+  .sideNav{
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    overflow: auto !important;
+  }
+
+  .main{
+    min-height: 100vh !important;
+    overflow: visible !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ===== Charts (Classy / polished) ===== */
 .chartGrid{
   display:grid;
   gap:14px;
   margin-top:12px;
 }
-@media (min-width: 980px){
-  .chartGrid{ grid-template-columns: 1fr 1fr; }
-  .chartGrid .span2{ grid-column: 1 / -1; }
-}
-
 .chartCard{
-  border-radius: 14px;
-  border: 1px solid var(--border-soft);
-  background: var(--bg-panel);
-  box-shadow: 0 10px 24px rgba(17,24,39,0.08);
-  padding: 16px;                /* a bit more like reference */
-  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--bg-soft) 92%, rgba(99,102,241,0.03));
+  border-radius: 16px;
+  padding: 12px;
+  overflow:hidden;
+  box-shadow: 0 10px 24px rgba(17,24,39,0.06);
 }
-
 .chartHeader{
   display:flex;
-  align-items:flex-start;
   justify-content:space-between;
-  gap:12px;
-  margin-bottom: 10px;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
 }
-
 .chartTitle{
-  font-weight: 900;
-  font-size: 16px;              /* closer to reference */
-  letter-spacing: -0.01em;
-  color: var(--text-strong);
+  font-weight:800;
+  font-size:13px;
+  color: var(--text-main);
+  letter-spacing:.2px;
 }
 .chartSub{
-  font-size: 12.5px;
+  font-size:12px;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top:4px;
 }
-
-/* Legend pills */
 .chartLegend{
   display:flex;
   gap:8px;
@@ -495,10 +1286,10 @@ textarea.fun-input{
   gap:6px;
   padding:6px 10px;
   border-radius:999px;
-  border:1px solid rgba(17,24,39,0.10);
-  background: rgba(17,24,39,0.03);
+  border:1px solid var(--border-soft);
+  background: color-mix(in oklab, var(--bg-soft) 82%, rgba(17,24,39,0.02));
   color: var(--text-muted);
-  font-weight:800;
+  font-weight:700;
   font-size:11px;
   white-space:nowrap;
 }
@@ -509,376 +1300,82 @@ textarea.fun-input{
   background: var(--dot, #6366f1);
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--dot, #6366f1) 18%, transparent);
 }
-
-/* ✅ IMPORTANT: remove inner boxed border + keep clean plot feel */
-.chartCanvasWrap{
-  padding: 6px 2px 0;
-}
-
-/* ✅ FIX: Chart needs explicit height (Chart.js + responsive) */
-canvas.chartCanvas{
-  width: 100% !important;
-  display: block;
-  height: 260px !important;      /* closer to reference card height */
-  max-height: 260px !important;
-  background: transparent !important;
-
-  border: none !important;       /* removes the “boxed plot area” */
-  border-radius: 0 !important;   /* reference has no inner rounding */
-}
-
-/* Mobile tweak */
-@media (max-width: 560px){
-  canvas.chartCanvas{
-    height: 220px !important;
-    max-height: 220px !important;
-  }
-}
-
-/* Remove any grey wrappers */
-.chartCell, .chartArea, .chartWrap, .chartPanel{
-  background: transparent !important;
-}
-
-/* Ribbon bars (unchanged) */
-.ribbonGrid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-  margin-top:12px;
-}
-@media (max-width: 920px){
-  .ribbonGrid{ grid-template-columns:1fr; }
-}
-.ribbonItem{
-  border:1px solid var(--border-soft);
-  border-radius:14px;
-  padding:10px;
-  background: rgba(17,24,39,0.02);
-}
-.ribbonTop{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  font-size:12px;
-  font-weight:900;
-  color: var(--text-muted);
-}
-.ribbonBar{
-  height:10px;
-  border-radius:999px;
-  background: rgba(17,24,39,0.06);
-  border:1px solid rgba(17,24,39,0.08);
-  margin-top:8px;
-  overflow:hidden;
-}
-.ribbonFill{
-  height:100%;
-  width:0%;
-  border-radius:999px;
-  transition:width .35s ease;
-}
-.ribbonGood{
-  background: linear-gradient(90deg, rgba(34,197,94,0.55), rgba(34,197,94,0.95));
-}
-.ribbonBad{
-  background: linear-gradient(90deg, rgba(239,68,68,0.45), rgba(239,68,68,0.95));
-}
-.ribbonWarn{
-  background: linear-gradient(90deg, rgba(245,158,11,0.45), rgba(245,158,11,0.95));
-}
-
-/* Dark themes keep glassy feel */
-:root[data-theme="neon"] .chartCard,
-:root[data-theme="retro"] .chartCard{
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.12);
-  box-shadow: 0 16px 38px rgba(0,0,0,0.38);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-:root[data-theme="neon"] .chartTitle,
-:root[data-theme="retro"] .chartTitle{ color: rgba(255,255,255,0.92); }
-:root[data-theme="neon"] .chartSub,
-:root[data-theme="retro"] .chartSub{ color: rgba(255,255,255,0.65); }
-:root[data-theme="neon"] .legendPill,
-:root[data-theme="retro"] .legendPill{
-  border-color: rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.75);
-}
-/* canvas stays borderless; allow a tiny glass surface if you want */
-:root[data-theme="neon"] canvas.chartCanvas,
-:root[data-theme="retro"] canvas.chartCanvas{
-  background: rgba(255,255,255,0.00) !important;
-}
-
-/* =======================
-   INSIGHTS + THEME + rest unchanged…
-   (keep your existing remaining CSS below this line if you have more)
-   ======================= */
-
-/* INSIGHT CARD SEVERITY (DEDUPED) */
-.insightsStack{ display:grid; gap:12px; margin-top:12px; }
-
-.insightCard{
-  position: relative;
-  padding: 18px;
-  border-radius: 16px;
-  border: 1px solid var(--border-soft);
+.chartCanvas{
+  width:100%;
+  display:block;
+  border-radius: 14px;
   background: #ffffff;
-  transition: transform .15s ease, box-shadow .15s ease;
+  border: 1px solid var(--border-soft);
 }
-.insightCard:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(15,23,42,0.08);
-}
-.insightCard::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  width:4px;
-  border-radius: 16px 0 0 16px;
-}
-.insight-risk::before{ background: #f43f5e; }
-.insight-watch::before{ background: #f59e0b; }
-.insight-info::before{ background: #10b981; }
 
-.insightHeader{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-.insightTag{
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .4px;
-  padding: 5px 8px;
-  border-radius: 999px;
+/* Desktop grid */
+@media (min-width: 980px){
+  .chartGrid{ grid-template-columns: 1fr 1fr; }
+  .chartGrid .span2{ grid-column: 1 / -1; }
 }
-.insight-risk .insightTag{ background: rgba(244,63,94,.12); color: #be123c; }
-.insight-watch .insightTag{ background: rgba(245,158,11,.14); color: #b45309; }
-.insight-info .insightTag{ background: rgba(16,185,129,.14); color: #047857; }
 
-.insightTitle{ font-size: 15px; font-weight: 800; margin:0; color: var(--text-strong); }
-.insightText{ font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin: 6px 0 10px; }
-.insightAction{ font-size: 13px; font-weight: 700; color: var(--accent); }
-
-/* Animations */
-.num-bump{ animation: numBump .52s ease; }
-@keyframes numBump{
-  0%{ transform: translateY(0) scale(1); }
-  35%{ transform: translateY(-2px) scale(1.04); }
-  100%{ transform: translateY(0) scale(1); }
+/* Phone: single column + comfortable height */
+@media (max-width: 560px){
+  .chartCard{ padding: 12px; }
+  canvas.chartCanvas{ height: 190px; }
 }
 
 /* =========================================================
-   PATCH v16 — Slack-minimal buttons + Collapsible Sprint History
-   Direction: Slight gamified but premium (Slack-like buttons)
+   v13 HOTFIX: Chart.js canvas stretching on scroll
+   - Force a stable, explicit canvas height on desktop
    ========================================================= */
+.chartCard{ position: relative; }
 
-/* --- Slack-minimal button system (overrides) --- */
-button,
-.btnGhost,
-.btnPrimary,
-.tabBtn,
-.themeToggle{
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: .2px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: transform .15s ease, background .15s ease, border-color .15s ease, filter .15s ease, box-shadow .15s ease;
-  border: 1px solid transparent;
+@media (min-width: 561px){
+  canvas.chartCanvas{
+    height: 220px !important;
+    max-height: 220px !important;
+   background: #ffffff;
+  }
 }
 
-/* Neutral */
-.btnGhost,
-.tabBtn,
-.themeToggle{
-  background: #ffffff;
-  border-color: rgba(15,23,42,0.10);
-  color: #1f2937;
-  box-shadow: none;
-}
-.btnGhost:hover,
-.tabBtn:hover,
-.themeToggle:hover{
-  background: #f8fafc;
-  transform: translateY(-1px);
+/* =========================================================
+   v13 FINAL: Chart stability + premium background
+   ========================================================= */
+.chartCard{ position: relative; }
+
+@media (min-width: 561px){
+  canvas.chartCanvas{
+    height: 220px !important;
+    max-height: 220px !important;
+    background: #ffffff;
+  }
 }
 
-/* Primary */
-.btnPrimary{
-  background: #4f46e5;
-  border-color: #4f46e5;
-  color: #ffffff;
-  box-shadow: 0 10px 22px rgba(79,70,229,0.16);
-}
-.btnPrimary:hover{
-  background: #4338ca;
-  border-color: #4338ca;
-  transform: translateY(-1px);
+/* =========================================================
+   v13.1: Force premium chart canvas background (override coach.html inline styles)
+   ========================================================= */
+canvas.chartCanvas,
+.chartCard canvas.chartCanvas{
+  background: #ffffff !important;
 }
 
-/* Tabs */
-.tabBar{ gap: 8px; }
-.tabBtn{
-  background: #ffffff;
-}
-.tabBtn.active{
-  background: #4f46e5;
-  border-color: #4f46e5;
-  color: #ffffff;
-  box-shadow: 0 10px 22px rgba(79,70,229,0.16);
+/* =========================================================
+   v13.2: Coach chart cards — premium white (remove grey cell)
+   Note: coach.html has inline styles; we override with !important
+   ========================================================= */
+.chartCard{
+  background: #ffffff !important;
+  border-color: rgba(17,24,39,0.10) !important;
+  box-shadow: 0 10px 24px rgba(17,24,39,0.06) !important;
 }
 
-/* --- Sprint History (Collapsible) --- */
-.historyWrap{
-  margin-top: 16px;
-  padding: 18px;
-  border-radius: 16px;
-  background: #f9fafb;
-  border: 1px solid rgba(15,23,42,0.05);
+.chartCanvas{
+  background: #ffffff !important;
+  border-color: rgba(17,24,39,0.10) !important;
 }
 
-.historyHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:14px;
-  flex-wrap:wrap;
+.legendPill{
+  background: rgba(17,24,39,0.03) !important;
+  border-color: rgba(17,24,39,0.10) !important;
 }
 
-.historyHeadLeft{ min-width: 260px; }
-
-.historyToggle{
-  border:none;
-  background: transparent;
-  padding: 0;
-  height: auto;
-  border-radius: 10px;
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  cursor:pointer;
-  color: var(--text-strong);
-}
-
-.historyToggle .chev{
-  display:inline-block;
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  text-align:center;
-  border-radius: 6px;
-  border: 1px solid rgba(15,23,42,0.10);
-  background:#fff;
-  transition: transform .16s ease;
-  font-weight: 800;
-  color:#334155;
-}
-
-#hist_wrap.is-collapsed .historyToggle .chev{
-  transform: rotate(-90deg);
-}
-
-.historyTitle{
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: -0.01em;
-}
-
-.historySub{
-  margin-top: 6px;
-  font-size: 12.5px;
-  color: #64748b;
-}
-
-.historyBody{ margin-top: 10px; }
-
-#hist_wrap.is-collapsed .historyBody{ display:none; }
-
-.historyActions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-/* Table + fixed inputs */
-.historyTable{
-  margin-top: 10px;
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  background:#ffffff;
-  border-radius:12px;
-  overflow:hidden;
-  border:1px solid rgba(15,23,42,0.06);
-  table-layout: fixed;
-}
-
-.historyTable th,
-.historyTable td{
-  padding:10px 8px;
-  border-bottom:1px solid rgba(15,23,42,0.05);
-  white-space: nowrap;
-text-align: center;
-}
-
-.historyTable thead th{
-  background:#f3f4f6;
-  font-size:11.5px;
-  letter-spacing:.35px;
-  font-weight:800;
-  color:#64748b;
-}
-
-.historyTable tbody tr:last-child td{ border-bottom:none; }
-
-.historyTable td:first-child,
-.historyTable th:first-child{
-  width: 150px;
-}
-
-.fun-input.numSm{
-  width: 104px !important;
-  min-width: 104px !important;
-  max-width: 104px !important;
-  text-align: center
-}
-
-
-/* ========================
-   COACH PAGE — remove big rounded container around Sprint Health Dashboard
-   Match coach_stitch1.html (flat section, cards inside)
-   ======================== */
-body[data-page="coach"] .sectionCard.heroCard{
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-body[data-page="coach"] .sectionCard.heroCard > .info-banner{
-  /* keep banners/cards as-is; just ensure spacing from top */
-  margin-top: 12px;
-}
-
-/* Reduce over-rounded feel across coach */
-body[data-page="coach"] .chartCard,
-body[data-page="coach"] .historyWrap,
-body[data-page="coach"] .info-banner{
-  border-radius: 12px;
-}
-
-
-/* Buttons — Slack-minimal (less rounding) */
-button, .btnGhost, .btnPrimary, .tabBtn, .themeToggle{
-  border-radius: 8px !important;
+/* Softer chart wrapper banners on Coach */
+.info-banner{
+  background: #ffffff !important;
 }
