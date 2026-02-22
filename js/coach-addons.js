@@ -1,5 +1,5 @@
 /**
- * Scrummer — Coach Addons (Clean / No Snapshots) — v3.4
+ * Scrummer — Coach Addons (Clean / No Snapshots) — v3.7
  * --------------------------------------------------------------
  * Uses last 6 sprints from:
  * localStorage["scrummer_sprint_history_v1"]
@@ -7,9 +7,11 @@
  * Falls back to window.ScrummerCoachHistory.getRows()
  *
  * Updates:
- * ✅ Y-axis step = 10 (Velocity, Capacity, Predictability %)
- * ✅ Predictability = (Completed ÷ Committed) × 100 (single series)
- * ✅ Premium reference look (indigo + gradient + white points)
+ * ✅ Predictability axis ticks show % and tooltip shows "85%"
+ * ✅ Predictability has dashed 100% target line
+ * ✅ Y-axis step=10 for Predictability, Capacity Fit, Scope Disruption
+ * ✅ Scope Disruption bars more rounded + cleaner grid + premium spacing
+ * ✅ Legend alignment handled via CSS (coach.css)
  */
 
 (() => {
@@ -150,12 +152,58 @@
     return g1;
   }
 
-  function baseOptions({ yStep = null, yMin = null, yMax = null } = {}) {
+  /* =============================
+     Predictability 100% target line (plugin)
+  ============================== */
+  const predictTargetLine = {
+    id: "predictTargetLine",
+    afterDatasetsDraw(chart) {
+      if (chart?.canvas?.id !== "hist_predictChart") return;
+
+      const yScale = chart.scales?.y;
+      if (!yScale) return;
+
+      const y = yScale.getPixelForValue(100);
+      const { left, right } = chart.chartArea;
+      const ctx = chart.ctx;
+
+      ctx.save();
+      ctx.setLineDash([6, 6]);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(15,23,42,0.18)";
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  function ensurePlugins() {
+    if (!window.Chart) return;
+    if (window.__scrummerPredictLineRegistered) return;
+    Chart.register(predictTargetLine);
+    window.__scrummerPredictLineRegistered = true;
+  }
+
+  /* =============================
+     Chart options
+  ============================== */
+
+  function baseOptions({
+    yStep = null,
+    yMin = null,
+    yMax = null,
+    yIsPercent = false,
+    tooltipValueSuffix = "",
+    tooltipLabelFormatter = null
+  } = {}) {
     const t = theme();
 
     const yTicks = {
       color: t.textSoft,
-      font: { weight: 600 }
+      font: { weight: 600 },
+      callback: (v) => (yIsPercent ? `${v}%` : v)
     };
     if (Number.isFinite(yStep)) yTicks.stepSize = yStep;
 
@@ -167,6 +215,15 @@
     };
     if (Number.isFinite(yMin)) yScale.min = yMin;
     if (Number.isFinite(yMax)) yScale.max = yMax;
+
+    const tooltipCallbacks = tooltipLabelFormatter
+      ? { label: tooltipLabelFormatter }
+      : {
+          label: (ctx) => {
+            const v = Number.isFinite(ctx.parsed?.y) ? ctx.parsed.y : (ctx.raw ?? 0);
+            return `${ctx.dataset.label}: ${v}${tooltipValueSuffix || ""}`;
+          }
+        };
 
     return {
       responsive: true,
@@ -196,7 +253,8 @@
           bodyColor: "#fff",
           padding: 10,
           cornerRadius: 12,
-          displayColors: true
+          displayColors: true,
+          callbacks: tooltipCallbacks
         }
       }
     };
@@ -235,6 +293,8 @@
     if (!canvas) return;
 
     destroyChart(id);
+    ensurePlugins();
+
     const t = theme();
 
     const chart = new Chart(canvas, {
@@ -260,6 +320,8 @@
     if (!canvas) return;
 
     destroyChart(id);
+    ensurePlugins();
+
     const t = theme();
 
     const pct = rows.map(r => {
@@ -274,13 +336,20 @@
       data: {
         labels: rows.map(r => r.sprint),
         datasets: [{
-          label: "Predictability (%)",
+          label: "Predictability",
           data: pct,
           ...lineDatasetBase(t.indigo),
           backgroundColor: (ctx) => gradientFill(ctx, t.indigo, 0.28, 0.04)
         }]
       },
-      options: baseOptions({ yStep: 10, yMin: 0, yMax: 120 })
+      options: baseOptions({
+        yStep: 10,
+        yMin: 0,
+        yMax: 120,
+        yIsPercent: true,
+        tooltipValueSuffix: "%",
+        tooltipLabelFormatter: (ctx) => `Predictability: ${ctx.parsed.y}%`
+      })
     });
 
     charts.set(id, chart);
@@ -292,6 +361,8 @@
     if (!canvas) return;
 
     destroyChart(id);
+    ensurePlugins();
+
     const t = theme();
 
     const chart = new Chart(canvas, {
@@ -325,6 +396,7 @@
     if (!canvas) return;
 
     destroyChart(id);
+    ensurePlugins();
 
     const added = rows.map(r => Number(r.added || 0));
     const removed = rows.map(r => Number(r.removed || 0));
@@ -334,11 +406,33 @@
       data: {
         labels: rows.map(r => r.sprint),
         datasets: [
-          { label: "Added", data: added, backgroundColor: "rgba(34,197,94,0.85)", borderRadius: 10, borderSkipped: false },
-          { label: "Removed", data: removed, backgroundColor: "rgba(239,68,68,0.85)", borderRadius: 10, borderSkipped: false }
+          {
+            label: "Added",
+            data: added,
+            backgroundColor: "rgba(34,197,94,0.85)",
+            borderRadius: 12,
+            borderSkipped: false,
+            barPercentage: 0.72,
+            categoryPercentage: 0.72
+          },
+          {
+            label: "Removed",
+            data: removed,
+            backgroundColor: "rgba(239,68,68,0.85)",
+            borderRadius: 12,
+            borderSkipped: false,
+            barPercentage: 0.72,
+            categoryPercentage: 0.72
+          }
         ]
       },
-      options: baseOptions({ yStep: 1 })
+      options: (() => {
+        const opt = baseOptions({ yStep: 10 });
+        opt.scales.x.grid.display = false;       // cleaner
+        opt.scales.y.grid.color = gridColor();   // soft grid
+        opt.layout = { padding: { left: 6, right: 6 } }; // premium spacing
+        return opt;
+      })()
     });
 
     charts.set(id, chart);
@@ -350,6 +444,8 @@
     if (!canvas) return;
 
     destroyChart(id);
+    ensurePlugins();
+
     const t = theme();
 
     const chart = new Chart(canvas, {
@@ -371,6 +467,8 @@
 
   function renderAll() {
     if (!window.Chart) return;
+    ensurePlugins();
+
     const rows = loadRows();
     if (!rows.length) return;
 
