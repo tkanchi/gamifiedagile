@@ -6,8 +6,8 @@
   <title>Scrummer — Coach</title>
 
   <!-- ✅ Bump cache after CSS refresh -->
-  <link rel="stylesheet" href="css/style.css?v=80">
-  <link rel="stylesheet" href="css/coach.css?v=80">
+  <link rel="stylesheet" href="css/style.css?v=81">
+  <link rel="stylesheet" href="css/coach.css?v=81">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <style>
@@ -64,8 +64,8 @@
       <div class="coachWrap">
 
         <div class="tabBar">
-          <button class="tabBtn active" data-tab="health">Health</button>
-          <button class="tabBtn" data-tab="copilot">Copilot</button>
+          <button class="tabBtn active" data-tab="health" type="button">Health</button>
+          <button class="tabBtn" data-tab="copilot" type="button">Copilot</button>
         </div>
 
         <!-- ================= HEALTH ================= -->
@@ -78,7 +78,6 @@
               <strong>Tip:</strong> Load demo data once — charts update instantly (no extra clicks).
             </div>
 
-            
             <!-- ✅ Sprint History (Collapsible) -->
             <div class="historyWrap" id="hist_wrap" style="margin-top:12px;">
               <div class="historyHead">
@@ -387,6 +386,61 @@
 
   <!-- charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/coach-addons.js?v=80"></script>
+  <script src="js/coach-addons.js?v=81"></script>
+
+  <!-- ✅ Demo dropdown bridge: make variant selection actually apply -->
+  <script>
+    (function () {
+      const KEY = "scrummer_demo_variant_v1";
+
+      function setVariant(v) {
+        try { localStorage.setItem(KEY, v); } catch {}
+        const btn = document.getElementById("hist_demoBtn");
+        if (btn) btn.dataset.variant = v; // helps if coach-history reads dataset
+      }
+
+      function getVariant() {
+        const sel = document.getElementById("hist_demoVariant");
+        if (sel && sel.value) return sel.value;
+        try { return localStorage.getItem(KEY) || "recovery"; } catch { return "recovery"; }
+      }
+
+      function applyDemo(v) {
+        const api = window.ScrummerCoachHistory;
+
+        // Try common API shapes if present
+        if (api) {
+          if (typeof api.setDemoVariant === "function") api.setDemoVariant(v);
+          if (typeof api.loadDemoVariant === "function") return api.loadDemoVariant(v);
+          if (typeof api.loadDemo === "function") return api.loadDemo(v);
+          if (typeof api.loadDemoData === "function") return api.loadDemoData(v);
+        }
+
+        // Fallback: click the existing demo button (whatever handler is attached)
+        const btn = document.getElementById("hist_demoBtn");
+        if (btn) btn.click();
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const sel = document.getElementById("hist_demoVariant");
+        const btn = document.getElementById("hist_demoBtn");
+        if (!sel || !btn) return;
+
+        // Initialize from storage
+        const stored = getVariant();
+        if (stored && sel.value !== stored) sel.value = stored;
+        setVariant(sel.value);
+
+        // ✅ Auto-load on variant change
+        sel.addEventListener("change", () => {
+          setVariant(sel.value);
+          applyDemo(sel.value);
+        });
+
+        // ✅ Ensure clicking "Load Demo Data" always uses current selection
+        btn.addEventListener("click", () => setVariant(getVariant()), true);
+      });
+    })();
+  </script>
 </body>
 </html>
