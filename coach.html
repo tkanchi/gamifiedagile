@@ -5,13 +5,13 @@
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <title>Scrummer — Coach</title>
 
-  <!-- ✅ Bump cache after CSS refresh -->
-  <link rel="stylesheet" href="css/style.css?v=81">
-  <link rel="stylesheet" href="css/coach.css?v=81">
+  <!-- ✅ MUST load both -->
+  <link rel="stylesheet" href="css/style.css?v=50">
+  <link rel="stylesheet" href="css/coach.css?v=50">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <style>
-    /* Tabs (Health / Copilot) */
+    /* Keep only tiny page-local helpers; styling belongs in css/coach.css */
     .tabBar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
     .tabPanel.hidden{display:none}
     .coachWrap{max-width:1100px;margin:0 auto;width:100%;}
@@ -115,14 +115,14 @@
                   <table class="historyTable">
                     <thead>
                       <tr>
-                        <th align="left">SPRINT</th>
-                        <th align="right">FORECAST SP</th>
-                        <th align="right">ACTUAL SP</th>
-                        <th align="right">COMMITTED SP</th>
-                        <th align="right">COMPLETED SP</th>
-                        <th align="right">SP ADDED</th>
-                        <th align="right">SP REMOVED</th>
-                        <th align="right">SICK LEAVES</th>
+                        <th align="center">SPRINT</th>
+                        <th align="center">FORECAST SP</th>
+                        <th align="center">ACTUAL SP</th>
+                        <th align="center">COMMITTED SP</th>
+                        <th align="center">COMPLETED SP</th>
+                        <th align="center">SP ADDED</th>
+                        <th align="center">SP REMOVED</th>
+                        <th align="center">SICK LEAVES</th>
                       </tr>
                     </thead>
                     <tbody id="hist_rows"></tbody>
@@ -150,22 +150,11 @@
                       <div class="chartSub">Completed SP (last 6 sprints)</div>
                     </div>
                     <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
+                      <span class="legendPill" style="--dot:#6366f1;"><span class="legendDot"></span>Completed SP</span>
                     </div>
                   </div>
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_velocityChart"></canvas>
-                  </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Average Velocity</span><span id="rb_velAvgTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_velAvg"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Stability</span><span id="rb_velStabilityTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_velStability"></div></div>
-                    </div>
                   </div>
                 </div>
 
@@ -174,26 +163,14 @@
                   <div class="chartHeader">
                     <div>
                       <div class="chartTitle">Predictability</div>
-                      <div class="chartSub">Committed vs Completed</div>
+                      <div class="chartSub">Completed ÷ Committed (%)</div>
                     </div>
                     <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#6366f1;"><span class="legendDot"></span>Committed</span>
-                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
+                      <span class="legendPill" style="--dot:#6366f1;"><span class="legendDot"></span>Predictability (%)</span>
                     </div>
                   </div>
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_predictChart"></canvas>
-                  </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Say-Do (Latest)</span><span id="rb_sayDoTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_sayDo"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Commitment Risk</span><span id="rb_commitRiskTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_commitRisk"></div></div>
-                    </div>
                   </div>
                 </div>
 
@@ -212,17 +189,6 @@
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_capacityChart"></canvas>
                   </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Capacity Fit (Latest)</span><span id="rb_capFitTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_capFit"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Overcommit</span><span id="rb_overcommitTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_overcommit"></div></div>
-                    </div>
-                  </div>
                 </div>
 
                 <!-- Scope -->
@@ -239,17 +205,6 @@
                   </div>
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_disruptionChart"></canvas>
-                  </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Scope Added (Avg)</span><span id="rb_scopeAddTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_scopeAdd"></div></div>
-                    </div>
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Scope Removed (Avg)</span><span id="rb_scopeRemTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonBad" id="rb_scopeRem"></div></div>
-                    </div>
                   </div>
                 </div>
 
@@ -280,32 +235,7 @@
               </div>
 
               <div class="insightsStack" id="coach_insightsStack">
-                <div class="insightCard insight-risk">
-                  <div class="insightHeader">
-                    <span class="insightTag">RISK</span>
-                    <h3 class="insightTitle">Overcommit risk detected</h3>
-                  </div>
-                  <p class="insightText">Committed work is trending above actual capacity. This increases spillover and quality risk.</p>
-                  <div class="insightAction">Action: Reduce 5–8 SP or add buffer before sprint start.</div>
-                </div>
-
-                <div class="insightCard insight-watch">
-                  <div class="insightHeader">
-                    <span class="insightTag">WATCH</span>
-                    <h3 class="insightTitle">Velocity variance increasing</h3>
-                  </div>
-                  <p class="insightText">Completed SP fluctuates sprint-to-sprint. Forecast confidence is lower when variance is high.</p>
-                  <div class="insightAction">Action: Track carryover % and limit mid-sprint scope changes.</div>
-                </div>
-
-                <div class="insightCard insight-info">
-                  <div class="insightHeader">
-                    <span class="insightTag">INFO</span>
-                    <h3 class="insightTitle">Predictability improving</h3>
-                  </div>
-                  <p class="insightText">Committed vs completed gap is narrowing across recent sprints.</p>
-                  <div class="insightAction">Keep it up: Maintain the same buffer and refinement cadence.</div>
-                </div>
+                <!-- your JS can populate this; these are safe placeholders -->
               </div>
             </div>
 
@@ -331,46 +261,14 @@
             </div>
 
             <div class="info-banner" style="margin-top:14px;">
-              <div class="kvKey" style="font-size:16px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                <span id="copilot_panelTitle">Choose a ceremony</span>
-                <button class="btnGhost" id="copilot_newAngleBtn" style="padding:8px 10px;" type="button">🔄 New angle</button>
-              </div>
-              <div class="panelBody" id="copilot_panelBody">
-                Your prompts will appear here.
-              </div>
-            </div>
-
-            <div class="info-banner" style="margin-top:14px;">
               <div class="kvKey">Capture decisions</div>
-              <div class="mutedText" style="margin-top:6px;">
-                Saved locally in your browser.
-              </div>
-
-              <textarea class="fun-input" id="copilot_decisionNotes"
-                        placeholder="Decisions / risks / owners..." rows="5"></textarea>
-
+              <textarea class="fun-input" id="copilot_decisionNotes" placeholder="Decisions / risks / owners..." rows="5"></textarea>
               <div class="btnRow" style="margin-top:10px;">
                 <button class="btnPrimary" id="copilot_saveBtn" type="button">Save</button>
                 <button class="btnGhost" id="copilot_clearBtn" type="button">Reset</button>
               </div>
-
               <div id="copilot_saveStatus" style="margin-top:10px; font-weight:650;"></div>
-              <div class="mutedText" id="copilot_saveHint" style="margin-top:6px;"></div>
-
-              <div class="info-banner" style="margin-top:12px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                  <div class="kvKey">Saved Decisions</div>
-                  <button class="btnGhost" id="copilot_copyRetroBtn" style="padding:8px 10px;" type="button">📋 Copy Retro Summary</button>
-                </div>
-
-                <div id="copilot_decisionsEmpty" style="color:var(--text-muted); font-weight:450; margin-top:6px;">
-                  No saved decisions yet.
-                </div>
-
-                <div id="copilot_decisionsList" style="display:grid; gap:10px; margin-top:10px;"></div>
-              </div>
             </div>
-
           </div>
         </section>
 
@@ -378,132 +276,29 @@
     </main>
   </div>
 
-  <script src="js/theme.js"></script>
-  <script src="js/xp.js"></script>
-
-  <!-- history table logic first -->
-  <script src="js/coach-history.js?v=8"></script>
-
-  <!-- charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/coach-addons.js?v=81"></script>
-
-  <!-- ✅ Demo dropdown bridge: make variant selection actually apply -->
+  <!-- ✅ Tab switcher (so the page works even if other scripts don’t manage tabs) -->
   <script>
-    (function () {
-      const KEY = "scrummer_demo_variant_v1";
-
-      function setVariant(v) {
-        try { localStorage.setItem(KEY, v); } catch {}
-        const btn = document.getElementById("hist_demoBtn");
-        if (btn) btn.dataset.variant = v; // helps if coach-history reads dataset
+    (function(){
+      const btns = Array.from(document.querySelectorAll(".tabBtn"));
+      const panels = {
+        health: document.getElementById("panel-health"),
+        copilot: document.getElementById("panel-copilot")
+      };
+      function show(name){
+        btns.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+        Object.keys(panels).forEach(k => panels[k]?.classList.toggle("hidden", k !== name));
       }
-
-      function getVariant() {
-        const sel = document.getElementById("hist_demoVariant");
-        if (sel && sel.value) return sel.value;
-        try { return localStorage.getItem(KEY) || "recovery"; } catch { return "recovery"; }
-      }
-
-      function applyDemo(v) {
-        const api = window.ScrummerCoachHistory;
-
-        // Try common API shapes if present
-        if (api) {
-          if (typeof api.setDemoVariant === "function") api.setDemoVariant(v);
-          if (typeof api.loadDemoVariant === "function") return api.loadDemoVariant(v);
-          if (typeof api.loadDemo === "function") return api.loadDemo(v);
-          if (typeof api.loadDemoData === "function") return api.loadDemoData(v);
-        }
-
-        // Fallback: click the existing demo button (whatever handler is attached)
-        const btn = document.getElementById("hist_demoBtn");
-        if (btn) btn.click();
-      }
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const sel = document.getElementById("hist_demoVariant");
-        const btn = document.getElementById("hist_demoBtn");
-        if (!sel || !btn) return;
-
-        // Initialize from storage
-        const stored = getVariant();
-        if (stored && sel.value !== stored) sel.value = stored;
-        setVariant(sel.value);
-
-        // ✅ Auto-load on variant change
-        sel.addEventListener("change", () => {
-          setVariant(sel.value);
-          applyDemo(sel.value);
-        });
-
-        // ✅ Ensure clicking "Load Demo Data" always uses current selection
-        btn.addEventListener("click", () => setVariant(getVariant()), true);
-      });
+      btns.forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
+      show("health");
     })();
   </script>
-  <script>
-/**
- * Sprint History Demo Variant — robust dropdown fix
- * - Persists selection
- * - Applies selection to demo load
- * - Works even if coach-history.js doesn't bind the select
- */
-(function () {
-  const KEY = "scrummer_demo_variant_v1";
 
-  function qs(id){ return document.getElementById(id); }
+  <!-- Your existing scripts -->
+  <script src="js/theme.js?v=50"></script>
+  <script src="js/xp.js?v=50"></script>
 
-  function readVariant() {
-    const sel = qs("hist_demoVariant");
-    if (sel && sel.value) return sel.value;
-    try { return localStorage.getItem(KEY) || "recovery"; } catch { return "recovery"; }
-  }
-
-  function writeVariant(v) {
-    try { localStorage.setItem(KEY, v); } catch {}
-    const btn = qs("hist_demoBtn");
-    if (btn) btn.dataset.variant = v; // helpful if coach-history reads dataset
-  }
-
-  function applyDemo(v) {
-    // If your coach-history exposes an API, try it first (no click hacks)
-    const api = window.ScrummerCoachHistory;
-    if (api) {
-      if (typeof api.setDemoVariant === "function") api.setDemoVariant(v);
-      if (typeof api.loadDemoVariant === "function") return api.loadDemoVariant(v);
-      if (typeof api.loadDemo === "function") return api.loadDemo(v);
-      if (typeof api.loadDemoData === "function") return api.loadDemoData(v);
-    }
-
-    // Fallback: trigger the existing button handler (most reliable)
-    const btn = qs("hist_demoBtn");
-    if (btn) btn.click();
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const sel = qs("hist_demoVariant");
-    const btn = qs("hist_demoBtn");
-
-    if (!sel || !btn) return;
-
-    // Init from storage
-    const stored = readVariant();
-    if (stored && sel.value !== stored) sel.value = stored;
-    writeVariant(sel.value);
-
-    // ✅ Change dropdown = load demo instantly
-    sel.addEventListener("change", () => {
-      writeVariant(sel.value);
-      applyDemo(sel.value);
-    });
-
-    // ✅ Ensure demo button always uses current dropdown value
-    btn.addEventListener("click", () => {
-      writeVariant(readVariant());
-    }, true);
-  });
-})();
-</script>
+  <script src="js/coach-history.js?v=50"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="js/coach-addons.js?v=50"></script>
 </body>
 </html>
