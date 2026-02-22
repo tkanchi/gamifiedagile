@@ -6,8 +6,7 @@
   <title>Scrummer — Coach</title>
 
   <!-- ✅ Bump cache after CSS refresh -->
-  <link rel="stylesheet" href="css/style.css?v=12">
-  <link rel="stylesheet" href="css/coach.css?v=1">
+  <link href="css/style.css?v=13" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
   <style>
@@ -116,14 +115,14 @@
                   <table class="historyTable">
                     <thead>
                       <tr>
-                        <th align="left">SPRINT</th>
-                        <th align="right">FORECAST SP</th>
-                        <th align="right">ACTUAL SP</th>
-                        <th align="right">COMMITTED SP</th>
-                        <th align="right">COMPLETED SP</th>
-                        <th align="right">SP ADDED</th>
-                        <th align="right">SP REMOVED</th>
-                        <th align="right">SICK LEAVES</th>
+                        <th align="center">SPRINT</th>
+                        <th align="center">FORECAST SP</th>
+                        <th align="center">ACTUAL SP</th>
+                        <th align="center">COMMITTED SP</th>
+                        <th align="center">COMPLETED SP</th>
+                        <th align="center">SP ADDED</th>
+                        <th align="center">SP REMOVED</th>
+                        <th align="center">SICK LEAVES</th>
                       </tr>
                     </thead>
                     <tbody id="hist_rows"></tbody>
@@ -157,11 +156,7 @@
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_velocityChart"></canvas>
                   </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Average Velocity</span><span id="rb_velAvgTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_velAvg"></div></div>
+<div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_velAvg"></div></div>
                     </div>
                     <div class="ribbonItem">
                       <div class="ribbonTop"><span>Stability</span><span id="rb_velStabilityTxt">—</span></div>
@@ -175,21 +170,16 @@
                   <div class="chartHeader">
                     <div>
                       <div class="chartTitle">Predictability</div>
-                      <div class="chartSub">Committed vs Completed</div>
+                      <div class="chartSub">Completed ÷ Committed (%)</div>
                     </div>
                     <div class="chartLegend">
-                      <span class="legendPill" style="--dot:#6366f1;"><span class="legendDot"></span>Committed</span>
-                      <span class="legendPill" style="--dot:#22c55e;"><span class="legendDot"></span>Completed</span>
+                      <span class=\"legendPill\" style=\"--dot:#6366f1;\"><span class=\"legendDot\"></span>Predictability (%)</span>
                     </div>
                   </div>
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_predictChart"></canvas>
                   </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Say-Do (Latest)</span><span id="rb_sayDoTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_sayDo"></div></div>
+<div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_sayDo"></div></div>
                     </div>
                     <div class="ribbonItem">
                       <div class="ribbonTop"><span>Commitment Risk</span><span id="rb_commitRiskTxt">—</span></div>
@@ -213,11 +203,7 @@
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_capacityChart"></canvas>
                   </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Capacity Fit (Latest)</span><span id="rb_capFitTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_capFit"></div></div>
+<div class="ribbonBar"><div class="ribbonFill ribbonGood" id="rb_capFit"></div></div>
                     </div>
                     <div class="ribbonItem">
                       <div class="ribbonTop"><span>Overcommit</span><span id="rb_overcommitTxt">—</span></div>
@@ -241,11 +227,7 @@
                   <div class="chartCanvasWrap">
                     <canvas class="chartCanvas" id="hist_disruptionChart"></canvas>
                   </div>
-
-                  <div class="ribbonGrid">
-                    <div class="ribbonItem">
-                      <div class="ribbonTop"><span>Scope Added (Avg)</span><span id="rb_scopeAddTxt">—</span></div>
-                      <div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_scopeAdd"></div></div>
+<div class="ribbonBar"><div class="ribbonFill ribbonWarn" id="rb_scopeAdd"></div></div>
                     </div>
                     <div class="ribbonItem">
                       <div class="ribbonTop"><span>Scope Removed (Avg)</span><span id="rb_scopeRemTxt">—</span></div>
@@ -387,6 +369,6 @@
 
   <!-- charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/coach-addons.js?v=33"></script>
+  <script src="js/coach-addons.js?v=34"></script>
 </body>
 </html>
