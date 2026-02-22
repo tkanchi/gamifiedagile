@@ -48,3 +48,81 @@ body[data-page="coach"] canvas.chartCanvas{
 body[data-page="coach"] .legendDot{
   background: var(--dot, #6366f1);
 }
+
+/* =========================================================
+   Sprint History Table — UI RESTORE (last-wins)
+   ========================================================= */
+
+body[data-page="coach"] .historyWrap{
+  background: #ffffff !important;
+  border: 1px solid rgba(15,23,42,0.08) !important;
+  border-radius: 12px !important;
+}
+
+body[data-page="coach"] .historyBody{
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Table container */
+body[data-page="coach"] .historyTable{
+  width: 100% !important;
+  min-width: 980px !important;
+  table-layout: fixed !important;
+
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+
+  background: #ffffff !important;
+  border: 1px solid rgba(15,23,42,0.08) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* Header */
+body[data-page="coach"] .historyTable thead th{
+  background: #f3f4f6 !important;
+  color: #64748b !important;
+  font-weight: 800 !important;
+  font-size: 11.5px !important;
+  letter-spacing: .35px !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  border-bottom: 1px solid rgba(15,23,42,0.06) !important;
+}
+
+/* Cells */
+body[data-page="coach"] .historyTable th,
+body[data-page="coach"] .historyTable td{
+  padding: 10px 8px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  border-bottom: 1px solid rgba(15,23,42,0.06) !important;
+}
+
+/* Inputs in cells */
+body[data-page="coach"] .historyTable input.fun-input{
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+/* Sticky first column (optional but nice) */
+body[data-page="coach"] .historyTable th:first-child,
+body[data-page="coach"] .historyTable td:first-child{
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 2 !important;
+  background: #ffffff !important;
+  box-shadow: 6px 0 10px rgba(15,23,42,0.04) !important;
+}
+body[data-page="coach"] .historyTable thead th:first-child{
+  background: #f3f4f6 !important;
+  z-index: 3 !important;
+}
