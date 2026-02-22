@@ -442,5 +442,68 @@
       });
     })();
   </script>
+  <script>
+/**
+ * Sprint History Demo Variant — robust dropdown fix
+ * - Persists selection
+ * - Applies selection to demo load
+ * - Works even if coach-history.js doesn't bind the select
+ */
+(function () {
+  const KEY = "scrummer_demo_variant_v1";
+
+  function qs(id){ return document.getElementById(id); }
+
+  function readVariant() {
+    const sel = qs("hist_demoVariant");
+    if (sel && sel.value) return sel.value;
+    try { return localStorage.getItem(KEY) || "recovery"; } catch { return "recovery"; }
+  }
+
+  function writeVariant(v) {
+    try { localStorage.setItem(KEY, v); } catch {}
+    const btn = qs("hist_demoBtn");
+    if (btn) btn.dataset.variant = v; // helpful if coach-history reads dataset
+  }
+
+  function applyDemo(v) {
+    // If your coach-history exposes an API, try it first (no click hacks)
+    const api = window.ScrummerCoachHistory;
+    if (api) {
+      if (typeof api.setDemoVariant === "function") api.setDemoVariant(v);
+      if (typeof api.loadDemoVariant === "function") return api.loadDemoVariant(v);
+      if (typeof api.loadDemo === "function") return api.loadDemo(v);
+      if (typeof api.loadDemoData === "function") return api.loadDemoData(v);
+    }
+
+    // Fallback: trigger the existing button handler (most reliable)
+    const btn = qs("hist_demoBtn");
+    if (btn) btn.click();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sel = qs("hist_demoVariant");
+    const btn = qs("hist_demoBtn");
+
+    if (!sel || !btn) return;
+
+    // Init from storage
+    const stored = readVariant();
+    if (stored && sel.value !== stored) sel.value = stored;
+    writeVariant(sel.value);
+
+    // ✅ Change dropdown = load demo instantly
+    sel.addEventListener("change", () => {
+      writeVariant(sel.value);
+      applyDemo(sel.value);
+    });
+
+    // ✅ Ensure demo button always uses current dropdown value
+    btn.addEventListener("click", () => {
+      writeVariant(readVariant());
+    }, true);
+  });
+})();
+</script>
 </body>
 </html>
