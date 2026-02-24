@@ -5,8 +5,8 @@
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <title>Scrummer — Coach</title>
 
-  <link rel="stylesheet" href="css/style.css?v=221">
-  <link rel="stylesheet" href="css/coach.css?v=221">
+  <link rel="stylesheet" href="../css/style.css?v=221">
+  <link rel="stylesheet" href="../css/coach.css?v=221">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet"/>
 
@@ -68,9 +68,9 @@
         <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
         <div class="mutedText" id="xpHint" style="margin-top:8px; font-weight:700;">Coach 3 more sprints to reach Level 2 Pro.</div>
       </div>
-      <div class="sideThemeInline">
-  <div class="sideThemeLabel">🎮 Theme</div>
-  <div class="inputWrap">
+      <div style="margin-top:14px;">
+        <div class="mutedText" style="margin-bottom:6px;">🎨 Theme</div>
+        <div class="inputWrap">
           <select class="fun-input" id="themeSelect" aria-label="Theme">
             <option value="light">🌤️ Light</option>
             <option value="mint">🍃 Mint Arcade</option>
@@ -78,7 +78,7 @@
             <option value="retro">🎲 Retro Arcade</option>
           </select>
         </div>
-</div>
+      </div>
     
       <button class="helpBtn" type="button"><span class="material-symbols-rounded">support_agent</span>Help &amp; Support</button>
     </aside>
@@ -168,36 +168,46 @@
             <div class="coachBodyGrid">
 
               <div class="coachLeftCol">
-                <!-- Tiles (rendered by JS; max 4 visible) -->
-                <div class="tileBar">
-                  <div class="tileBarLeft">
-                    <div class="miniTitle" style="font-weight:850;">Key Tiles</div>
-                    <div class="mutedText" style="font-size:12px;">Max 4. Defaults: Predictability, Overcommit, Team Health, Stability Index.</div>
+                <!-- KPI tiles — visual template (code.html) -->
+                <div class="metricGrid" aria-label="Key sprint metrics">
+                  <div class="metricCard">
+                    <div class="metricTop">
+                      <div class="metricName"><span class="material-symbols-rounded">trending_up</span> Sprint Velocity</div>
+                      <div class="metricDelta" id="kpi_velVar">—</div>
+                    </div>
+                    <div class="metricValue"><span id="kpi_velAvg">—</span></div>
+                    <div class="metricMeta">pts avg</div>
+                    <div class="metricFormula" id="kpi_velFormula" style="display:none;">Avg(Completed SP)</div>
                   </div>
-                  <button class="btnGhost" id="tileCustomizeBtn" type="button">
-                    <span class="material-symbols-rounded" style="font-size:18px;">tune</span>
-                    Customize tiles
-                  </button>
-                </div>
-                <div class="metricGrid" id="tileGrid" aria-label="Key sprint metrics"></div>
 
-                <!-- Tile customizer modal (built by JS) -->
-                <div class="modal" id="tileModal" aria-hidden="true" style="display:none;">
-                  <div class="modalScrim" data-close="1"></div>
-                  <div class="modalCard" role="dialog" aria-modal="true" aria-label="Customize tiles">
-                    <div class="modalHead">
-                      <div>
-                        <div class="modalTitle">Customize tiles</div>
-                        <div class="mutedText" id="tileModalCount">Select up to 4 tiles • Selected 0/4</div>
-                      </div>
+                  <div class="metricCard">
+                    <div class="metricTop">
+                      <div class="metricName"><span class="material-symbols-rounded">shield</span> Predictability</div>
+                      <div class="metricDelta" id="kpi_predLatest">—</div>
                     </div>
-                    <div class="modalBody" id="tileModalBody"></div>
-                    <div class="modalFoot">
-                      <button class="btnGhost" id="tileModalReset" type="button">Reset to default</button>
-                      <div style="flex:1"></div>
-                      <button class="btnGhost" data-close="1" type="button">Cancel</button>
-                      <button class="btnPrimary" id="tileModalSave" type="button">Save</button>
+                    <div class="metricValue"><span id="kpi_predAvg">—</span></div>
+                    <div class="metricMeta">last 6 sprints</div>
+                    <div class="metricFormula" id="kpi_predFormula" style="display:none;">Avg(Completed ÷ Committed) × 100</div>
+                  </div>
+
+                  <div class="metricCard">
+                    <div class="metricTop">
+                      <div class="metricName"><span class="material-symbols-rounded">swap_horiz</span> Scope Churn</div>
+                      <div class="metricDelta" id="kpi_scopeHint">—</div>
                     </div>
+                    <div class="metricValue"><span id="kpi_scopeAvg">—</span></div>
+                    <div class="metricMeta">avg churn</div>
+                    <div class="metricFormula" id="kpi_scopeFormula" style="display:none;">Avg(Added + Removed)</div>
+                  </div>
+
+                  <div class="metricCard">
+                    <div class="metricTop">
+                      <div class="metricName"><span class="material-symbols-rounded">target</span> Capacity Fit</div>
+                      <div class="metricDelta" id="kpi_overcommitHint">—</div>
+                    </div>
+                    <div class="metricValue"><span id="kpi_overcommit">—</span></div>
+                    <div class="metricMeta">latest ratio</div>
+                    <div class="metricFormula" id="kpi_overcommitFormula" style="display:none;">Committed ÷ Forecast Capacity (latest)</div>
                   </div>
                 </div>
 
@@ -209,11 +219,11 @@
                   </button>
                   <div class="formulaBody" id="formula_body" style="display:none;">
                     <ul class="formulaList">
+                      <li><b>Avg Velocity</b> = Avg(Completed SP) across the last 6 sprints.</li>
                       <li><b>Predictability</b> = Avg(Completed ÷ Committed) × 100 (capped at 100%).</li>
-                      <li><b>Overcommit Ratio</b> = Committed ÷ Forecast Capacity (latest) × 100.</li>
-                      <li><b>Team Health</b> (0–100) blends stability signals: churn, carryover, interruptions, and volatility.</li>
-                      <li><b>Stability Index</b> (0–100) is higher when velocity variance is low and delivery is predictable.</li>
-                      <li><b>Optional tiles</b>: Avg Velocity, Scope Churn %, Forecast Accuracy, Commitment Reliability, Carryover %, Capacity Fit.</li>
+                      <li><b>Scope Churn</b> = Avg(Added + Removed mid-sprint).</li>
+                      <li><b>Capacity Fit</b> = Committed ÷ Forecast Capacity (latest sprint).</li>
+                      <li><b>Team Health</b> is shown via the <b>Sick Leave Trend</b> chart (Σ sick leave person-days).</li>
                     </ul>
                   </div>
                 </div>
@@ -230,8 +240,8 @@
                           <div class="chartSub">Completed SP (last 6 sprints)</div>
                         </div>
                         <div class="chartLegend">
-                          <span class="legendPill" style="--dot:#16A34A;"><span class="legendDot"></span>Completed</span>
-                          <span class="legendPill" style="--dot:#4F46E5;"><span class="legendDot"></span>3-sprint avg</span>
+                          <span class="legendPill" style="--dot:#2EB67D;"><span class="legendDot"></span>Completed</span>
+                          <span class="legendPill" style="--dot:#36C5F0;"><span class="legendDot"></span>3-sprint avg</span>
                         </div>
                       </div>
                       <div class="chartCanvasWrap">
@@ -246,7 +256,7 @@
                           <div class="chartSub">Completed ÷ Committed (%)</div>
                         </div>
                         <div class="chartLegend">
-                          <span class="legendPill" style="--dot:#06B6D4;"><span class="legendDot"></span>Predictability</span>
+                          <span class="legendPill" style="--dot:#36C5F0;"><span class="legendDot"></span>Predictability</span>
                         </div>
                       </div>
                       <div class="chartCanvasWrap">
@@ -261,8 +271,8 @@
                           <div class="chartSub">Committed vs Completed</div>
                         </div>
                         <div class="chartLegend">
-                          <span class="legendPill" style="--dot:#9333EA;"><span class="legendDot"></span>Committed</span>
-                          <span class="legendPill" style="--dot:#16A34A;"><span class="legendDot"></span>Completed</span>
+                          <span class="legendPill" style="--dot:#36C5F0;"><span class="legendDot"></span>Committed</span>
+                          <span class="legendPill" style="--dot:#2EB67D;"><span class="legendDot"></span>Completed</span>
                         </div>
                       </div>
                       <div class="chartCanvasWrap">
@@ -277,8 +287,8 @@
                           <div class="chartSub">Forecast vs Completed</div>
                         </div>
                         <div class="chartLegend">
-                          <span class="legendPill" style="--dot:#4F46E5;"><span class="legendDot"></span>Forecast cap</span>
-                          <span class="legendPill" style="--dot:#F97316;"><span class="legendDot"></span>Committed</span>
+                          <span class="legendPill" style="--dot:#ECB22E;"><span class="legendDot"></span>Forecast</span>
+                          <span class="legendPill" style="--dot:#2EB67D;"><span class="legendDot"></span>Completed</span>
                         </div>
                       </div>
                       <div class="chartCanvasWrap">
@@ -293,8 +303,8 @@
                           <div class="chartSub">Added vs Removed mid-sprint</div>
                         </div>
                         <div class="chartLegend">
-                          <span class="legendPill" style="--dot:#F97316;"><span class="legendDot"></span>Added</span>
-                          <span class="legendPill" style="--dot:#E11D48;"><span class="legendDot"></span>Removed</span>
+                          <span class="legendPill" style="--dot:#2EB67D;"><span class="legendDot"></span>Added</span>
+                          <span class="legendPill" style="--dot:#E01E5A;"><span class="legendDot"></span>Removed</span>
                         </div>
                       </div>
                       <div class="chartCanvasWrap">
@@ -309,7 +319,7 @@
                           <div class="chartSub">Spillover / under-commit signal</div>
                         </div>
                         <div class="chartLegend">
-                          <span class="legendPill" style="--dot:#E11D48;"><span class="legendDot"></span>Carryover</span>
+                          <span class="legendPill" style="--dot:#E01E5A;"><span class="legendDot"></span>Carryover</span>
                         </div>
                       </div>
                       <div class="chartCanvasWrap">
@@ -317,7 +327,20 @@
                       </div>
                     </div>
 
-                    <!-- Overcommit Ratio moved to Tiles (no chart). -->
+                    <div class="chartCard">
+                      <div class="chartHeader">
+                        <div>
+                          <div class="chartTitleRow"><div class="chartTitle">Overcommit Ratio</div><span class="material-symbols-rounded chartInfo" title="Overcommit Ratio = Committed ÷ Forecast Capacity. Target ≈ 100%.">info</span></div>
+                          <div class="chartSub">Committed ÷ Forecast Capacity (%)</div>
+                        </div>
+                        <div class="chartLegend">
+                          <span class="legendPill" style="--dot:#ECB22E;"><span class="legendDot"></span>Overcommit</span>
+                        </div>
+                      </div>
+                      <div class="chartCanvasWrap">
+                        <canvas class="chartCanvas" id="hist_overcommitChart"></canvas>
+                      </div>
+                    </div>
 
                     <div class="chartCard">
                       <div class="chartHeader">
@@ -326,7 +349,7 @@
                           <div class="chartSub">(Added + Removed) ÷ Committed (%)</div>
                         </div>
                         <div class="chartLegend">
-                          <span class="legendPill" style="--dot:#06B6D4;"><span class="legendDot"></span>Churn %</span>
+                          <span class="legendPill" style="--dot:#36C5F0;"><span class="legendDot"></span>Churn %</span>
                         </div>
                       </div>
                       <div class="chartCanvasWrap">
@@ -334,7 +357,20 @@
                       </div>
                     </div>
 
-                    <!-- Sick leave trend chart removed (Team Health is a tile; no trend shown). -->
+                    <div class="chartCard">
+                      <div class="chartHeader">
+                        <div>
+                          <div class="chartTitleRow"><div class="chartTitle">Sick Leave Trend</div><span class="material-symbols-rounded chartInfo" title="Sick leave person-days each sprint. Spikes can indicate overload or interruptions.">info</span></div>
+                          <div class="chartSub">Sick leave (person-days)</div>
+                        </div>
+                        <div class="chartLegend">
+                          <span class="legendPill" style="--dot:#E01E5A;"><span class="legendDot"></span>Sick leave</span>
+                        </div>
+                      </div>
+                      <div class="chartCanvasWrap">
+                        <canvas class="chartCanvas" id="hist_sickChart"></canvas>
+                      </div>
+                    </div>
 
                   </div>
                 </div>
@@ -347,7 +383,7 @@
                       <div class="mutedText">Explains the charts + suggests what to do next.</div>
                     </div>
                     <div class="insightsControls">
-                      <span class="betaPill">AI BETA</span>
+                      <span class="betaPill">AI Beta</span>
                       <select class="fun-input insightRoleSel" id="coach_roleSel" aria-label="Role view">
                         <option value="sm" selected>Scrum Master</option>
                         <option value="dm">Delivery Manager</option>
@@ -482,12 +518,12 @@
     })();
   </script>
 
-  <script src="js/theme.js?v=221"></script>
-  <script src="js/xp.js?v=221"></script>
+  <script src="../js/theme.js?v=221"></script>
+  <script src="../js/xp.js?v=221"></script>
 
-  <script src="js/coach-history.js?v=220"></script>
+  <script src="../js/coach-history.js?v=221"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/coach-addons.js?v=221"></script>
-  <script src="js/coach-copilot.js?v=217"></script>
+  <script src="../js/coach-addons.js?v=221"></script>
+  <script src="../js/coach-copilot.js?v=217"></script>
 </body>
 </html>

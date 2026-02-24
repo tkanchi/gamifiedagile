@@ -5,44 +5,76 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>Scrummer — Game Rules</title>
-<link href="css/style.css?v=3" rel="stylesheet"/>
+<link href="css/style.css?v=221" rel="stylesheet"/>
 <!-- Unified Font (keep this on every page) -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet"/>
 </head>
 <body data-page="gamerules">
 <div class="appShell">
 <!-- SIDEBAR -->
-<aside class="sideNav">
+<aside class="sideNav eliteNav">
 <div class="sideBrand">
-<div class="brandMark"><span>S</span></div>
+<div class="brandMark"><span class="material-symbols-rounded">rocket_launch</span></div>
 <div>
-<div class="brandName">SCRUMMER</div>
-<div class="brandTag">Gamified Scrum OS</div>
+<div class="brandName">Scrummer</div>
+<div class="brandTag">Enterprise Edition</div>
 </div>
 </div>
 <!-- Nav Bar -->
-<nav class="nav"><a class="navlink" href="index.html">🚀 Plan</a><a class="navlink" href="coach.html">🤖 Coach</a><a class="navlink active" href="Gamerules.html">🎮 Game Rules</a><a class="navlink" href="accounts.html">🔐 Account</a></nav>
+
+      <nav class="nav">
+        <a class="navlink" href="index.html">
+          <span class="material-symbols-rounded navIco">calendar_month</span>
+          <span>Plan</span>
+        </a>
+        <a class="navlink" href="coach.html">
+          <span class="material-symbols-rounded navIco">bar_chart</span>
+          <span>Coach</span>
+        </a>
+        <a class="navlink active" href="Gamerules.html">
+          <span class="material-symbols-rounded navIco">gavel</span>
+          <span>Game Rules</span>
+        </a>
+        <a class="navlink" href="accounts.html">
+          <span class="material-symbols-rounded navIco">person</span>
+          <span>Account</span>
+        </a>
+      </nav>
+
 <!-- XP WIDGET -->
 <div class="xpWidget">
-<div class="xpTop">
-<div>
-<div class="lvl" id="xpLevel">Level 1</div>
-<div class="title" id="xpTitle">Rookie</div>
+        <div class="xpTop">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span class="material-symbols-rounded" style="font-size:18px; opacity:.9;">emoji_events</span>
+            <div>
+              <div class="lvl" id="xpLevel">Level 1</div>
+              <div class="title" id="xpTitle">Rookie</div>
+            </div>
+          </div>
+          <div class="xpActivePill">ACTIVE</div>
+        </div>
+        <div class="xpMeta">
+          <span id="xpText">0 / 300 XP</span>
+          <span id="xpPct">0%</span>
+        </div>
+        <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+        <div class="mutedText" id="xpHint" style="margin-top:8px; font-weight:700;">Coach 3 more sprints to reach Level 2 Pro.</div>
+      </div>
+<div class="sideThemeInline">
+  <div class="sideThemeLabel">🎮 Theme</div>
+  <div class="inputWrap">
+    <select class="fun-input" id="themeSelect" aria-label="Theme">
+      <option value="light">🌤️ Light</option>
+      <option value="mint">🍃 Mint Arcade</option>
+      <option value="neon">⚡ Neon Arena</option>
+      <option value="retro">🎲 Retro Arcade</option>
+    </select>
+  </div>
 </div>
-<div id="moodBadge">🐆 Calm</div>
-</div>
-<div class="xpBar">
-<div class="xpFill" id="xpFill"></div>
-</div>
-<div class="xpMeta">
-<span id="xpText">0 / 300 XP</span>
-<span id="streakText">🧊 streak reset</span>
-</div>
-</div>
-<button class="themeToggle" id="themeToggle" type="button">
-        Theme: <span id="themeMode">Light</span>
-</button>
-</aside>
+
+      <button class="helpBtn" type="button"><span class="material-symbols-rounded">support_agent</span>Help &amp; Support</button>
+    </aside>
 <!-- MAIN -->
 <main class="main">
 <div class="sectionCard">

@@ -5,8 +5,8 @@
 <meta content="width=device-width,initial-scale=1" name="viewport" />
 <title>Scrummer — Plan</title>
 
-<link rel="stylesheet" href="css/style.css?v=12">
-<link rel="stylesheet" href="css/index.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=221">
+<link rel="stylesheet" href="css/index.css?v=221">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
 <style>
@@ -126,47 +126,105 @@ overflow-wrap: anywhere !important;
 word-break: break-word;
 }
 
+
+
+/* Plan action buttons aligned with Coach page */
+body[data-page="plan"] .btnCoachMatch,
+body[data-page="plan"] .btnPrimary{
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: .15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+body[data-page="plan"] .btnCoachMatch{
+  border: 1px solid rgba(15,23,42,0.10);
+  background: #ffffff;
+  color: #0f172a;
+}
+body[data-page="plan"] .btnCoachMatch:hover{
+  transform: translateY(-1px);
+  background: #f8fafc;
+}
+body[data-page="plan"] .btnPrimary,
+body[data-page="plan"] .btnPrimary:link,
+body[data-page="plan"] .btnPrimary:visited{
+  border: 1px solid #111827;
+  background: #111827;
+  color: #fff;
+}
+body[data-page="plan"] .btnPrimary:hover{
+  transform: translateY(-1px);
+  background: #0b1220;
+}
+
 </style>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet"/>
 </head>
 
 <body data-page="plan">
 <div class="appShell">
 
-    <aside class="sideNav">
+    <aside class="sideNav eliteNav">
       <div class="sideBrand">
-        <div class="brandMark"><span>S</span></div>
+        <div class="brandMark"><span class="material-symbols-rounded">rocket_launch</span></div>
         <div>
-          <div class="brandName">SCRUMMER</div>
-          <div class="brandTag">Gamified Scrum OS</div>
+          <div class="brandName">Scrummer</div>
+          <div class="brandTag">Enterprise Edition</div>
         </div>
       </div>
 
-<nav class="nav">
-<a class="navlink active" href="index.html">🚀 Plan</a>
-<a class="navlink" href="coach.html">🤖 Coach</a>
-<a class="navlink" href="Gamerules.html">🎮 Game Rules</a>
-<a class="navlink" href="accounts.html">🔐 Account</a>
-</nav>
+
+      <nav class="nav">
+        <a class="navlink active" href="index.html">
+          <span class="material-symbols-rounded navIco">calendar_month</span>
+          <span>Plan</span>
+        </a>
+        <a class="navlink" href="coach.html">
+          <span class="material-symbols-rounded navIco">bar_chart</span>
+          <span>Coach</span>
+        </a>
+        <a class="navlink" href="Gamerules.html">
+          <span class="material-symbols-rounded navIco">gavel</span>
+          <span>Game Rules</span>
+        </a>
+        <a class="navlink" href="accounts.html">
+          <span class="material-symbols-rounded navIco">person</span>
+          <span>Account</span>
+        </a>
+      </nav>
+
 
 
 <div class="xpWidget">
-<div class="xpTop">
-<div>
-<div class="lvl" id="xpLevel">Level 1</div>
-<div class="title" id="xpTitle">Rookie</div>
-</div>
-<div id="moodBadge">🐆 Calm</div>
-</div>
-<div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
-<div class="xpMeta">
-<span id="xpText">0 / 300 XP</span>
-<span id="streakText">🧊 streak reset</span>
-</div>
-</div>
-
-<div style="margin-top:14px;">
-<div class="mutedText" style="margin-bottom:6px;">🎮 Theme</div>
-<div class="inputWrap">
+        <div class="xpTop">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span class="material-symbols-rounded" style="font-size:18px; opacity:.9;">emoji_events</span>
+            <div>
+              <div class="lvl" id="xpLevel">Level 1</div>
+              <div class="title" id="xpTitle">Rookie</div>
+            </div>
+          </div>
+          <div class="xpActivePill">ACTIVE</div>
+        </div>
+        <div class="xpMeta">
+          <span id="xpText">0 / 300 XP</span>
+          <span id="xpPct">0%</span>
+        </div>
+        <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+        <div class="mutedText" id="xpHint" style="margin-top:8px; font-weight:700;">Coach 3 more sprints to reach Level 2 Pro.</div>
+      </div>
+<div class="sideThemeInline">
+  <div class="sideThemeLabel">🎮 Theme</div>
+  <div class="inputWrap">
 <select class="fun-input" id="themeSelect">
 <option value="light">🌤️ Light</option>
 <option value="mint">🍃 Mint Arcade</option>
@@ -175,7 +233,9 @@ word-break: break-word;
 </select>
 </div>
 </div>
-</aside>
+
+      <button class="helpBtn" type="button"><span class="material-symbols-rounded">support_agent</span>Help &amp; Support</button>
+    </aside>
 
 <main class="main">
 <div class="planWrap">
@@ -281,8 +341,8 @@ word-break: break-word;
 </div>
 <div style="margin-top:14px;">
 <div class="btnRow btnRow-left">
-<button class="btnGhost" id="setup_resetBtn" type="button">Reset</button>
-<button class="btnStage btnStage-next" id="setup_saveBtn" type="button">Save</button>
+<button class="btnGhost btnCoachMatch" id="setup_resetBtn" type="button">Reset</button>
+<button class="btnPrimary" id="setup_saveBtn" type="button">Save</button>
 </div>
 <div class="mutedText" id="setup_saveStatus" style="margin-top:8px;">Not saved yet.</div>
 
@@ -369,12 +429,6 @@ word-break: break-word;
 <div class="info-banner" id="forecast_velocityBox" style="margin-top:14px; display:none;">
 <div class="kvKey">🔵 Velocity-Based</div>
 <div class="mutedText" style="margin-top:6px;">Formula: (N-1 + N-2 + N-3) / 3</div>
-
-<div class="toggleRow" style="margin-top:10px;">
-<input id="forecast_velOverride" type="checkbox" />
-<label for="forecast_velOverride">Override velocities (otherwise uses setup)</label>
-</div>
-
 <div class="velocityRow" style="margin-top:10px;">
 <div class="velItem">
 <div class="velLabel">Sprint N-1</div>
@@ -457,7 +511,7 @@ If ratio &gt; 1 → you're committing more than forecast (risk). If &lt; 1 → b
 <div class="miniTitle">🚀 Ready for Coach Insights?</div>
 <div class="miniSub">Open Coach to see insights, health indicators, and next recommended actions.</div>
 </div>
-<a class="btnStage btnStage-next" href="coach.html">Go to Coach</a>
+<a class="btnPrimary" href="coach.html">Go to Coach</a>
 </div>
 </div>
 </div>
@@ -471,7 +525,7 @@ If ratio &gt; 1 → you're committing more than forecast (risk). If &lt; 1 → b
 
 <script src="js/theme.js"></script>
 <script src="js/xp.js"></script>
-<script src="js/plan.js?v=200"></script>
+<script src="js/plan.js?v=211"></script>
 <script src="js/minigame.js"></script>
 </body>
 </html>

@@ -17,15 +17,15 @@
   const SETUP_KEY_LEGACY  = "scrummer_setup_v1";
 
   const XP_KEY = "scrummer_xp_v1";
-  const LEVEL_SIZE = 300;
+  const LEVEL_SIZE = 1000;
 
   const LEVEL_TITLES = [
     "Rookie",
-    "Sprint Scout",
-    "Sprint Runner",
-    "Velocity Cheetah",
-    "Scrum Legend",
-    "Agile Mythic"
+    "Pro",
+    "Elite",
+    "Master",
+    "Legend",
+    "Mythic"
   ];
 
   const el = (id) => document.getElementById(id);
@@ -258,6 +258,9 @@
       const next = String(Math.round(pct));
 
       fill.style.width = `${pct}%`;
+
+      const pctEl = el("xpPct");
+      if (pctEl) pctEl.textContent = `${Math.round(pct)}%`;
       fill.setAttribute("data-pct", next);
 
       if (prev !== null && prev !== next) bumpXpWidget();
@@ -266,11 +269,14 @@
     if (el("xpText"))
       el("xpText").textContent = `${info.inLevel} / ${info.next} XP`;
 
-    if (el("streakText")) {
-      el("streakText").textContent =
-        state.streak > 0
-          ? `🔥 ${state.streak} sprint-stable streak`
-          : `🧊 streak reset`;
+        const hintEl = el("xpHint");
+    if (hintEl) {
+      const remaining = Math.max(0, info.next - info.inLevel);
+      const xpPerSprint = 120; // heuristic for the hint text
+      const sprints = Math.max(1, Math.ceil(remaining / xpPerSprint));
+      const nextLevel = info.level + 1;
+      const nextTitle = LEVEL_TITLES[Math.min(nextLevel - 1, LEVEL_TITLES.length - 1)];
+      hintEl.textContent = `Coach ${sprints} more sprints to reach Level ${nextLevel} ${nextTitle}.`;
     }
 
     const badge = el("moodBadge");

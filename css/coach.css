@@ -1,5 +1,6 @@
+
 /* =========================================================
-   Scrummer — Coach Page CSS (Elite / Premium) — v200
+   Scrummer — Coach Page CSS (Elite / Premium) — v213
    Requires: <body data-page="coach">
    ========================================================= */
 
@@ -10,14 +11,208 @@ body[data-page="coach"]{
   --slack-red:#E01E5A;
 }
 
-/* Buttons (minimal, elite) */
+/* Scrim (only used on mobile drawer) */
+body[data-page="coach"] .navScrim{ display:none; }
+
+/* Sidebar sizing (less bulky)
+   ---------------------------------------------------------
+   NOTE: style.css defines the shell grid as 280px + 1fr.
+   If we set a smaller nav width without updating the grid,
+   it creates a visible "dead gap" between nav and page.
+   So on coach we override the grid column to match nav.
+*/
+body[data-page="coach"] .appShell{ grid-template-columns: 240px 1fr; }
+body[data-page="coach"] .sideNav.eliteNav{ width: auto; }
+
+@media (max-width: 980px){
+  body[data-page="coach"] .appShell{ grid-template-columns: 1fr; }
+}
+
+/* Slightly tighter main padding so the page aligns nicer */
+body[data-page="coach"] .main{ padding: 18px 20px 40px; }
+@media (max-width: 980px){
+  /* Mobile: drawer nav (doesn't eat the viewport) */
+  body[data-page="coach"] .sideNav.eliteNav{
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 260px;
+    transform: translateX(-110%);
+    transition: transform .18s ease;
+    z-index: 60;
+    background: #ffffff;
+    box-shadow: 18px 0 40px rgba(2,6,23,0.18);
+  }
+  body[data-page="coach"].nav-open .sideNav.eliteNav{ transform: translateX(0); }
+
+  body[data-page="coach"] .navScrim{
+    display:none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2,6,23,0.40);
+    z-index: 55;
+  }
+  body[data-page="coach"].nav-open .navScrim{ display:block; }
+}
+
+/* Mobile burger */
+body[data-page="coach"] .navBurger{
+  display:none;
+  height: 38px;
+  width: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: #ffffff;
+  align-items:center;
+  justify-content:center;
+  cursor: pointer;
+}
+body[data-page="coach"] .navBurger .material-symbols-rounded{ font-size: 20px; color:#0f172a; }
+@media (max-width: 980px){
+  body[data-page="coach"] .navBurger{ display:inline-flex; }
+}
+
+/* Page header (template: /testing/code.html) */
+body[data-page="coach"] .coachHeader{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap: 14px;
+  margin: 6px 0 14px;
+}
+@media (max-width: 980px){
+  body[data-page="coach"] .coachHeader{ align-items:flex-start; }
+  body[data-page="coach"] .coachHeader > div{ position: relative; padding-left: 48px; }
+  body[data-page="coach"] .coachHeader .navBurger{ position:absolute; left:0; top: 0; }
+}
+body[data-page="coach"] .coachPageTitle{
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+body[data-page="coach"] .coachPageSub{
+  margin: 6px 0 0;
+  color:#64748b;
+  font-weight: 650;
+}
+
+/* Metric cards (replace clumsy tiles) */
+body[data-page="coach"] .metricGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 10px;
+}
+@media (max-width: 1100px){
+  body[data-page="coach"] .metricGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+body[data-page="coach"] .metricCard{
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  box-shadow: var(--shadow-soft);
+  min-height: 148px; /* allow 2-line titles without pushing visuals */
+  display:flex;
+  flex-direction:column;
+}
+body[data-page="coach"] .metricTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+  min-height: 44px; /* keeps all tiles aligned */
+}
+body[data-page="coach"] .metricName{
+  display:flex;
+  align-items:flex-start;
+  gap: 8px;
+  font-weight: 900;
+  color: var(--text-main);
+  min-width: 0;
+}
+body[data-page="coach"] .metricName .material-symbols-rounded{ font-size: 18px; opacity: .85; }
+
+/* Prevent long metric names from wrapping (keeps tiles visually even)
+   Full name is available via native tooltip (title attribute). */
+body[data-page="coach"] .metricTitle{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.22;
+  max-height: 2.9em; /* comfortably fits two lines */
+  white-space: normal;
+}
+body[data-page="coach"] .metricDelta{
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(15,23,42,0.06);
+  color:#334155;
+  white-space: nowrap;
+}
+body[data-page="coach"] .metricValue{
+  font-size: 24px;
+  font-weight: 950;
+  margin-top: 6px;
+  letter-spacing: -0.02em;
+}
+body[data-page="coach"] .metricUnit{
+  font-size: 12px;
+  font-weight: 800;
+  color:#64748b;
+  margin-left: 6px;
+  letter-spacing: .1px;
+}
+
+/* Small, creative micro-viz area (like the reference cards) */
+body[data-page="coach"] .metricViz{ margin-top: auto; padding-top: 10px; }
+body[data-page="coach"] .metricViz--bars{
+  display:flex;
+  align-items:flex-end;
+  gap: 6px;
+  height: 26px;
+}
+body[data-page="coach"] .metricViz--bars .mbar{
+  flex: 1;
+  height: var(--h, 40%);
+  background: rgba(99,102,241,0.18);
+  border-radius: 4px 4px 0 0;
+}
+body[data-page="coach"] .metricViz--bars .mbar.is-strong{
+  background: rgba(99,102,241,0.85);
+}
+body[data-page="coach"] .metricViz--progress .mprog{
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.08);
+  overflow:hidden;
+}
+body[data-page="coach"] .metricViz--progress .mprogFill{
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(99,102,241,0.80);
+}
+body[data-page="coach"] .metricMeta{
+  margin-top: 4px;
+  color:#64748b;
+  font-weight: 750;
+  font-size: 12px;
+}
+
+/* Buttons */
 body[data-page="coach"] .btnGhost,
 body[data-page="coach"] .btnPrimary,
 body[data-page="coach"] .tabBtn,
 body[data-page="coach"] .themeToggle{
   height: 34px;
   padding: 0 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 650;
   letter-spacing: .15px;
@@ -41,19 +236,15 @@ body[data-page="coach"] .btnPrimary{
   border-color: #111827;
   color:#fff;
 }
-body[data-page="coach"] .btnPrimary:hover{
-  background:#0b1220;
-}
+body[data-page="coach"] .btnPrimary:hover{ background:#0b1220; }
 body[data-page="coach"] .tabBtn.active{
   background:#111827;
   color:#fff;
   border-color:#111827;
 }
 
-/* Hero card corners (not too round) */
-body[data-page="coach"] .sectionCard.heroCard{
-  border-radius: 14px !important;
-}
+/* Hero card */
+body[data-page="coach"] .sectionCard.heroCard{ border-radius: 14px !important; }
 
 /* Sprint History */
 body[data-page="coach"] .historyWrap{
@@ -102,103 +293,98 @@ body[data-page="coach"] .historyActions{
   align-items:center;
 }
 
-/* Dropdown: not huge */
+/* Dropdown: compact */
 body[data-page="coach"] #hist_demoVariant{
   width: auto !important;
   min-width: 190px !important;
   max-width: 240px !important;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 /* Table */
-body[data-page="coach"] .historyBody{
-  overflow-x:auto;
-  -webkit-overflow-scrolling: touch;
-}
+body[data-page="coach"] .historyBody{ overflow-x:auto; -webkit-overflow-scrolling: touch; }
 body[data-page="coach"] .historyTable{
   width:100%;
-  min-width: 980px;
+  min-width: 740px;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing:0;
-  background:#fff;
-  border:1px solid rgba(15,23,42,0.08);
+  background: var(--bg-panel, #fff);
+  border:1px solid rgba(15,23,42,0.10);
   border-radius: 14px;
   overflow:hidden;
 }
 body[data-page="coach"] .historyTable thead th{
-  background:#f3f4f6;
+  background: rgba(255,255,255,0.04);
   color:#64748b;
   font-weight:800;
-  font-size: 11.5px;
-  letter-spacing:.35px;
+  font-size: 12px;
+  letter-spacing:.28px;
   text-transform: uppercase;
   text-align:center;
   border-bottom:1px solid rgba(15,23,42,0.06);
-  padding:10px 8px;
+  padding:8px 6px;
 }
 body[data-page="coach"] .historyTable td{
-  padding:10px 8px;
+  padding:8px 6px;
   border-bottom:1px solid rgba(15,23,42,0.06);
   text-align:center;
   vertical-align:middle;
   white-space:nowrap;
-  font-size: 12.5px;         /* ✅ match header feel */
+  font-size: 12px;
   font-weight: 650;
-  color:#0f172a;
+  color: var(--text-main);
 }
 
-/* Sprint label should NOT be bigger than header */
+body[data-page="coach"] .historyTable th:nth-child(1),
+body[data-page="coach"] .historyTable td:nth-child(1){ width: 96px; }
+body[data-page="coach"] .historyTable th:nth-child(n+2):nth-child(-n+7),
+body[data-page="coach"] .historyTable td:nth-child(n+2):nth-child(-n+7){ width: 96px; }
+body[data-page="coach"] .historyTable th:nth-child(8),
+body[data-page="coach"] .historyTable td:nth-child(8){ width: 92px; }
 body[data-page="coach"] .historyTable td:first-child{
   font-weight: 700;
-  font-size: 12.5px;
-  color:#0f172a;
+  font-size: 12px; /* not bigger than header */
 }
-
-/* Inputs */
 body[data-page="coach"] .historyTable input.fun-input{
   width:100% !important;
-  height: 34px !important;
-  border-radius: 10px !important;
+  height: 30px !important;
+  border-radius: 12px !important;
   text-align:center;
 }
 
-/* Sticky first column */
+/* Sticky first col */
 body[data-page="coach"] .historyTable th:first-child,
 body[data-page="coach"] .historyTable td:first-child{
   position: sticky;
   left: 0;
   z-index: 2;
-  background:#fff;
+  background: var(--bg-panel, #fff);
   box-shadow: 6px 0 10px rgba(15,23,42,0.04);
 }
 body[data-page="coach"] .historyTable thead th:first-child{
-  background:#f3f4f6;
+  background: rgba(255,255,255,0.04);
   z-index: 3;
 }
 
 /* Row hover */
-body[data-page="coach"] .historyTable tbody tr:hover td{
-  background: rgba(15,23,42,0.02);
-}
-body[data-page="coach"] .historyTable tbody tr:hover td:first-child{
-  background: rgba(15,23,42,0.02);
-}
+body[data-page="coach"] .historyTable tbody tr:hover td{ background: rgba(15,23,42,0.02); }
+body[data-page="coach"] .historyTable tbody tr:hover td:first-child{ background: rgba(15,23,42,0.02); }
 
-/* Main Coach Layout: charts left, insights right */
+/* Main layout */
 body[data-page="coach"] .coachBodyGrid{
-  display:grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 14px;
+  display:block;
   margin-top: 14px;
 }
-@media (max-width: 980px){
-  body[data-page="coach"] .coachBodyGrid{
-    grid-template-columns: 1fr;
-  }
+
+/* Insights now sit below charts (less clutter) */
+body[data-page="coach"] .insightsBox.insightsBox--below{
+  position: static;
+  margin-top: 12px;
 }
 
+/* KPI tiles */
 body[data-page="coach"] .kpiGrid{
   display:grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -206,14 +392,10 @@ body[data-page="coach"] .kpiGrid{
   margin-bottom: 12px;
 }
 @media (max-width: 980px){
-  body[data-page="coach"] .kpiGrid{
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  body[data-page="coach"] .kpiGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 520px){
-  body[data-page="coach"] .kpiGrid{
-    grid-template-columns: 1fr;
-  }
+  body[data-page="coach"] .kpiGrid{ grid-template-columns: 1fr; }
 }
 body[data-page="coach"] .kpiTile{
   border:1px solid rgba(15,23,42,0.10);
@@ -224,7 +406,7 @@ body[data-page="coach"] .kpiTile{
 }
 body[data-page="coach"] .kpiLabel{
   font-size: 11.5px;
-  letter-spacing: .35px;
+  letter-spacing: .28px;
   text-transform: uppercase;
   color:#64748b;
   font-weight: 800;
@@ -247,27 +429,31 @@ body[data-page="coach"] .chartsWrap{
   border:1px solid rgba(15,23,42,0.08);
   background:#fff;
   border-radius: 14px;
-  padding: 12px;
+  padding: 10px;
 }
 body[data-page="coach"] .chartGrid{
   display:grid;
   gap: 12px;
+  grid-template-columns: 1fr;
 }
 @media (min-width: 980px){
-  body[data-page="coach"] .chartGrid{
-    grid-template-columns: 1fr 1fr;
-  }
-  body[data-page="coach"] .chartGrid .span2{
-    grid-column: 1 / -1;
-  }
+  body[data-page="coach"] .chartGrid{ grid-template-columns: 1fr 1fr; }
+  body[data-page="coach"] .chartGrid .span2{ grid-column: 1 / -1; }
 }
 
 body[data-page="coach"] .chartCard{
   border:1px solid rgba(15,23,42,0.08);
   background:#fff;
   border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 10px 22px rgba(15,23,42,0.06);
+  padding: 10px;
+  box-shadow: 0 8px 18px rgba(15,23,42,0.05);
+}
+body[data-page="coach"] .chartCard.is-highlight{
+  box-shadow:
+    0 0 0 2px rgba(99,102,241,0.22),
+    0 12px 26px rgba(15,23,42,0.10);
+  transform: translateY(-1px);
+  transition: box-shadow .18s ease, transform .18s ease;
 }
 body[data-page="coach"] .chartHeader{
   display:flex;
@@ -278,15 +464,13 @@ body[data-page="coach"] .chartHeader{
 }
 body[data-page="coach"] .chartTitle{ font-weight: 850; font-size: 13px; color:#0b1220; }
 body[data-page="coach"] .chartSub{ font-size: 12px; color:#64748b; margin-top:4px; }
-
 body[data-page="coach"] .chartLegend{
   display:flex;
   align-items:center;
   gap: 14px;
   justify-content:flex-end;
 }
-
-/* ✅ Remove grey background on legends */
+/* legend: no grey bg */
 body[data-page="coach"] .legendPill{
   display:inline-flex;
   align-items:center;
@@ -303,28 +487,21 @@ body[data-page="coach"] .legendDot{
   width:10px;height:10px;border-radius:999px;
   background: var(--dot, #36C5F0);
 }
-
 body[data-page="coach"] .chartCanvasWrap{ padding-top: 6px; }
 body[data-page="coach"] canvas.chartCanvas{
   width:100% !important;
   display:block;
-  height: 240px !important;
-  max-height: 240px !important;
+  height: 220px !important;
+  max-height: 220px !important;
   background: transparent !important;
   border:none !important;
 }
+
 @media (max-width: 560px){
-  body[data-page="coach"] canvas.chartCanvas{
-    height: 210px !important;
-    max-height: 210px !important;
-  }
+  body[data-page="coach"] canvas.chartCanvas{ height: 200px !important; max-height: 200px !important; }
 }
 
-body[data-page="coach"] .moreChartsHint{
-  margin-top: 10px;
-}
-
-/* Insights right column */
+/* Insights */
 body[data-page="coach"] .insightsBox{
   border:1px solid rgba(15,23,42,0.08);
   background:#fff;
@@ -333,9 +510,7 @@ body[data-page="coach"] .insightsBox{
   position: sticky;
   top: 14px;
 }
-@media (max-width: 980px){
-  body[data-page="coach"] .insightsBox{ position: static; }
-}
+@media (max-width: 980px){ body[data-page="coach"] .insightsBox{ position: static; } }
 body[data-page="coach"] .insightsHead{
   display:flex;
   justify-content:space-between;
@@ -343,37 +518,25 @@ body[data-page="coach"] .insightsHead{
   gap: 10px;
   margin-bottom: 10px;
 }
-body[data-page="coach"] .insightsStack{
-  display:grid;
-  gap: 10px;
-}
+body[data-page="coach"] .insightsStack{ display:grid; gap: 10px; }
 body[data-page="coach"] .insightCard{
   border:1px solid rgba(15,23,42,0.10);
   background:#fff;
   border-radius: 14px;
   padding: 12px;
 }
-body[data-page="coach"] .insightHeader{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-}
+body[data-page="coach"] .insightHeader{ display:flex; align-items:center; gap: 10px; }
 body[data-page="coach"] .insightTag{
   font-size: 11px;
   font-weight: 900;
-  letter-spacing: .35px;
+  letter-spacing: .28px;
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid rgba(15,23,42,0.12);
   background: rgba(15,23,42,0.04);
   color:#0b1220;
 }
-body[data-page="coach"] .insightTitle{
-  margin:0;
-  font-size: 13.5px;
-  font-weight: 850;
-  color:#0b1220;
-}
+body[data-page="coach"] .insightTitle{ margin:0; font-size: 13.5px; font-weight: 850; color:#0b1220; }
 body[data-page="coach"] .insightText{
   margin: 10px 0 0;
   color:#334155;
@@ -381,9 +544,385 @@ body[data-page="coach"] .insightText{
   font-size: 12.5px;
   line-height: 1.45;
 }
-body[data-page="coach"] .insightAction{
-  margin-top: 10px;
-  font-weight: 800;
-  font-size: 12.5px;
+body[data-page="coach"] .insightAction{ margin-top: 10px; font-weight: 800; font-size: 12.5px; color:#0b1220; }
+
+/* =========================================================
+   v218 — Tiles modal + 2-up charts on wide screens
+   ========================================================= */
+
+/* Tile bar + modal */
+body[data-page="coach"] .tileBar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
+body[data-page="coach"] .tileBarLeft{ display:grid; gap: 2px; }
+
+body[data-page="coach"] .modal{
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+body[data-page="coach"] .modalScrim{
+  position:absolute;
+  inset:0;
+  background: rgba(2,6,23,0.55);
+}
+body[data-page="coach"] .modalCard{
+  position: relative;
+  width: min(560px, calc(100% - 24px));
+  margin: 6vh auto 0;
+  border-radius: 16px;
+  background: var(--bg-panel, #fff);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 28px 80px rgba(2,6,23,0.35);
+  overflow:hidden;
+  max-height: 82vh;
+  display:flex;
+  flex-direction:column;
+}
+body[data-page="coach"] .modalHead,
+body[data-page="coach"] .modalFoot{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+body[data-page="coach"] .modalHead{ border-bottom: 1px solid rgba(15,23,42,0.10); }
+body[data-page="coach"] .modalFoot{ border-top: 1px solid rgba(15,23,42,0.10); }
+body[data-page="coach"] .modalTitle{ font-weight: 900; font-size: 14px; color: var(--text-main); }
+body[data-page="coach"] .modalBody{ padding: 10px 14px 14px; display:grid; gap: 10px; overflow:auto; flex:1; }
+body[data-page="coach"] .tilePickRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: rgba(255,255,255,0.04);
+}
+body[data-page="coach"] .tilePickRow .tilePickMeta{ display:grid; gap: 2px; }
+body[data-page="coach"] .tilePickRow .tilePickName{ font-weight: 850; font-size: 13px; color: var(--text-main); }
+body[data-page="coach"] .tilePickRow .tilePickDesc{ font-weight: 650; font-size: 12px; color: var(--text-muted); }
+
+/* KPI tile header + info */
+body[data-page="coach"] .kpiHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+body[data-page="coach"] .kpiInfo{
+  font-size: 18px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: help;
+}
+body[data-page="coach"] .kpiFormula{
+  margin-top: 8px;
+  font-size: 11.5px;
+  color:#64748b;
+  font-weight: 650;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(15,23,42,0.10);
+}
+
+/* KPI color states (set by JS)
+   ---------------------------------------------------------
+   Reference-style: NO left ribbon.
+   Only the top-right badge + progress fill carries color.
+*/
+body[data-page="coach"] .kpiTile{ position: relative; overflow:hidden; }
+body[data-page="coach"] .metricCard{ position: relative; overflow:hidden; }
+body[data-page="coach"] .metricCard::before{ content:none !important; }
+
+body[data-page="coach"] .metricCard.kpi--good .metricDelta{ background: rgba(46,182,125,0.14); color:#047857; }
+body[data-page="coach"] .metricCard.kpi--warn .metricDelta{ background: rgba(236,178,46,0.16); color:#a16207; }
+body[data-page="coach"] .metricCard.kpi--risk .metricDelta{ background: rgba(224,30,90,0.14); color:#b91c1c; }
+body[data-page="coach"] .metricCard.kpi--info .metricDelta{ background: rgba(54,197,240,0.16); color:#0369a1; }
+
+body[data-page="coach"] .metricCard.kpi--good .mprogFill{ background: rgba(46,182,125,0.85); }
+body[data-page="coach"] .metricCard.kpi--warn .mprogFill{ background: rgba(236,178,46,0.92); }
+body[data-page="coach"] .metricCard.kpi--risk .mprogFill{ background: rgba(224,30,90,0.86); }
+body[data-page="coach"] .metricCard.kpi--info .mprogFill{ background: rgba(54,197,240,0.86); }
+
+/* Chart title row + info icon */
+body[data-page="coach"] .chartTitleRow{ display:flex; align-items:center; gap: 8px; }
+body[data-page="coach"] .chartInfo{
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: help;
+}
+
+/* Formula accordion */
+body[data-page="coach"] .formulaCard{
+  margin: 12px 0;
+  border: 1px solid rgba(15,23,42,0.08);
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+body[data-page="coach"] .formulaToggle{
+  width: 100%;
+  border: none;
+  background: transparent;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 850;
   color:#0b1220;
 }
+body[data-page="coach"] .formulaToggle .material-symbols-rounded{ color:#64748b; }
+body[data-page="coach"] .formulaToggle .chev{
+  width:18px;height:18px;line-height:18px;
+  text-align:center;
+  border-radius:6px;
+  border:1px solid rgba(15,23,42,0.10);
+  background:#fff;
+  font-weight:900;
+  color:#334155;
+  transition: transform .16s ease;
+}
+body[data-page="coach"] .formulaCard.is-open .formulaToggle .chev{ transform: rotate(180deg); }
+body[data-page="coach"] .formulaBody{ margin-top: 10px; }
+body[data-page="coach"] .formulaList{ margin: 0; padding-left: 18px; color:#334155; }
+body[data-page="coach"] .formulaList li{ margin: 8px 0; font-weight: 650; font-size: 12.5px; }
+
+/* Insights controls */
+body[data-page="coach"] .insightsControls{ display:flex; gap: 8px; align-items:center; }
+body[data-page="coach"] .betaPill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .28px;
+  padding: 6px 12px;
+  min-width: 86px;
+  border-radius: 999px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.28);
+  color: #4f46e5;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+}
+body[data-page="coach"] .betaPill::before{
+  content: "⚡";
+  font-size: 12px;
+  line-height: 1;
+}
+
+body[data-page="coach"] .insightRoleSel{ height: 34px; border-radius: 12px; }
+
+/* Insight styling
+   - Remove the left ribbon (felt repetitive with tiles)
+   - Use a subtle TOP accent instead (cleaner)
+*/
+body[data-page="coach"] .insightCard{
+  position: relative;
+  overflow:hidden;
+  border-top: 3px solid transparent;
+}
+/* Removed large watermark icon (felt noisy + overlapped content) */
+body[data-page="coach"] .insightCard::after{ content: none; }
+body[data-page="coach"] .insightCard.is-risk{ border-top-color: var(--slack-red); }
+body[data-page="coach"] .insightCard.is-risk .insightTag{ background: rgba(224,30,90,0.12); border-color: rgba(224,30,90,0.24); color: #b91c1c; }
+body[data-page="coach"] .insightCard.is-watch{ border-top-color: var(--slack-yellow); }
+body[data-page="coach"] .insightCard.is-watch .insightTag{ background: rgba(236,178,46,0.14); border-color: rgba(236,178,46,0.26); color: #a16207; }
+body[data-page="coach"] .insightCard.is-info{ border-top-color: var(--slack-blue); }
+body[data-page="coach"] .insightCard.is-info .insightTag{ background: rgba(54,197,240,0.12); border-color: rgba(54,197,240,0.22); color: #0369a1; }
+body[data-page="coach"] .insightCard.is-good{ border-top-color: var(--slack-green); }
+body[data-page="coach"] .insightCard.is-good .insightTag{ background: rgba(46,182,125,0.12); border-color: rgba(46,182,125,0.22); color: #047857; }
+
+/* Slightly tighter insight typography */
+body[data-page="coach"] .insightText{ color:#475569; }
+
+body[data-page="coach"] .insightRelated{
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+
+/* =========================================================
+   Copilot (embedded in Coach)
+   ========================================================= */
+
+body[data-page="coach"] .copilotGrid{
+  display:grid;
+  grid-template-columns: 1fr 360px;
+  gap: 14px;
+  margin-top: 14px;
+}
+@media (max-width: 980px){
+  body[data-page="coach"] .copilotGrid{ grid-template-columns: 1fr; }
+}
+
+body[data-page="coach"] .copilotPills{
+  display:flex;
+  flex-wrap:wrap;
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+body[data-page="coach"] .pillBtn{
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: #ffffff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor:pointer;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+body[data-page="coach"] .pillBtn:hover{
+  transform: translateY(-1px);
+  background: #f8fafc;
+}
+body[data-page="coach"] .pillBtn.active{
+  background: #111827;
+  border-color:#111827;
+  color:#fff;
+}
+
+body[data-page="coach"] .copilotCardHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+body[data-page="coach"] .fun-textarea{
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,0.10);
+  padding: 12px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  outline: none;
+  resize: vertical;
+  background: #ffffff;
+}
+body[data-page="coach"] .fun-textarea:focus{
+  border-color: rgba(99,102,241,0.45);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+body[data-page="coach"] .copilotBtnRow{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap:wrap;
+}
+
+body[data-page="coach"] .promptList{
+  display:grid;
+  gap: 10px;
+}
+body[data-page="coach"] .promptItem{
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,0.08);
+  background: rgba(2,6,23,0.02);
+}
+body[data-page="coach"] .promptItem .promptTitle{
+  font-weight: 900;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #0b1220;
+}
+body[data-page="coach"] .promptItem .promptBody{
+  color: #334155;
+  font-weight: 650;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+body[data-page="coach"] .savedList{
+  display:grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+body[data-page="coach"] .savedCard{
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,0.08);
+  padding: 10px 12px;
+  background: #ffffff;
+}
+body[data-page="coach"] .savedMeta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+body[data-page="coach"] .savedMeta .chip{
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: rgba(54,197,240,0.10);
+  color:#0369a1;
+}
+body[data-page="coach"] .savedMeta .time{
+  font-size: 11px;
+  font-weight: 700;
+  color:#64748b;
+}
+body[data-page="coach"] .savedText{
+  white-space: pre-wrap;
+  color: #0b1220;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+
+/* Tile micro-viz variants (creative, non-repetitive) */
+body[data-page="coach"] .metricViz--ring{ display:flex; align-items:center; gap: 12px; }
+body[data-page="coach"] .ring{
+  width: 44px; height: 44px;
+  border-radius: 999px;
+  background:
+    conic-gradient(currentColor calc(var(--p,0) * 1%), rgba(148,163,184,0.25) 0);
+  position: relative;
+  color: rgba(99,102,241,0.95);
+}
+body[data-page="coach"] .metricCard.kpi--risk .ring{ color: rgba(224,30,90,0.92); }
+body[data-page="coach"] .metricCard.kpi--warn .ring{ color: rgba(236,178,46,0.98); }
+body[data-page="coach"] .metricCard.kpi--good .ring{ color: rgba(46,182,125,0.92); }
+body[data-page="coach"] .ring::after{
+  content:"";
+  position:absolute;
+  inset: 6px;
+  border-radius: 999px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(15,23,42,0.06);
+}
+body[data-page="coach"] .ringSub{ font-size: 12px; font-weight: 750; color: var(--text-muted); }
+
+body[data-page="coach"] .metricViz--faces{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+body[data-page="coach"] .faces{ display:flex; gap: 6px; font-size: 18px; }
+body[data-page="coach"] .faces span{ filter: grayscale(0.2); opacity: .35; transition: opacity .2s ease; }
+body[data-page="coach"] .faces span.is-on{ opacity: 1; }
+
+body[data-page="coach"] .metricViz--spark{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+body[data-page="coach"] .spark{
+  width: 120px; height: 26px;
+  color: rgba(99,102,241,0.92);
+}
+body[data-page="coach"] .metricCard.kpi--risk .spark{ color: rgba(224,30,90,0.92); }
+body[data-page="coach"] .metricCard.kpi--warn .spark{ color: rgba(236,178,46,0.98); }
+body[data-page="coach"] .metricCard.kpi--good .spark{ color: rgba(46,182,125,0.92); }
+body[data-page="coach"] .spark polyline{ stroke: currentColor; stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }

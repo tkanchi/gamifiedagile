@@ -649,8 +649,9 @@ body{
 }
 
 .overcommit{
-  border-color: rgba(239,68,68,.55) !important;
-  box-shadow: 0 14px 34px rgba(239,68,68,.12);
+  /* Keep status emphasis in pills; avoid red card border ring */
+  border-color: var(--border) !important;
+  box-shadow: 0 12px 28px rgba(15,23,42,.06);
 }
 
 /* =======================
@@ -678,7 +679,7 @@ body{
   color: #ffffff;
 }
 :root[data-theme="mint"] #themeSelect option{
-  background: #ffffff;
+  background: var(--bg-panel);
   color: #0f172a;
 }
 
@@ -1232,7 +1233,15 @@ body{
     position: sticky !important;
     top: 0 !important;
     height: 100vh !important;
-    overflow: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none;      /* Firefox */
+    -ms-overflow-style: none;   /* IE/Edge legacy */
+  }
+
+  .sideNav::-webkit-scrollbar{
+    width: 0;
+    height: 0;
   }
 
   .main{
@@ -1250,7 +1259,7 @@ body[data-page="coach"] .chartGrid{
 }
 body[data-page="coach"] .chartCard{
   border: 1px solid var(--border);
-  background: #ffffff;
+  background: var(--bg-panel);
   border-radius: 12px;
   padding: 14px;
   overflow:hidden;
@@ -1344,7 +1353,7 @@ body[data-page="coach"] canvas.chartCanvas{
   canvas.chartCanvas{
     height: 220px !important;
     max-height: 220px !important;
-   background: #ffffff;
+   background: var(--bg-panel);
   }
 }
 
@@ -1357,7 +1366,7 @@ body[data-page="coach"] canvas.chartCanvas{
   canvas.chartCanvas{
     height: 220px !important;
     max-height: 220px !important;
-    background: #ffffff;
+    background: var(--bg-panel);
   }
 }
 
@@ -1366,7 +1375,7 @@ body[data-page="coach"] canvas.chartCanvas{
    ========================================================= */
 canvas.chartCanvas,
 .chartCard canvas.chartCanvas{
-  background: #ffffff !important;
+  background: var(--bg-panel) !important;
 }
 
 /* =========================================================
@@ -1374,13 +1383,13 @@ canvas.chartCanvas,
    Note: coach.html has inline styles; we override with !important
    ========================================================= */
 .chartCard{
-  background: #ffffff !important;
+  background: var(--bg-panel) !important;
   border-color: rgba(17,24,39,0.10) !important;
   box-shadow: 0 10px 24px rgba(17,24,39,0.06) !important;
 }
 
 .chartCanvas{
-  background: #ffffff !important;
+  background: var(--bg-panel) !important;
   border-color: rgba(17,24,39,0.10) !important;
 }
 
@@ -1390,10 +1399,11 @@ canvas.chartCanvas,
 }
 
 /* Softer chart wrapper banners on Coach */
-body[data-page="coach"] .info-banner{ background: #ffffff !important; }
+body[data-page="coach"] .info-banner{ background: var(--bg-panel) !important; }
+
 
 /* =========================================================
-   Elite Nav (site-wide) — v200
+   Elite Nav + Typography (site-wide) — v210
    ========================================================= */
 :root{
   --elite-text:#0b1220;
@@ -1404,9 +1414,13 @@ body{
   color: var(--elite-text);
 }
 
-/* Smaller sidebar */
-.sideNav{
-  padding: 16px 14px !important;
+/* Slightly slimmer sidebar */
+.appShell{
+  grid-template-columns: 250px 1fr;
+}
+
+@media (max-width: 980px){
+  .appShell{ grid-template-columns: 1fr; }
 }
 
 /* Brand */
@@ -1415,11 +1429,8 @@ body{
   height: 40px !important;
   border-radius: 12px !important;
 }
-.brandMark .material-symbols-rounded{
-  font-size: 22px;
-}
 
-/* Nav tabs elite */
+/* Nav links: elite, less round */
 .navlink{
   padding: 10px 12px !important;
   border-radius: 12px !important;
@@ -1429,13 +1440,176 @@ body{
   align-items:center;
   gap: 10px;
 }
+
 .navlink .navIco{
   font-size: 20px;
+  line-height: 1;
   opacity: 0.9;
 }
 
-/* Less “puffy” active */
 .navlink.active{
   background: rgba(17,24,39,0.06) !important;
   border-color: rgba(17,24,39,0.10) !important;
+}
+
+.material-symbols-rounded{
+  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+
+
+/* =========================================================
+   v220 — Enterprise Sidebar (matches reference screenshot)
+   ========================================================= */
+
+.appShell{ grid-template-columns: 268px 1fr; }
+
+.sideNav.eliteNav{
+  padding: 20px 18px;
+}
+
+.sideNav.eliteNav .sideBrand{ padding: 6px 6px 14px; }
+.sideNav.eliteNav .brandMark{
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: #1d4ed8;
+  border: none;
+  color: #fff;
+}
+.sideNav.eliteNav .brandMark .material-symbols-rounded{ font-size: 20px; }
+.sideNav.eliteNav .brandName{
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-size: 16px;
+}
+.sideNav.eliteNav .brandTag{
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.sideNav.eliteNav .nav{ margin-top: 8px; gap: 8px; }
+.sideNav.eliteNav .navlink{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-weight: 750;
+  border: 1px solid transparent;
+}
+
+.sideNav.eliteNav .navlink .navIco{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display:grid;
+  place-items:center;
+  background: transparent;
+  color: #0f172a;
+  border: 1px solid transparent;
+}
+
+.sideNav.eliteNav .navlink:hover{
+  background: rgba(99,102,241,0.06);
+  border-color: rgba(99,102,241,0.16);
+}
+
+.sideNav.eliteNav .navlink.active{
+  background: rgba(99,102,241,0.12);
+  border-color: rgba(99,102,241,0.20);
+  color: #1d4ed8;
+}
+.sideNav.eliteNav .navlink.active .navIco{
+  background: #1d4ed8;
+  color: #fff;
+  border-color: rgba(29,78,216,0.25);
+}
+
+/* XP card matches reference */
+.sideNav.eliteNav .xpWidget{
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: rgba(99,102,241,0.04);
+}
+.sideNav.eliteNav .xpTop{
+  align-items:center;
+}
+.sideNav.eliteNav .xpTop .title{ font-size: 14px; }
+.sideNav.eliteNav .xpTop .lvl{ font-size: 12.5px; }
+
+.sideNav.eliteNav .xpActivePill{
+  margin-left:auto;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: .22px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.22);
+  color: #1d4ed8;
+}
+
+.sideNav.eliteNav .xpMeta{
+  display:flex;
+  justify-content:space-between;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.sideNav.eliteNav .helpBtn{
+  margin-top: 14px;
+  width: 100%;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  justify-content:center;
+  background: #0b1220;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.10);
+  font-weight: 850;
+}
+.sideNav.eliteNav .helpBtn .material-symbols-rounded{ font-size: 18px; }
+
+/* Dark themes: keep nav readable */
+:root[data-theme="neon"] .sideNav.eliteNav,
+:root[data-theme="retro"] .sideNav.eliteNav,
+:root[data-theme="mint"] .sideNav.eliteNav{
+  background: var(--bg-panel);
+}
+:root[data-theme="neon"] .sideNav.eliteNav .navlink,
+:root[data-theme="retro"] .sideNav.eliteNav .navlink,
+:root[data-theme="mint"] .sideNav.eliteNav .navlink{
+  color: var(--text-main);
+}
+
+/* Compact theme selector row (saves vertical space in sidebar) */
+.sideThemeInline{
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sideThemeInline .sideThemeLabel{
+  margin: 0;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1;
+}
+.sideThemeInline .inputWrap{
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+.sideThemeInline #themeSelect{
+  width: 100%;
 }
